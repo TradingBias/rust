@@ -202,51 +202,67 @@ tradebias/
 
 # 2. Indicator System Design
 
-## 2.1 Dual Implementation Architecture
+## 2.1 Indicator Implementation Architecture
 
 ### Conceptual Model
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                    Indicator Trait                          │
-│  • calculate_vectorized() → Polars Expr (backtesting)      │
-│  • calculate_stateful() → f64 (live trading)                │
+│  • calculation_mode() → Vectorized OR Stateful              │
+│  • generate_mql5() → String (always stateful for live)      │
 │  • metadata: scale, range, arity                            │
-└─────────────────────────────────────────────────────────────┘
-                           ↓ implements
-        ┌──────────────────┴──────────────────┐
-        ↓                                      ↓
-┌──────────────────────┐          ┌───────────────────────┐
-│ Vectorized Mode      │          │ Stateful Mode         │
-│ (Backtesting)        │          │ (Live Trading/MQL5)   │
-│                      │          │                       │
-│ Input: Series        │          │ Input: f64 bar data   │
-│ Process: Polars ops  │          │ Process: Maintain     │
-│ Output: Expr/Series  │          │          state buffer │
-│ Speed: 100-1000x     │          │ Output: f64           │
-│                      │          │ Speed: Bar-by-bar     │
-└──────────────────────┘          └───────────────────────┘
-         ↓                                    ↓
-    Used by Backtester                  Used by Code Gen
-    (Rust engine)                       (MQL5 EA + MQH)
+└───────────────────┬─────────────────────────────────────────┘
+                    ↓ implements one of:
+        ┌───────────┴──────────────┐
+        ↓                           ↓
+┌──────────────────────┐  ┌───────────────────────┐
+│ VectorizedIndicator  │  │ StatefulIndicator     │
+│ (Polars-based)       │  │ (Buffer-based)        │
+│                      │  │                       │
+│ Input: Series        │  │ Input: f64 bar data   │
+│ Process: Polars ops  │  │ Process: Maintain     │
+│ Output: Expr/Series  │  │          state buffer │
+│ Speed: 100-1000x     │  │ Output: f64           │
+│                      │  │ Speed: Bar-by-bar     │
+│ Examples: SMA, EMA,  │  │ Examples: Complex     │
+│   RSI, MACD, ATR     │  │   indicators that     │
+│                      │  │   can't vectorize     │
+└──────────────────────┘  └───────────────────────┘
+         ↓                           ↓
+    Used for Backtesting        Used for Backtesting
+    (when mathematically        (when vectorization
+     vectorizable)               isn't practical)
+         │                           │
+         └───────────┬───────────────┘
+                     ↓
+              ┌─────────────────┐
+              │ MQL5 Code Gen   │
+              │ (Always         │
+              │  Stateful)      │
+              └─────────────────┘
 ```
 
 ### Key Design Decisions
 
-1. **Same Algorithm, Different Execution**:
-   - Mathematical logic MUST be identical
-   - Vectorized uses array operations (Polars)
-   - Stateful uses circular buffers + incremental updates
+1. **Choose Best Implementation Mode**:
+   - **Vectorized** (preferred): Use when indicator math can be expressed as Polars operations
+     - Best performance for backtesting (100-1000x faster)
+     - Examples: Moving averages, RSI, MACD, ATR, Bollinger Bands
+   - **Stateful** (when needed): Use when vectorization isn't mathematically practical
+     - Bar-by-bar calculation with state buffer
+     - Examples: Complex multi-condition indicators, custom logic
 
-2. **Verification Strategy**:
-   - Run same data through both modes
-   - Compare outputs bar-by-bar
-   - Assert differences < 1e-6 (floating point tolerance)
-
-3. **Code Generation**:
-   - Stateful mode logic translates directly to MQL5
+2. **MQL5 Code Generation**:
+   - ALL indicators generate stateful MQL5 code (for live trading)
+   - Vectorized indicators convert their logic to stateful form for codegen
    - Generate `TradeBias_Indicators.mqh` from Rust implementations
    - EA calls these custom functions
+
+3. **No Dual Implementation Required**:
+   - Each indicator implements EITHER vectorized OR stateful (not both)
+   - Simplifies implementation and maintenance
+   - This is a backtesting-focused system; MQL5 gen handles live trading separately
 
 ## 2.2 Primitive Set Definition
 
@@ -341,30 +357,54 @@ const TIER1_INDICATORS: &[&str] = &[
 ];
 ```
 
+**Tier 1 Implementation Modes:**
+```rust
+// Vectorized indicators (preferred - use Polars operations)
+const VECTORIZED_TIER1: &[&str] = &[
+    "SMA",           // Simple moving average via Polars rolling ops
+    "EMA",           // Exponential moving average (ewm_mean)
+    "RSI",           // Relative Strength Index (vectorized gains/losses)
+    "MACD",          // MACD via EMA composition
+    "BB",            // Bollinger Bands (SMA + StdDev)
+    "ATR",           // Average True Range (true range + moving average)
+    "Stochastic",    // Stochastic Oscillator (highest/lowest + formula)
+    "OBV",           // On-Balance Volume (cumulative sum with conditions)
+    "CCI",           // Commodity Channel Index (typical price + deviation)
+];
+
+// Stateful indicators (use when vectorization not practical)
+const STATEFUL_TIER1: &[&str] = &[
+    "ADX",           // Complex multi-step calculation with smoothing
+];
+```
+
 **Tier 2: Common (20 indicators)**
 ```rust
 const TIER2_INDICATORS: &[&str] = &[
-    "WilliamsR",     // Williams %R
-    "MFI",           // Money Flow Index
-    "ROC",           // Rate of Change
-    "DeMarker",      // DeMarker Indicator
-    "StdDev",        // Standard Deviation
-    "Envelopes",     // Price Envelopes
-    "SAR",           // Parabolic SAR
-    "Force",         // Force Index
-    "Bears",         // Bears Power
-    "Bulls",         // Bulls Power
-    "Momentum",      // Momentum Indicator
-    "DEMA",          // Double EMA
-    "TEMA",          // Triple EMA
-    "RVI",           // Relative Vigor Index
-    "TriX",          // Triple Exponential Average
-    "Volumes",       // Volume indicator
-    "Chaikin",       // Chaikin Oscillator
-    "BWMFI",         // Market Facilitation Index
-    "AC",            // Accelerator Oscillator
-    "AO",            // Awesome Oscillator
+    "WilliamsR",     // Williams %R - Vectorized
+    "MFI",           // Money Flow Index - Vectorized
+    "ROC",           // Rate of Change - Vectorized
+    "DeMarker",      // DeMarker Indicator - Vectorized
+    "StdDev",        // Standard Deviation - Vectorized
+    "Envelopes",     // Price Envelopes - Vectorized
+    "SAR",           // Parabolic SAR - Stateful (complex state logic)
+    "Force",         // Force Index - Vectorized
+    "Bears",         // Bears Power - Vectorized
+    "Bulls",         // Bulls Power - Vectorized
+    "Momentum",      // Momentum Indicator - Vectorized
+    "DEMA",          // Double EMA - Vectorized
+    "TEMA",          // Triple EMA - Vectorized
+    "RVI",           // Relative Vigor Index - Vectorized
+    "TriX",          // Triple Exponential Average - Vectorized
+    "Volumes",       // Volume indicator - Vectorized
+    "Chaikin",       // Chaikin Oscillator - Vectorized
+    "BWMFI",         // Market Facilitation Index - Vectorized
+    "AC",            // Accelerator Oscillator - Vectorized
+    "AO",            // Awesome Oscillator - Vectorized
 ];
+
+// Most Tier 2 indicators can be vectorized
+// Only SAR requires stateful due to complex conditional logic
 ```
 
 **Tier 3: User-Customizable (Runtime)**
@@ -600,42 +640,60 @@ pub struct StrategyResult {
 use polars::prelude::*;
 use anyhow::Result;
 
+/// Calculation mode for indicators
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CalculationMode {
+    /// Vectorized calculation using Polars (best performance when mathematically feasible)
+    Vectorized,
+    /// Stateful bar-by-bar calculation (for complex indicators where vectorization isn't practical)
+    Stateful,
+}
+
 /// Base trait for all indicators
 pub trait Indicator: Send + Sync {
     /// Unique identifier
     fn alias(&self) -> &'static str;
-    
+
     /// Display name
     fn ui_name(&self) -> &'static str;
-    
+
     /// Semantic scale type
     fn scale_type(&self) -> ScaleType;
-    
+
     /// Expected value range
     fn value_range(&self) -> Option<(f64, f64)>;
-    
+
     /// Number of parameters
     fn arity(&self) -> usize;
-    
+
     /// Input data types
     fn input_types(&self) -> Vec<DataType>;
-    
+
     /// Output type
     fn output_type(&self) -> DataType {
         DataType::NumericSeries
     }
-    
-    /// VECTORIZED: Calculate over entire series (backtesting)
+
+    /// Returns the calculation mode for this indicator
+    fn calculation_mode(&self) -> CalculationMode;
+
+    /// Generate MQL5 code for this indicator (always stateful for live trading)
+    fn generate_mql5(&self, args: &[String]) -> String;
+}
+
+/// Trait for vectorized indicators (used in backtesting)
+pub trait VectorizedIndicator: Indicator {
+    /// Calculate over entire series using Polars expressions
     fn calculate_vectorized(&self, args: &[IndicatorArg]) -> Result<Expr>;
-    
-    /// STATEFUL: Calculate single bar with state (live trading)
+}
+
+/// Trait for stateful indicators (used when vectorization isn't practical)
+pub trait StatefulIndicator: Indicator {
+    /// Calculate single bar with state
     fn calculate_stateful(&self, args: &[f64], state: &mut dyn Any) -> Result<f64>;
-    
+
     /// Initialize state for stateful calculation
     fn init_state(&self) -> Box<dyn Any>;
-    
-    /// Generate MQL5 code for this indicator
-    fn generate_mql5(&self, args: &[String]) -> String;
 }
 
 /// Flexible argument for indicator calls
@@ -873,7 +931,7 @@ pub struct Subtract;
 
 ## 4.2 Indicator Implementations
 
-### Example: RSI (Complete Dual Implementation)
+### Example: RSI (Vectorized Implementation)
 
 ```rust
 // src/functions/indicators/momentum.rs
@@ -884,28 +942,27 @@ pub struct RSI {
     period: usize,
 }
 
-/// State for stateful RSI calculation
-pub struct RSIState {
-    period: usize,
-    gains: VecDeque<f64>,
-    losses: VecDeque<f64>,
-    avg_gain: Option<f64>,
-    avg_loss: Option<f64>,
-    prev_close: Option<f64>,
-}
-
 impl Indicator for RSI {
     fn alias(&self) -> &'static str { "RSI" }
     fn ui_name(&self) -> &'static str { "Relative Strength Index" }
     fn scale_type(&self) -> ScaleType { ScaleType::Oscillator0_100 }
     fn value_range(&self) -> Option<(f64, f64)> { Some((0.0, 100.0)) }
     fn arity(&self) -> usize { 2 }
-    
+
     fn input_types(&self) -> Vec<DataType> {
         vec![DataType::NumericSeries, DataType::Integer]
     }
-    
-    /// VECTORIZED: Calculate RSI over entire series
+
+    fn calculation_mode(&self) -> CalculationMode {
+        CalculationMode::Vectorized
+    }
+
+    fn generate_mql5(&self, args: &[String]) -> String {
+        format!("TB_RSI({}, {})", args[0], args[1])
+    }
+}
+
+impl VectorizedIndicator for RSI {
     fn calculate_vectorized(&self, args: &[IndicatorArg]) -> Result<Expr> {
         let series = match &args[0] {
             IndicatorArg::Series(expr) => expr.clone(),
@@ -933,90 +990,6 @@ impl Indicator for RSI {
         let rsi = lit(100.0) - (lit(100.0) / (lit(1.0) + rs));
         
         Ok(rsi)
-    }
-    
-    /// STATEFUL: Calculate RSI for single bar
-    fn calculate_stateful(&self, args: &[f64], state: &mut dyn Any) -> Result<f64> {
-        let state = state.downcast_mut::<RSIState>()
-            .ok_or_else(|| anyhow!("Invalid state type for RSI"))?;
-        
-        let close = args[0];
-        
-        // First bar: just store close
-        if state.prev_close.is_none() {
-            state.prev_close = Some(close);
-            return Ok(50.0); // Default RSI on first bar
-        }
-        
-        let prev_close = state.prev_close.unwrap();
-        let change = close - prev_close;
-        
-        // Separate gain and loss
-        let gain = if change > 0.0 { change } else { 0.0 };
-        let loss = if change < 0.0 { -change } else { 0.0 };
-        
-        // Add to buffers
-        state.gains.push_back(gain);
-        state.losses.push_back(loss);
-        
-        // Keep only 'period' values
-        if state.gains.len() > state.period {
-            state.gains.pop_front();
-            state.losses.pop_front();
-        }
-        
-        // Calculate averages
-        if state.gains.len() < state.period {
-            // Not enough data yet, return neutral RSI
-            state.prev_close = Some(close);
-            return Ok(50.0);
-        }
-        
-        // First average: simple mean
-        if state.avg_gain.is_none() {
-            let sum_gain: f64 = state.gains.iter().sum();
-            let sum_loss: f64 = state.losses.iter().sum();
-            state.avg_gain = Some(sum_gain / state.period as f64);
-            state.avg_loss = Some(sum_loss / state.period as f64);
-        } else {
-            // Subsequent: smoothed (Wilder's smoothing)
-            let period = state.period as f64;
-            state.avg_gain = Some(
-                (state.avg_gain.unwrap() * (period - 1.0) + gain) / period
-            );
-            state.avg_loss = Some(
-                (state.avg_loss.unwrap() * (period - 1.0) + loss) / period
-            );
-        }
-        
-        // Calculate RSI
-        let avg_gain = state.avg_gain.unwrap();
-        let avg_loss = state.avg_loss.unwrap();
-        
-        let rsi = if avg_loss == 0.0 {
-            100.0
-        } else {
-            let rs = avg_gain / avg_loss;
-            100.0 - (100.0 / (1.0 + rs))
-        };
-        
-        state.prev_close = Some(close);
-        Ok(rsi)
-    }
-    
-    fn init_state(&self) -> Box<dyn Any> {
-        Box::new(RSIState {
-            period: self.period,
-            gains: VecDeque::new(),
-            losses: VecDeque::new(),
-            avg_gain: None,
-            avg_loss: None,
-            prev_close: None,
-        })
-    }
-    
-    fn generate_mql5(&self, args: &[String]) -> String {
-        format!("TB_RSI({}, {})", args[0], args[1])
     }
 }
 
@@ -1062,6 +1035,18 @@ pub struct Volumes { /* ... */ }
 
 ## 4.3 MQL5 Code Generation
 
+### Overview
+
+**Key Principle**: ALL MQL5 code generation is stateful (bar-by-bar), regardless of whether the Rust implementation is vectorized or stateful.
+
+- **Vectorized Rust indicators**: The `generate_mql5()` method translates the vectorized logic into equivalent stateful MQL5 code
+- **Stateful Rust indicators**: The `generate_mql5()` method directly translates the stateful logic to MQL5
+
+This ensures:
+1. Live trading compatibility (MQL5 runs bar-by-bar in real-time)
+2. Mathematical consistency (same algorithm, different execution model)
+3. No dual implementation burden (backtesting uses best mode, codegen handles translation)
+
 ### MQL5 Indicator Library Template
 
 ```rust
@@ -1074,26 +1059,28 @@ pub struct MQL5IndicatorGenerator {
 impl MQL5IndicatorGenerator {
     pub fn generate_mqh_library(&self) -> String {
         let mut code = String::new();
-        
+
         // Header
         code.push_str("//+------------------------------------------------------------------+\n");
         code.push_str("//| TradeBias_Indicators.mqh                                         |\n");
         code.push_str("//| Custom indicator implementations for TradeBias                   |\n");
         code.push_str("//| Generated by TradeBias Rust Engine                               |\n");
+        code.push_str("//| NOTE: All indicators use stateful (bar-by-bar) calculation       |\n");
         code.push_str("//+------------------------------------------------------------------+\n\n");
-        
-        // Moving Average
-        code.push_str(&self.generate_ma_function());
-        
-        // RSI
-        code.push_str(&self.generate_rsi_function());
-        
-        // MACD
-        code.push_str(&self.generate_macd_function());
-        
-        // ... generate all other indicators
-        
+
+        // Generate all indicators (all become stateful MQL5 functions)
+        for (alias, indicator) in &self.registry.indicators {
+            code.push_str(&self.generate_indicator_function(indicator));
+        }
+
         code
+    }
+
+    fn generate_indicator_function(&self, indicator: &Arc<dyn Indicator>) -> String {
+        // Each indicator implements generate_mql5() to produce stateful code
+        // Vectorized indicators translate their logic to stateful form
+        // Stateful indicators directly translate their implementation
+        indicator.generate_mql5(&self.get_default_args(indicator))
     }
     
     fn generate_rsi_function(&self) -> String {
@@ -1757,10 +1744,11 @@ All 12 primitives should have passing tests.
 
 ## 5.4 Phase 3: Core Indicators (Tier 1)
 
-### Task 3.1: Implement RSI (Complete Dual Implementation)
+### Task 3.1: Implement RSI (Vectorized Mode)
 
 **Input**: RSI specification from Section 4.2
 **Output**: `src/functions/indicators/momentum.rs` (partial)
+**Mode**: Vectorized (uses Polars operations for best performance)
 
 **Mathematical Specification**:
 ```
@@ -1780,35 +1768,33 @@ All 12 primitives should have passing tests.
 
 **Implementation Steps**:
 1. Create `RSI` struct
-2. Implement `Indicator` trait
-3. Implement `calculate_vectorized()` using Polars operations
-4. Create `RSIState` struct for stateful mode
-5. Implement `calculate_stateful()` with state management
-6. Implement `init_state()`
-7. Implement `generate_mql5()`
+2. Implement `Indicator` trait (set `calculation_mode()` to return `CalculationMode::Vectorized`)
+3. Implement `VectorizedIndicator` trait with `calculate_vectorized()` using Polars operations
+4. Implement `generate_mql5()` to produce stateful MQL5 code for live trading
 
 **Verification Test**:
 ```rust
 #[test]
-fn test_rsi_dual_implementation() {
+fn test_rsi_vectorized() {
     let data = load_sample_data(); // From sample_data.csv
-    
+
     let rsi = RSI::new(14);
-    
-    // Test vectorized
-    let vectorized_result = /* calculate using vectorized mode */;
-    
-    // Test stateful
-    let stateful_result = /* calculate bar-by-bar with state */;
-    
-    // Compare
-    for (i, (v, s)) in vectorized_result.iter().zip(stateful_result.iter()).enumerate() {
-        assert!(
-            (v - s).abs() < 1e-6,
-            "RSI mismatch at bar {}: vec={}, state={}",
-            i, v, s
-        );
-    }
+
+    // Test vectorized calculation
+    let result = rsi.calculate_vectorized(&[
+        IndicatorArg::Series(col("close")),
+        IndicatorArg::Scalar(14.0),
+    ]).unwrap();
+
+    // Evaluate expression on data
+    let df = data.lazy().with_column(result.alias("rsi")).collect().unwrap();
+    let rsi_values: Vec<f64> = df.column("rsi").unwrap().f64().unwrap()
+        .into_no_null_iter().collect();
+
+    // Verify against golden file or TA-Lib reference
+    assert!(!rsi_values.is_empty());
+    assert!(rsi_values.iter().all(|v| v.is_finite()));
+    assert!(rsi_values.iter().all(|&v| v >= 0.0 && v <= 100.0));
 }
 ```
 
@@ -2704,58 +2690,52 @@ fn test_all_indicators_vs_golden_files() {
 }
 ```
 
-### Task 8.2: Vectorized vs Stateful Consistency Tests
+### Task 8.2: Indicator Calculation Tests
 
-**Purpose**: Ensure both calculation modes produce identical results
+**Purpose**: Verify all indicators calculate correctly in their native modes
 
 **Test suite**:
 ```rust
 #[test]
-fn test_consistency_all_indicators() {
+fn test_all_indicators_calculation() {
     let data = load_sample_data();
-    let close_prices: Vec<f64> = data
-        .column("close")
-        .unwrap()
-        .f64()
-        .unwrap()
-        .into_no_null_iter()
-        .collect();
-    
+    let registry = FunctionRegistry::new(RegistryConfig::default());
+
     for indicator_alias in TIER1_INDICATORS.iter().chain(TIER2_INDICATORS.iter()) {
         let indicator = registry.get_indicator(indicator_alias).unwrap();
-        
-        // Vectorized calculation
-        let vectorized = calculate_vectorized(indicator.as_ref(), &data);
-        
-        // Stateful calculation
-        let stateful = calculate_stateful(indicator.as_ref(), &close_prices);
-        
-        // Compare
-        for (i, (v, s)) in vectorized.iter().zip(stateful.iter()).enumerate() {
-            let diff = (v - s).abs();
-            assert!(
-                diff < 1e-6,
-                "{} inconsistency at bar {}: vec={}, state={}, diff={}",
-                indicator_alias, i, v, s, diff
-            );
+
+        // Test based on the indicator's calculation mode
+        match indicator.calculation_mode() {
+            CalculationMode::Vectorized => {
+                // Test vectorized calculation
+                let result = calculate_vectorized_indicator(indicator.as_ref(), &data);
+                assert!(!result.is_empty(), "{} returned empty results", indicator_alias);
+                assert!(result.iter().all(|v| v.is_finite()),
+                    "{} produced non-finite values", indicator_alias);
+            }
+            CalculationMode::Stateful => {
+                // Test stateful calculation
+                let result = calculate_stateful_indicator(indicator.as_ref(), &data);
+                assert!(!result.is_empty(), "{} returned empty results", indicator_alias);
+                assert!(result.iter().all(|v| v.is_finite()),
+                    "{} produced non-finite values", indicator_alias);
+            }
         }
-        
-        println!("✓ {} consistency verified", indicator_alias);
+
+        println!("✓ {} calculation verified", indicator_alias);
     }
 }
 
-fn calculate_stateful(indicator: &dyn Indicator, prices: &[f64]) -> Vec<f64> {
-    let mut state = indicator.init_state();
-    let mut results = Vec::new();
-    
-    for &price in prices {
-        let value = indicator
-            .calculate_stateful(&[price], state.as_mut())
-            .unwrap();
-        results.push(value);
-    }
-    
-    results
+fn calculate_vectorized_indicator(indicator: &dyn Indicator, data: &DataFrame) -> Vec<f64> {
+    // Cast to VectorizedIndicator and calculate
+    // Returns vector of results
+    unimplemented!("Cast indicator and call calculate_vectorized")
+}
+
+fn calculate_stateful_indicator(indicator: &dyn Indicator, data: &DataFrame) -> Vec<f64> {
+    // Cast to StatefulIndicator and calculate bar-by-bar
+    // Returns vector of results
+    unimplemented!("Cast indicator and call calculate_stateful")
 }
 ```
 
@@ -3446,11 +3426,11 @@ TASK_029: Implement golden file tests
   ESTIMATED_TIME: 6 hours
   DEPENDENCIES: TASK_028
 
-TASK_030: Implement consistency tests (vectorized vs stateful)
+TASK_030: Implement indicator calculation tests
   INPUT: all indicators
   OUTPUT: tests/indicator_verification.rs (continued)
-  VERIFY: cargo test consistency
-  ESTIMATED_TIME: 4 hours
+  VERIFY: cargo test indicator_calculation
+  ESTIMATED_TIME: 3 hours
   DEPENDENCIES: TASK_014
 
 TASK_031: Document all test results
@@ -3599,12 +3579,12 @@ cargo test [test_name]
 ```markdown
 ### TASK ID: TASK_008
 
-**Objective**: Implement RSI (Relative Strength Index) indicator with both vectorized and stateful modes
+**Objective**: Implement RSI (Relative Strength Index) indicator in vectorized mode
 
 **Inputs**:
 - File: src/functions/traits.rs
 - File: src/functions/primitives.rs
-- Specification: Section 4.2 (RSI Complete Dual Implementation)
+- Specification: Section 4.2 (RSI Vectorized Implementation)
 - Dependencies: TASK_005, TASK_006
 
 **Outputs**:
@@ -3613,21 +3593,18 @@ cargo test [test_name]
 
 **Implementation Steps**:
 1. Create `RSI` struct with `period` field
-2. Create `RSIState` struct with: period, gains buffer, losses buffer, avg_gain, avg_loss, prev_close
-3. Implement `Indicator` trait for RSI
-4. Implement `calculate_vectorized()`:
+2. Implement `Indicator` trait for RSI:
+   - Set `calculation_mode()` to return `CalculationMode::Vectorized`
+   - Implement metadata methods (alias, ui_name, scale_type, etc.)
+3. Implement `VectorizedIndicator` trait with `calculate_vectorized()`:
    - Calculate price deltas using diff(1)
    - Separate gains (max(delta, 0)) and losses (max(-delta, 0))
    - Apply Wilder's smoothing (SMMA) to gains and losses
    - Calculate RS = avg_gain / avg_loss
    - Calculate RSI = 100 - (100 / (1 + RS))
-5. Implement `calculate_stateful()`:
-   - Maintain VecDeque buffers for gains and losses
-   - Calculate average using Wilder's smoothing algorithm
-   - Handle first period (use simple average)
-   - Subsequent periods use: avg[i] = (avg[i-1] * (period-1) + value[i]) / period
-6. Implement `init_state()` returning boxed RSIState
-7. Implement `generate_mql5()` returning "TB_RSI(close, period)"
+4. Implement `generate_mql5()`:
+   - Return MQL5 function call like "TB_RSI(close, period)"
+   - The MQL5 codegen will translate vectorized logic to stateful form
 
 **Mathematical Specification**:
 ```
@@ -3649,19 +3626,20 @@ RSI = 100 - (100 / (1 + RS))
 **Verification Command**:
 ```bash
 cargo test indicators::rsi
-cargo test indicators::rsi::test_dual_implementation
+cargo test indicators::rsi::test_vectorized
 ```
 
 **Success Criteria**:
-- [x] RSI struct implements Indicator trait
-- [x] Vectorized mode returns correct Polars expression
-- [x] Stateful mode calculates bar-by-bar correctly
-- [x] Both modes produce identical results (within 1e-6 tolerance)
+- [x] RSI struct implements Indicator and VectorizedIndicator traits
+- [x] Returns `CalculationMode::Vectorized` from `calculation_mode()`
+- [x] Vectorized calculation returns correct Polars expression
+- [x] Produces values in valid range (0-100)
 - [x] Handles edge cases (not enough data, zero division)
+- [x] MQL5 code generation works correctly
 - [x] All tests pass
 - [x] No clippy warnings
 
-**Estimated Time**: 6 hours
+**Estimated Time**: 4 hours
 ```
 
 ---
@@ -4052,7 +4030,7 @@ impl MetricsEngine {
 ```
 feat(indicators): Add RSI implementation
 
-Implements RSI with dual calculation modes (vectorized and stateful).
+Implements RSI with vectorized calculation for optimal backtesting performance.
 Includes comprehensive tests and MQL5 code generation.
 
 Closes #42
