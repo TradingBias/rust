@@ -12,9 +12,10 @@ pub struct SMA {
     pub period: usize,
 }
 
-pub struct SMAState {
-    buffer: VecDeque<f64>,
-    period: usize,
+impl SMA {
+    pub fn new(period: usize) -> Self {
+        Self { period }
+    }
 }
 
 impl Indicator for SMA {
@@ -24,7 +25,15 @@ impl Indicator for SMA {
     fn value_range(&self) -> Option<(f64, f64)> { None }
     fn arity(&self) -> usize { 2 }
     fn input_types(&self) -> Vec<DataType> { vec![DataType::NumericSeries, DataType::Integer] }
+    fn calculation_mode(&self) -> crate::functions::traits::CalculationMode {
+        crate::functions::traits::CalculationMode::Vectorized
+    }
+    fn generate_mql5(&self, args: &[String]) -> String {
+        format!("iMA({}, {}, {}, 0, MODE_SMA, {}, {})", args[0], args[1], self.period, args[2], args[3])
+    }
+}
 
+impl crate::functions::traits::VectorizedIndicator for SMA {
     fn calculate_vectorized(&self, args: &[IndicatorArg]) -> Result<dsl::Expr> {
         let series = match &args[0] {
             IndicatorArg::Series(expr) => expr.clone(),
@@ -37,30 +46,6 @@ impl Indicator for SMA {
         let ma = MovingAverage { method: MAMethod::Simple };
         ma.execute(&[series, dsl::lit(period)])
     }
-
-    fn calculate_stateful(&self, args: &[f64], state: &mut dyn Any) -> Result<f64> {
-        let state = state.downcast_mut::<SMAState>().unwrap();
-        state.buffer.push_back(args[0]);
-        if state.buffer.len() > state.period {
-            state.buffer.pop_front();
-        }
-        if state.buffer.len() < state.period {
-            return Ok(0.0);
-        }
-        let sum: f64 = state.buffer.iter().sum();
-        Ok(sum / state.period as f64)
-    }
-
-    fn init_state(&self) -> Box<dyn Any> {
-        Box::new(SMAState {
-            buffer: VecDeque::with_capacity(self.period),
-            period: self.period,
-        })
-    }
-
-    fn generate_mql5(&self, args: &[String]) -> String {
-        format!("iMA({}, {}, {}, 0, MODE_SMA, {}, {})", args[0], args[1], self.period, args[2], args[3])
-    }
 }
 
 // --- EMA ---
@@ -68,10 +53,10 @@ pub struct EMA {
     pub period: usize,
 }
 
-pub struct EMAState {
-    period: usize,
-    prev_ema: Option<f64>,
-    init_buffer: VecDeque<f64>,
+impl EMA {
+    pub fn new(period: usize) -> Self {
+        Self { period }
+    }
 }
 
 impl Indicator for EMA {
@@ -81,7 +66,15 @@ impl Indicator for EMA {
     fn value_range(&self) -> Option<(f64, f64)> { None }
     fn arity(&self) -> usize { 2 }
     fn input_types(&self) -> Vec<DataType> { vec![DataType::NumericSeries, DataType::Integer] }
+    fn calculation_mode(&self) -> crate::functions::traits::CalculationMode {
+        crate::functions::traits::CalculationMode::Vectorized
+    }
+    fn generate_mql5(&self, args: &[String]) -> String {
+        format!("iMA({}, {}, {}, 0, MODE_EMA, {}, {})", args[0], args[1], self.period, args[2], args[3])
+    }
+}
 
+impl crate::functions::traits::VectorizedIndicator for EMA {
     fn calculate_vectorized(&self, args: &[IndicatorArg]) -> Result<dsl::Expr> {
         let series = match &args[0] {
             IndicatorArg::Series(expr) => expr.clone(),
@@ -94,37 +87,6 @@ impl Indicator for EMA {
         let ma = MovingAverage { method: MAMethod::Exponential };
         ma.execute(&[series, dsl::lit(period)])
     }
-
-    fn calculate_stateful(&self, args: &[f64], state: &mut dyn Any) -> Result<f64> {
-        let state = state.downcast_mut::<EMAState>().unwrap();
-        let price = args[0];
-
-        if state.prev_ema.is_none() {
-            state.init_buffer.push_back(price);
-            if state.init_buffer.len() < state.period {
-                return Ok(price);
-            }
-            let sum: f64 = state.init_buffer.iter().sum();
-            state.prev_ema = Some(sum / state.period as f64);
-        }
-
-        let alpha = 2.0 / (state.period as f64 + 1.0);
-        let ema = alpha * price + (1.0 - alpha) * state.prev_ema.unwrap();
-        state.prev_ema = Some(ema);
-        Ok(ema)
-    }
-
-    fn init_state(&self) -> Box<dyn Any> {
-        Box::new(EMAState {
-            period: self.period,
-            prev_ema: None,
-            init_buffer: VecDeque::with_capacity(self.period),
-        })
-    }
-
-    fn generate_mql5(&self, args: &[String]) -> String {
-        format!("iMA({}, {}, {}, 0, MODE_EMA, {}, {})", args[0], args[1], self.period, args[2], args[3])
-    }
 }
 
 // --- MACD ---
@@ -134,13 +96,10 @@ pub struct MACD {
     pub signal_period: usize,
 }
 
-pub struct MACDState {
-    fast_ema_state: EMAState,
-    slow_ema_state: EMAState,
-    signal_ema_state: EMAState,
-    fast_ema_indicator: EMA,
-    slow_ema_indicator: EMA,
-    signal_ema_indicator: EMA,
+impl MACD {
+    pub fn new(fast_period: usize, slow_period: usize, signal_period: usize) -> Self {
+        Self { fast_period, slow_period, signal_period }
+    }
 }
 
 impl Indicator for MACD {
@@ -150,7 +109,15 @@ impl Indicator for MACD {
     fn value_range(&self) -> Option<(f64, f64)> { None }
     fn arity(&self) -> usize { 4 }
     fn input_types(&self) -> Vec<DataType> { vec![DataType::NumericSeries, DataType::Integer, DataType::Integer, DataType::Integer] }
+    fn calculation_mode(&self) -> crate::functions::traits::CalculationMode {
+        crate::functions::traits::CalculationMode::Vectorized
+    }
+    fn generate_mql5(&self, args: &[String]) -> String {
+        format!("iMACD({}, {}, {}, {}, {}, {}, {}, {})", args[0], args[1], self.fast_period, self.slow_period, self.signal_period, args[2], args[3], args[4])
+    }
+}
 
+impl crate::functions::traits::VectorizedIndicator for MACD {
     fn calculate_vectorized(&self, args: &[IndicatorArg]) -> Result<dsl::Expr> {
         let series = match &args[0] {
             IndicatorArg::Series(expr) => expr.clone(),
@@ -166,35 +133,6 @@ impl Indicator for MACD {
         
         Ok(macd_line)
     }
-
-    fn calculate_stateful(&self, args: &[f64], state: &mut dyn Any) -> Result<f64> {
-        let state = state.downcast_mut::<MACDState>().unwrap();
-        let price = args[0];
-
-        let fast_ema = state.fast_ema_indicator.calculate_stateful(&[price], &mut state.fast_ema_state)?;
-        let slow_ema = state.slow_ema_indicator.calculate_stateful(&[price], &mut state.slow_ema_state)?;
-
-        let macd_line = fast_ema - slow_ema;
-        
-        let _signal_line = state.signal_ema_indicator.calculate_stateful(&[macd_line], &mut state.signal_ema_state)?;
-
-        Ok(macd_line)
-    }
-
-    fn init_state(&self) -> Box<dyn Any> {
-        Box::new(MACDState {
-            fast_ema_state: EMAState { period: self.fast_period, prev_ema: None, init_buffer: VecDeque::with_capacity(self.fast_period) },
-            slow_ema_state: EMAState { period: self.slow_period, prev_ema: None, init_buffer: VecDeque::with_capacity(self.slow_period) },
-            signal_ema_state: EMAState { period: self.signal_period, prev_ema: None, init_buffer: VecDeque::with_capacity(self.signal_period) },
-            fast_ema_indicator: EMA { period: self.fast_period },
-            slow_ema_indicator: EMA { period: self.slow_period },
-            signal_ema_indicator: EMA { period: self.signal_period },
-        })
-    }
-
-    fn generate_mql5(&self, args: &[String]) -> String {
-        format!("iMACD({}, {}, {}, {}, {}, {}, {}, {})", args[0], args[1], self.fast_period, self.slow_period, self.signal_period, args[2], args[3], args[4])
-    }
 }
 
 
@@ -204,9 +142,10 @@ pub struct BollingerBands {
     pub deviation: f64,
 }
 
-pub struct BBState {
-    buffer: VecDeque<f64>,
-    period: usize,
+impl BollingerBands {
+    pub fn new(period: usize, deviation: f64) -> Self {
+        Self { period, deviation }
+    }
 }
 
 impl Indicator for BollingerBands {
@@ -216,7 +155,15 @@ impl Indicator for BollingerBands {
     fn value_range(&self) -> Option<(f64, f64)> { None }
     fn arity(&self) -> usize { 3 }
     fn input_types(&self) -> Vec<DataType> { vec![DataType::NumericSeries, DataType::Integer, DataType::Float] }
+    fn calculation_mode(&self) -> crate::functions::traits::CalculationMode {
+        crate::functions::traits::CalculationMode::Vectorized
+    }
+    fn generate_mql5(&self, args: &[String]) -> String {
+        format!("iBands({}, {}, {}, {}, 0, {}, {}, {})", args[0], args[1], self.period, self.deviation, args[2], args[3], args[4])
+    }
+}
 
+impl crate::functions::traits::VectorizedIndicator for BollingerBands {
     fn calculate_vectorized(&self, args: &[IndicatorArg]) -> Result<dsl::Expr> {
         let series = match &args[0] {
             IndicatorArg::Series(expr) => expr.clone(),
@@ -236,45 +183,18 @@ impl Indicator for BollingerBands {
 
         Ok(upper_band)
     }
-
-    fn calculate_stateful(&self, args: &[f64], state: &mut dyn Any) -> Result<f64> {
-        let state = state.downcast_mut::<BBState>().unwrap();
-        state.buffer.push_back(args[0]);
-        if state.buffer.len() > state.period {
-            state.buffer.pop_front();
-        }
-
-        if state.buffer.len() < state.period {
-            return Ok(args[0]);
-        }
-
-        let sum: f64 = state.buffer.iter().sum();
-        let mean = sum / state.period as f64;
-
-        let std_dev_sum: f64 = state.buffer.iter().map(|x| (x - mean).powi(2)).sum();
-        let std_dev = (std_dev_sum / state.period as f64).sqrt();
-
-        let upper_band = mean + self.deviation * std_dev;
-
-        Ok(upper_band)
-    }
-
-    fn init_state(&self) -> Box<dyn Any> {
-        Box::new(BBState {
-            buffer: VecDeque::with_capacity(self.period),
-            period: self.period,
-        })
-    }
-
-    fn generate_mql5(&self, args: &[String]) -> String {
-        format!("iBands({}, {}, {}, {}, 0, {}, {}, {})", args[0], args[1], self.period, self.deviation, args[2], args[3], args[4])
-    }
 }
 
 // --- Envelopes ---
 pub struct Envelopes {
     pub period: usize,
     pub deviation: f64,
+}
+
+impl Envelopes {
+    pub fn new(period: usize, deviation: f64) -> Self {
+        Self { period, deviation }
+    }
 }
 
 impl Indicator for Envelopes {
@@ -290,7 +210,15 @@ impl Indicator for Envelopes {
             DataType::Float,         // deviation
         ]
     }
+    fn calculation_mode(&self) -> crate::functions::traits::CalculationMode {
+        crate::functions::traits::CalculationMode::Vectorized
+    }
+    fn generate_mql5(&self, _args: &[String]) -> String {
+        format!("iEnvelopes(_Symbol, _Period, {}, MODE_SMA, 0, PRICE_CLOSE, {})", self.period, self.deviation)
+    }
+}
 
+impl crate::functions::traits::VectorizedIndicator for Envelopes {
     fn calculate_vectorized(&self, args: &[IndicatorArg]) -> Result<dsl::Expr> {
         let close = match &args[0] {
             IndicatorArg::Series(expr) => expr.clone(),
@@ -305,37 +233,18 @@ impl Indicator for Envelopes {
 
         Ok(upper_band)
     }
-
-    fn calculate_stateful(&self, args: &[f64], state: &mut dyn Any) -> Result<f64> {
-        let state = state.downcast_mut::<SMAState>().unwrap();
-        state.buffer.push_back(args[0]);
-        if state.buffer.len() > self.period {
-            state.buffer.pop_front();
-        }
-        if state.buffer.len() < self.period {
-            return Ok(0.0);
-        }
-        let sum: f64 = state.buffer.iter().sum();
-        let ma = sum / self.period as f64;
-        Ok(ma * (1.0 + self.deviation))
-    }
-
-    fn init_state(&self) -> Box<dyn Any> {
-        Box::new(SMAState {
-            buffer: VecDeque::with_capacity(self.period),
-            period: self.period,
-        })
-    }
-
-    fn generate_mql5(&self, _args: &[String]) -> String {
-        format!("iEnvelopes(_Symbol, _Period, {}, MODE_SMA, 0, PRICE_CLOSE, {})", self.period, self.deviation)
-    }
 }
 
 // --- SAR (Parabolic SAR) ---
 pub struct SAR {
     pub step: f64,
     pub max: f64,
+}
+
+impl SAR {
+    pub fn new(step: f64, max: f64) -> Self {
+        Self { step, max }
+    }
 }
 
 pub struct SARState {
@@ -366,10 +275,12 @@ impl Indicator for SAR {
         crate::functions::traits::CalculationMode::Stateful
     }
 
-    fn calculate_vectorized(&self, _args: &[IndicatorArg]) -> Result<dsl::Expr> {
-        bail!("SAR is a stateful indicator and does not have a vectorized implementation.")
+    fn generate_mql5(&self, _args: &[String]) -> String {
+        format!("iSAR(_Symbol, _Period, {}, {})", self.step, self.max)
     }
+}
 
+impl crate::functions::traits::StatefulIndicator for SAR {
     fn calculate_stateful(&self, args: &[f64], state: &mut dyn Any) -> Result<f64> {
         let state = state.downcast_mut::<SARState>().unwrap();
         let high = args[0];
@@ -414,19 +325,22 @@ impl Indicator for SAR {
             is_rising: true,
         })
     }
-
-    fn generate_mql5(&self, _args: &[String]) -> String {
-        format!("iSAR(_Symbol, _Period, {}, {})", self.step, self.max)
-    }
+}
+// --- Bears Power ---
+pub struct Bears {
+    pub period: usize, // Add period to struct for new()
 }
 
-// --- Bears Power ---
-pub struct Bears;
+impl Bears {
+    pub fn new(period: usize) -> Self {
+        Self { period }
+    }
+}
 
 impl Indicator for Bears {
     fn alias(&self) -> &'static str { "Bears" }
     fn ui_name(&self) -> &'static str { "Bears Power" }
-    fn scale_type(&self) -> ScaleType { ScaleType::Price }
+    fn scale_type(&self) -> ScaleType { ScaleType::OscillatorCentered } // Changed from Price to OscillatorCentered
     fn value_range(&self) -> Option<(f64, f64)> { None }
     fn arity(&self) -> usize { 3 } // low, close, period
     fn input_types(&self) -> Vec<DataType> {
@@ -436,7 +350,15 @@ impl Indicator for Bears {
             DataType::Integer,       // period
         ]
     }
+    fn calculation_mode(&self) -> crate::functions::traits::CalculationMode {
+        crate::functions::traits::CalculationMode::Vectorized
+    }
+    fn generate_mql5(&self, args: &[String]) -> String {
+        format!("iBearsPower(_Symbol, _Period, {}, PRICE_CLOSE)", args[2])
+    }
+}
 
+impl crate::functions::traits::VectorizedIndicator for Bears {
     fn calculate_vectorized(&self, args: &[IndicatorArg]) -> Result<dsl::Expr> {
         let low = match &args[0] {
             IndicatorArg::Series(expr) => expr.clone(),
@@ -456,40 +378,23 @@ impl Indicator for Bears {
 
         Ok(low - ema_val)
     }
-
-    fn calculate_stateful(&self, args: &[f64], state: &mut dyn Any) -> Result<f64> {
-        let state = state.downcast_mut::<EMAState>().unwrap();
-        let low = args[0];
-        let close = args[1];
-        let ema_indicator = EMA { period: state.period };
-        let ema = ema_indicator.calculate_stateful(&[close], state)?;
-        Ok(low - ema)
-    }
-
-    fn init_state(&self) -> Box<dyn Any> {
-        // This is tricky because the period is not known at initialization.
-        // We'll rely on the caller to provide the period.
-        // For now, we'll use a default, but this should be improved.
-        let period = 13;
-        Box::new(EMAState {
-            period,
-            prev_ema: None,
-            init_buffer: VecDeque::with_capacity(period),
-        })
-    }
-
-    fn generate_mql5(&self, args: &[String]) -> String {
-        format!("iBearsPower(_Symbol, _Period, {}, PRICE_CLOSE)", args[2])
-    }
 }
 
 // --- Bulls Power ---
-pub struct Bulls;
+pub struct Bulls {
+    pub period: usize, // Add period to struct for new()
+}
+
+impl Bulls {
+    pub fn new(period: usize) -> Self {
+        Self { period }
+    }
+}
 
 impl Indicator for Bulls {
     fn alias(&self) -> &'static str { "Bulls" }
     fn ui_name(&self) -> &'static str { "Bulls Power" }
-    fn scale_type(&self) -> ScaleType { ScaleType::Price }
+    fn scale_type(&self) -> ScaleType { ScaleType::OscillatorCentered } // Changed from Price to OscillatorCentered
     fn value_range(&self) -> Option<(f64, f64)> { None }
     fn arity(&self) -> usize { 3 } // high, close, period
     fn input_types(&self) -> Vec<DataType> {
@@ -499,7 +404,15 @@ impl Indicator for Bulls {
             DataType::Integer,       // period
         ]
     }
+    fn calculation_mode(&self) -> crate::functions::traits::CalculationMode {
+        crate::functions::traits::CalculationMode::Vectorized
+    }
+    fn generate_mql5(&self, args: &[String]) -> String {
+        format!("iBullsPower(_Symbol, _Period, {}, PRICE_CLOSE)", args[2])
+    }
+}
 
+impl crate::functions::traits::VectorizedIndicator for Bulls {
     fn calculate_vectorized(&self, args: &[IndicatorArg]) -> Result<dsl::Expr> {
         let high = match &args[0] {
             IndicatorArg::Series(expr) => expr.clone(),
@@ -519,43 +432,16 @@ impl Indicator for Bulls {
 
         Ok(high - ema_val)
     }
-
-    fn calculate_stateful(&self, args: &[f64], state: &mut dyn Any) -> Result<f64> {
-        let state = state.downcast_mut::<EMAState>().unwrap();
-        let high = args[0];
-        let close = args[1];
-        let ema_indicator = EMA { period: state.period };
-        let ema = ema_indicator.calculate_stateful(&[close], state)?;
-        Ok(high - ema)
-    }
-
-    fn init_state(&self) -> Box<dyn Any> {
-        // This is tricky because the period is not known at initialization.
-        // We'll rely on the caller to provide the period.
-        // For now, we'll use a default, but this should be improved.
-        let period = 13;
-        Box::new(EMAState {
-            period,
-            prev_ema: None,
-            init_buffer: VecDeque::with_capacity(period),
-        })
-    }
-
-    fn generate_mql5(&self, args: &[String]) -> String {
-        format!("iBullsPower(_Symbol, _Period, {}, PRICE_CLOSE)", args[2])
-    }
 }
-
 // --- DEMA (Double Exponential Moving Average) ---
 pub struct DEMA {
     pub period: usize,
 }
 
-pub struct DEMAState {
-    ema1_state: EMAState,
-    ema2_state: EMAState,
-    ema1_indicator: EMA,
-    ema2_indicator: EMA,
+impl DEMA {
+    pub fn new(period: usize) -> Self {
+        Self { period }
+    }
 }
 
 impl Indicator for DEMA {
@@ -570,7 +456,15 @@ impl Indicator for DEMA {
             DataType::Integer,       // period
         ]
     }
+    fn calculation_mode(&self) -> crate::functions::traits::CalculationMode {
+        crate::functions::traits::CalculationMode::Vectorized
+    }
+    fn generate_mql5(&self, _args: &[String]) -> String {
+        format!("iMAOnArray(DEMA_buffer, 0, {}, 0, MODE_EMA, 0)", self.period)
+    }
+}
 
+impl crate::functions::traits::VectorizedIndicator for DEMA {
     fn calculate_vectorized(&self, args: &[IndicatorArg]) -> Result<dsl::Expr> {
         let close = match &args[0] {
             IndicatorArg::Series(expr) => expr.clone(),
@@ -585,29 +479,6 @@ impl Indicator for DEMA {
 
         Ok(dsl::lit(2.0) * ema1_val - ema2_val)
     }
-
-    fn calculate_stateful(&self, args: &[f64], state: &mut dyn Any) -> Result<f64> {
-        let state = state.downcast_mut::<DEMAState>().unwrap();
-        let close = args[0];
-
-        let ema1 = state.ema1_indicator.calculate_stateful(&[close], &mut state.ema1_state)?;
-        let ema2 = state.ema2_indicator.calculate_stateful(&[ema1], &mut state.ema2_state)?;
-
-        Ok(2.0 * ema1 - ema2)
-    }
-
-    fn init_state(&self) -> Box<dyn Any> {
-        Box::new(DEMAState {
-            ema1_state: EMAState { period: self.period, prev_ema: None, init_buffer: VecDeque::with_capacity(self.period) },
-            ema2_state: EMAState { period: self.period, prev_ema: None, init_buffer: VecDeque::with_capacity(self.period) },
-            ema1_indicator: EMA { period: self.period },
-            ema2_indicator: EMA { period: self.period },
-        })
-    }
-
-    fn generate_mql5(&self, _args: &[String]) -> String {
-        format!("iMAOnArray(DEMA_buffer, 0, {}, 0, MODE_EMA, 0)", self.period)
-    }
 }
 
 // --- TEMA (Triple Exponential Moving Average) ---
@@ -615,13 +486,10 @@ pub struct TEMA {
     pub period: usize,
 }
 
-pub struct TEMAState {
-    ema1_state: EMAState,
-    ema2_state: EMAState,
-    ema3_state: EMAState,
-    ema1_indicator: EMA,
-    ema2_indicator: EMA,
-    ema3_indicator: EMA,
+impl TEMA {
+    pub fn new(period: usize) -> Self {
+        Self { period }
+    }
 }
 
 impl Indicator for TEMA {
@@ -636,7 +504,15 @@ impl Indicator for TEMA {
             DataType::Integer,       // period
         ]
     }
+    fn calculation_mode(&self) -> crate::functions::traits::CalculationMode {
+        crate::functions::traits::CalculationMode::Vectorized
+    }
+    fn generate_mql5(&self, _args: &[String]) -> String {
+        format!("iMAOnArray(TEMA_buffer, 0, {}, 0, MODE_EMA, 0)", self.period)
+    }
+}
 
+impl crate::functions::traits::VectorizedIndicator for TEMA {
     fn calculate_vectorized(&self, args: &[IndicatorArg]) -> Result<dsl::Expr> {
         let close = match &args[0] {
             IndicatorArg::Series(expr) => expr.clone(),
@@ -654,47 +530,16 @@ impl Indicator for TEMA {
 
         Ok(dsl::lit(3.0) * (ema1_val - ema2_val) + ema3_val)
     }
-
-    fn calculate_stateful(&self, args: &[f64], state: &mut dyn Any) -> Result<f64> {
-        let state = state.downcast_mut::<TEMAState>().unwrap();
-        let close = args[0];
-
-        let ema1 = state.ema1_indicator.calculate_stateful(&[close], &mut state.ema1_state)?;
-        let ema2 = state.ema2_indicator.calculate_stateful(&[ema1], &mut state.ema2_state)?;
-        let ema3 = state.ema3_indicator.calculate_stateful(&[ema2], &mut state.ema3_state)?;
-
-        Ok(3.0 * (ema1 - ema2) + ema3)
-    }
-
-    fn init_state(&self) -> Box<dyn Any> {
-        Box::new(TEMAState {
-            ema1_state: EMAState { period: self.period, prev_ema: None, init_buffer: VecDeque::with_capacity(self.period) },
-            ema2_state: EMAState { period: self.period, prev_ema: None, init_buffer: VecDeque::with_capacity(self.period) },
-            ema3_state: EMAState { period: self.period, prev_ema: None, init_buffer: VecDeque::with_capacity(self.period) },
-            ema1_indicator: EMA { period: self.period },
-            ema2_indicator: EMA { period: self.period },
-            ema3_indicator: EMA { period: self.period },
-        })
-    }
-
-    fn generate_mql5(&self, _args: &[String]) -> String {
-        format!("iMAOnArray(TEMA_buffer, 0, {}, 0, MODE_EMA, 0)", self.period)
-    }
 }
-
 // --- TriX (Triple Exponential Average) ---
 pub struct TriX {
     pub period: usize,
 }
 
-pub struct TriXState {
-    ema1_state: EMAState,
-    ema2_state: EMAState,
-    ema3_state: EMAState,
-    ema1_indicator: EMA,
-    ema2_indicator: EMA,
-    ema3_indicator: EMA,
-    prev_ema3: Option<f64>,
+impl TriX {
+    pub fn new(period: usize) -> Self {
+        Self { period }
+    }
 }
 
 impl Indicator for TriX {
@@ -709,7 +554,15 @@ impl Indicator for TriX {
             DataType::Integer,       // period
         ]
     }
+    fn calculation_mode(&self) -> crate::functions::traits::CalculationMode {
+        crate::functions::traits::CalculationMode::Vectorized
+    }
+    fn generate_mql5(&self, _args: &[String]) -> String {
+        format!("iTriX(_Symbol, _Period, {})", self.period)
+    }
+}
 
+impl crate::functions::traits::VectorizedIndicator for TriX {
     fn calculate_vectorized(&self, args: &[IndicatorArg]) -> Result<dsl::Expr> {
         let close = match &args[0] {
             IndicatorArg::Series(expr) => expr.clone(),
@@ -726,42 +579,5 @@ impl Indicator for TriX {
         let ema3_val = ema3.execute(&[ema2_val, dsl::lit(self.period as i64)])?;
 
         Ok(ema3_val.pct_change(1))
-    }
-
-    fn calculate_stateful(&self, args: &[f64], state: &mut dyn Any) -> Result<f64> {
-        let state = state.downcast_mut::<TriXState>().unwrap();
-        let close = args[0];
-
-        let ema1 = state.ema1_indicator.calculate_stateful(&[close], &mut state.ema1_state)?;
-        let ema2 = state.ema2_indicator.calculate_stateful(&[ema1], &mut state.ema2_state)?;
-        let ema3 = state.ema3_indicator.calculate_stateful(&[ema2], &mut state.ema3_state)?;
-
-        let roc = if let Some(prev_ema3) = state.prev_ema3 {
-            if prev_ema3 != 0.0 {
-                (ema3 - prev_ema3) / prev_ema3
-            } else {
-                0.0
-            }
-        } else {
-            0.0
-        };
-        state.prev_ema3 = Some(ema3);
-        Ok(roc)
-    }
-
-    fn init_state(&self) -> Box<dyn Any> {
-        Box::new(TriXState {
-            ema1_state: EMAState { period: self.period, prev_ema: None, init_buffer: VecDeque::with_capacity(self.period) },
-            ema2_state: EMAState { period: self.period, prev_ema: None, init_buffer: VecDeque::with_capacity(self.period) },
-            ema3_state: EMAState { period: self.period, prev_ema: None, init_buffer: VecDeque::with_capacity(self.period) },
-            ema1_indicator: EMA { period: self.period },
-            ema2_indicator: EMA { period: self.period },
-            ema3_indicator: EMA { period: self.period },
-            prev_ema3: None,
-        })
-    }
-
-    fn generate_mql5(&self, _args: &[String]) -> String {
-        format!("iTriX(_Symbol, _Period, {})", self.period)
     }
 }

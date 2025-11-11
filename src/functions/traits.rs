@@ -3,42 +3,60 @@ use anyhow::Result;
 use std::any::Any;
 use crate::types::{DataType, ScaleType};
 
+/// Calculation mode for indicators
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CalculationMode {
+    /// Vectorized calculation using Polars (best performance when mathematically feasible)
+    Vectorized,
+    /// Stateful bar-by-bar calculation (for complex indicators where vectorization isn't practical)
+    Stateful,
+}
+
 /// Base trait for all indicators
 pub trait Indicator: Send + Sync {
     /// Unique identifier
     fn alias(&self) -> &'static str;
-    
+
     /// Display name
     fn ui_name(&self) -> &'static str;
-    
+
     /// Semantic scale type
     fn scale_type(&self) -> ScaleType;
-    
+
     /// Expected value range
     fn value_range(&self) -> Option<(f64, f64)>;
-    
+
     /// Number of parameters
     fn arity(&self) -> usize;
-    
+
     /// Input data types
     fn input_types(&self) -> Vec<DataType>;
-    
+
     /// Output type
     fn output_type(&self) -> DataType {
         DataType::NumericSeries
     }
-    
-    /// VECTORIZED: Calculate over entire series (backtesting)
+
+    /// Returns the calculation mode for this indicator
+    fn calculation_mode(&self) -> CalculationMode;
+
+    /// Generate MQL5 code for this indicator (always stateful for live trading)
+    fn generate_mql5(&self, args: &[String]) -> String;
+}
+
+/// Trait for vectorized indicators (used in backtesting)
+pub trait VectorizedIndicator: Indicator {
+    /// Calculate over entire series using Polars expressions
     fn calculate_vectorized(&self, args: &[IndicatorArg]) -> Result<Expr>;
-    
-    /// STATEFUL: Calculate single bar with state (live trading)
+}
+
+/// Trait for stateful indicators (used when vectorization isn't practical)
+pub trait StatefulIndicator: Indicator {
+    /// Calculate single bar with state
     fn calculate_stateful(&self, args: &[f64], state: &mut dyn Any) -> Result<f64>;
-    
+
     /// Initialize state for stateful calculation
     fn init_state(&self) -> Box<dyn Any>;
-    
-    /// Generate MQL5 code for this indicator
-    fn generate_mql5(&self, args: &[String]) -> String;
 }
 
 /// Flexible argument for indicator calls

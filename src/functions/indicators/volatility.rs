@@ -2,19 +2,19 @@ use std::any::Any;
 use anyhow::{Result, bail};
 use polars::lazy::dsl;
 use polars::prelude::{ewm_mean, EWMOptions};
-use crate::functions::traits::{Indicator, IndicatorArg};
+use crate::functions::traits::{Indicator, IndicatorArg, VectorizedIndicator};
 use crate::types::{DataType, ScaleType};
+use std::collections::VecDeque; // Added VecDeque import
 
 // --- ATR (Average True Range) ---
 pub struct ATR {
     pub period: usize,
 }
 
-pub struct ATRState {
-    period: usize,
-    prev_close: Option<f64>,
-    true_ranges: Vec<f64>,
-    atr: Option<f64>,
+impl ATR {
+    pub fn new(period: usize) -> Self {
+        Self { period }
+    }
 }
 
 impl Indicator for ATR {
@@ -31,7 +31,15 @@ impl Indicator for ATR {
             DataType::Integer,       // period
         ]
     }
+    fn calculation_mode(&self) -> crate::functions::traits::CalculationMode {
+        crate::functions::traits::CalculationMode::Vectorized
+    }
+    fn generate_mql5(&self, _args: &[String]) -> String {
+        format!("iATR(_Symbol, _Period, {})", self.period)
+    }
+}
 
+impl crate::functions::traits::VectorizedIndicator for ATR {
     fn calculate_vectorized(&self, args: &[IndicatorArg]) -> Result<dsl::Expr> {
         let high = match &args[0] {
             IndicatorArg::Series(expr) => expr.clone(),
@@ -66,55 +74,16 @@ impl Indicator for ATR {
 
         Ok(atr)
     }
-
-    fn calculate_stateful(&self, args: &[f64], state: &mut dyn Any) -> Result<f64> {
-        let state = state.downcast_mut::<ATRState>().unwrap();
-        let high = args[0];
-        let low = args[1];
-        let close = args[2];
-
-        if let Some(prev_close) = state.prev_close {
-            let tr1 = high - low;
-            let tr2 = (high - prev_close).abs();
-            let tr3 = (low - prev_close).abs();
-            let true_range = tr1.max(tr2).max(tr3);
-
-            state.true_ranges.push(true_range);
-            if state.true_ranges.len() > state.period {
-                state.true_ranges.remove(0);
-            }
-
-            if state.true_ranges.len() == state.period {
-                let atr = if let Some(prev_atr) = state.atr {
-                    (prev_atr * (state.period - 1) as f64 + true_range) / state.period as f64
-                } else {
-                    state.true_ranges.iter().sum::<f64>() / state.period as f64
-                };
-                state.atr = Some(atr);
-            }
-        }
-
-        state.prev_close = Some(close);
-        Ok(state.atr.unwrap_or(0.0))
-    }
-
-    fn init_state(&self) -> Box<dyn Any> {
-        Box::new(ATRState {
-            period: self.period,
-            prev_close: None,
-            true_ranges: Vec::with_capacity(self.period),
-            atr: None,
-        })
-    }
-
-    fn generate_mql5(&self, _args: &[String]) -> String {
-        format!("iATR(_Symbol, _Period, {})", self.period)
-    }
 }
-
 // --- ADX (Average Directional Index) ---
 pub struct ADX {
     pub period: usize,
+}
+
+impl ADX {
+    pub fn new(period: usize) -> Self {
+        Self { period }
+    }
 }
 
 pub struct ADXState {
@@ -150,10 +119,12 @@ impl Indicator for ADX {
         crate::functions::traits::CalculationMode::Stateful
     }
 
-    fn calculate_vectorized(&self, _args: &[IndicatorArg]) -> Result<dsl::Expr> {
-        bail!("ADX is a stateful indicator and does not have a vectorized implementation.")
+    fn generate_mql5(&self, _args: &[String]) -> String {
+        format!("iADX(_Symbol, _Period, {})", self.period)
     }
+}
 
+impl crate::functions::traits::StatefulIndicator for ADX {
     fn calculate_stateful(&self, args: &[f64], state: &mut dyn Any) -> Result<f64> {
         let state = state.downcast_mut::<ADXState>().unwrap();
         let high = args[0];
@@ -225,20 +196,16 @@ impl Indicator for ADX {
             tr_smooth: 0.0,
         })
     }
-
-    fn generate_mql5(&self, _args: &[String]) -> String {
-        format!("iADX(_Symbol, _Period, {})", self.period)
-    }
 }
-
 // --- StdDev (Standard Deviation) ---
 pub struct StdDev {
     pub period: usize,
 }
 
-pub struct StdDevState {
-    period: usize,
-    buffer: VecDeque<f64>,
+impl StdDev {
+    pub fn new(period: usize) -> Self {
+        Self { period }
+    }
 }
 
 impl Indicator for StdDev {
@@ -253,7 +220,15 @@ impl Indicator for StdDev {
             DataType::Integer,       // period
         ]
     }
+    fn calculation_mode(&self) -> crate::functions::traits::CalculationMode {
+        crate::functions::traits::CalculationMode::Vectorized
+    }
+    fn generate_mql5(&self, _args: &[String]) -> String {
+        format!("iStdDev(_Symbol, _Period, {}, 0, MODE_SMA, PRICE_CLOSE)", self.period)
+    }
+}
 
+impl crate::functions::traits::VectorizedIndicator for StdDev {
     fn calculate_vectorized(&self, args: &[IndicatorArg]) -> Result<dsl::Expr> {
         let series = match &args[0] {
             IndicatorArg::Series(expr) => expr.clone(),
@@ -264,35 +239,5 @@ impl Indicator for StdDev {
             window_size: self.period,
             ..Default::default()
         }))
-    }
-
-    fn calculate_stateful(&self, args: &[f64], state: &mut dyn Any) -> Result<f64> {
-        let state = state.downcast_mut::<StdDevState>().unwrap();
-        let value = args[0];
-        state.buffer.push_back(value);
-        if state.buffer.len() > state.period {
-            state.buffer.pop_front();
-        }
-
-        if state.buffer.len() < state.period {
-            return Ok(0.0);
-        }
-
-        let sum: f64 = state.buffer.iter().sum();
-        let mean = sum / state.period as f64;
-        let variance: f64 = state.buffer.iter().map(|v| (v - mean).powi(2)).sum::<f64>() / state.period as f64;
-
-        Ok(variance.sqrt())
-    }
-
-    fn init_state(&self) -> Box<dyn Any> {
-        Box::new(StdDevState {
-            period: self.period,
-            buffer: VecDeque::with_capacity(self.period),
-        })
-    }
-
-    fn generate_mql5(&self, _args: &[String]) -> String {
-        format!("iStdDev(_Symbol, _Period, {}, 0, MODE_SMA, PRICE_CLOSE)", self.period)
     }
 }

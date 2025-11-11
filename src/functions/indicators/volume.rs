@@ -1,16 +1,18 @@
 use std::any::Any;
 use anyhow::{Result, bail};
-use polars::lazy::dsl;
-use polars::prelude::{col, cum_sum, when};
-use crate::functions::traits::{Indicator, IndicatorArg};
+use polars::lazy::dsl::{self, col, cum_sum, when}; // Corrected import for cum_sum and when
+use polars::prelude::EWMOptions; // Added EWMOptions import
+use crate::functions::traits::{Indicator, IndicatorArg, VectorizedIndicator}; // Added VectorizedIndicator
 use crate::types::{DataType, ScaleType};
+use std::collections::VecDeque; // Added VecDeque import
 
 // --- OBV (On-Balance Volume) ---
 pub struct OBV;
 
-pub struct OBVState {
-    prev_close: Option<f64>,
-    obv: f64,
+impl OBV {
+    pub fn new() -> Self {
+        Self {}
+    }
 }
 
 impl Indicator for OBV {
@@ -25,7 +27,15 @@ impl Indicator for OBV {
             DataType::NumericSeries, // volume
         ]
     }
+    fn calculation_mode(&self) -> crate::functions::traits::CalculationMode {
+        crate::functions::traits::CalculationMode::Vectorized
+    }
+    fn generate_mql5(&self, _args: &[String]) -> String {
+        "iOBV(_Symbol, _Period)".to_string()
+    }
+}
 
+impl crate::functions::traits::VectorizedIndicator for OBV {
     fn calculate_vectorized(&self, args: &[IndicatorArg]) -> Result<dsl::Expr> {
         let close = match &args[0] {
             IndicatorArg::Series(expr) => expr.clone(),
@@ -45,34 +55,6 @@ impl Indicator for OBV {
 
         Ok(cum_sum(signed_volume, false))
     }
-
-    fn calculate_stateful(&self, args: &[f64], state: &mut dyn Any) -> Result<f64> {
-        let state = state.downcast_mut::<OBVState>().unwrap();
-        let close = args[0];
-        let volume = args[1];
-
-        if let Some(prev_close) = state.prev_close {
-            if close > prev_close {
-                state.obv += volume;
-            } else if close < prev_close {
-                state.obv -= volume;
-            }
-        }
-
-        state.prev_close = Some(close);
-        Ok(state.obv)
-    }
-
-    fn init_state(&self) -> Box<dyn Any> {
-        Box::new(OBVState {
-            prev_close: None,
-            obv: 0.0,
-        })
-    }
-
-    fn generate_mql5(&self, _args: &[String]) -> String {
-        "iOBV(_Symbol, _Period)".to_string()
-    }
 }
 
 // --- MFI (Money Flow Index) ---
@@ -80,12 +62,10 @@ pub struct MFI {
     pub period: usize,
 }
 
-pub struct MFIState {
-    period: usize,
-    highs: VecDeque<f64>,
-    lows: VecDeque<f64>,
-    closes: VecDeque<f64>,
-    volumes: VecDeque<f64>,
+impl MFI {
+    pub fn new(period: usize) -> Self {
+        Self { period }
+    }
 }
 
 impl Indicator for MFI {
@@ -103,7 +83,15 @@ impl Indicator for MFI {
             DataType::Integer,       // period
         ]
     }
+    fn calculation_mode(&self) -> crate::functions::traits::CalculationMode {
+        crate::functions::traits::CalculationMode::Vectorized
+    }
+    fn generate_mql5(&self, _args: &[String]) -> String {
+        format!("iMFI(_Symbol, _Period, {})", self.period)
+    }
+}
 
+impl crate::functions::traits::VectorizedIndicator for MFI {
     fn calculate_vectorized(&self, args: &[IndicatorArg]) -> Result<dsl::Expr> {
         let high = match &args[0] {
             IndicatorArg::Series(expr) => expr.clone(),
@@ -150,73 +138,16 @@ impl Indicator for MFI {
 
         Ok(money_flow_index)
     }
-
-    fn calculate_stateful(&self, args: &[f64], state: &mut dyn Any) -> Result<f64> {
-        let state = state.downcast_mut::<MFIState>().unwrap();
-        state.highs.push_back(args[0]);
-        state.lows.push_back(args[1]);
-        state.closes.push_back(args[2]);
-        state.volumes.push_back(args[3]);
-
-        if state.highs.len() > state.period {
-            state.highs.pop_front();
-            state.lows.pop_front();
-            state.closes.pop_front();
-            state.volumes.pop_front();
-        }
-
-        if state.highs.len() == state.period {
-            let mut positive_mf = 0.0;
-            let mut negative_mf = 0.0;
-
-            for i in 1..state.period {
-                let tp_curr = (state.highs[i] + state.lows[i] + state.closes[i]) / 3.0;
-                let tp_prev = (state.highs[i-1] + state.lows[i-1] + state.closes[i-1]) / 3.0;
-                let money_flow = tp_curr * state.volumes[i];
-
-                if tp_curr > tp_prev {
-                    positive_mf += money_flow;
-                } else {
-                    negative_mf += money_flow;
-                }
-            }
-
-            if negative_mf == 0.0 {
-                return Ok(100.0);
-            }
-
-            let money_ratio = positive_mf / negative_mf;
-            let mfi = 100.0 - (100.0 / (1.0 + money_ratio));
-            return Ok(mfi);
-        }
-
-        Ok(50.0)
-    }
-
-    fn init_state(&self) -> Box<dyn Any> {
-        Box::new(MFIState {
-            period: self.period,
-            highs: VecDeque::with_capacity(self.period),
-            lows: VecDeque::with_capacity(self.period),
-            closes: VecDeque::with_capacity(self.period),
-            volumes: VecDeque::with_capacity(self.period),
-        })
-    }
-
-    fn generate_mql5(&self, _args: &[String]) -> String {
-        format!("iMFI(_Symbol, _Period, {})", self.period)
-    }
 }
-
 // --- Force Index ---
 pub struct Force {
     pub period: usize,
 }
 
-pub struct ForceState {
-    period: usize,
-    prev_close: Option<f64>,
-    ema: Option<f64>,
+impl Force {
+    pub fn new(period: usize) -> Self {
+        Self { period }
+    }
 }
 
 impl Indicator for Force {
@@ -232,7 +163,15 @@ impl Indicator for Force {
             DataType::Integer,       // period
         ]
     }
+    fn calculation_mode(&self) -> crate::functions::traits::CalculationMode {
+        crate::functions::traits::CalculationMode::Vectorized
+    }
+    fn generate_mql5(&self, _args: &[String]) -> String {
+        format!("iForce(_Symbol, _Period, {}, MODE_EMA, PRICE_CLOSE)", self.period)
+    }
+}
 
+impl crate::functions::traits::VectorizedIndicator for Force {
     fn calculate_vectorized(&self, args: &[IndicatorArg]) -> Result<dsl::Expr> {
         let close = match &args[0] {
             IndicatorArg::Series(expr) => expr.clone(),
@@ -252,41 +191,15 @@ impl Indicator for Force {
             ..Default::default()
         }))
     }
-
-    fn calculate_stateful(&self, args: &[f64], state: &mut dyn Any) -> Result<f64> {
-        let state = state.downcast_mut::<ForceState>().unwrap();
-        let close = args[0];
-        let volume = args[1];
-
-        if let Some(prev_close) = state.prev_close {
-            let force = (close - prev_close) * volume;
-            if let Some(ema) = state.ema {
-                let alpha = 2.0 / (state.period as f64 + 1.0);
-                state.ema = Some(alpha * force + (1.0 - alpha) * ema);
-            } else {
-                state.ema = Some(force);
-            }
-        }
-
-        state.prev_close = Some(close);
-        Ok(state.ema.unwrap_or(0.0))
-    }
-
-    fn init_state(&self) -> Box<dyn Any> {
-        Box::new(ForceState {
-            period: self.period,
-            prev_close: None,
-            ema: None,
-        })
-    }
-
-    fn generate_mql5(&self, _args: &[String]) -> String {
-        format!("iForce(_Symbol, _Period, {}, MODE_EMA, PRICE_CLOSE)", self.period)
-    }
 }
-
 // --- Volumes ---
 pub struct Volumes;
+
+impl Volumes {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
 
 impl Indicator for Volumes {
     fn alias(&self) -> &'static str { "Volumes" }
@@ -297,7 +210,15 @@ impl Indicator for Volumes {
     fn input_types(&self) -> Vec<DataType> {
         vec![DataType::NumericSeries]
     }
+    fn calculation_mode(&self) -> crate::functions::traits::CalculationMode {
+        crate::functions::traits::CalculationMode::Vectorized
+    }
+    fn generate_mql5(&self, _args: &[String]) -> String {
+        "iVolumes(_Symbol, _Period)".to_string()
+    }
+}
 
+impl crate::functions::traits::VectorizedIndicator for Volumes {
     fn calculate_vectorized(&self, args: &[IndicatorArg]) -> Result<dsl::Expr> {
         let volume = match &args[0] {
             IndicatorArg::Series(expr) => expr.clone(),
@@ -305,30 +226,17 @@ impl Indicator for Volumes {
         };
         Ok(volume)
     }
-
-    fn calculate_stateful(&self, args: &[f64], _state: &mut dyn Any) -> Result<f64> {
-        Ok(args[0])
-    }
-
-    fn init_state(&self) -> Box<dyn Any> {
-        Box::new(())
-    }
-
-    fn generate_mql5(&self, _args: &[String]) -> String {
-        "iVolumes(_Symbol, _Period)".to_string()
-    }
 }
-
 // --- Chaikin Oscillator ---
 pub struct Chaikin {
     pub fast_period: usize,
     pub slow_period: usize,
 }
 
-pub struct ChaikinState {
-    fast_period: usize,
-    slow_period: usize,
-    adl_buffer: VecDeque<f64>,
+impl Chaikin {
+    pub fn new(fast_period: usize, slow_period: usize) -> Self {
+        Self { fast_period, slow_period }
+    }
 }
 
 impl Indicator for Chaikin {
@@ -346,7 +254,15 @@ impl Indicator for Chaikin {
             DataType::Integer,       // period
         ]
     }
+    fn calculation_mode(&self) -> crate::functions::traits::CalculationMode {
+        crate::functions::traits::CalculationMode::Vectorized
+    }
+    fn generate_mql5(&self, _args: &[String]) -> String {
+        format!("iAD(_Symbol, _Period)")
+    }
+}
 
+impl crate::functions::traits::VectorizedIndicator for Chaikin {
     fn calculate_vectorized(&self, args: &[IndicatorArg]) -> Result<dsl::Expr> {
         let high = match &args[0] {
             IndicatorArg::Series(expr) => expr.clone(),
@@ -385,61 +301,15 @@ impl Indicator for Chaikin {
 
         Ok(ema_fast - ema_slow)
     }
-
-    fn calculate_stateful(&self, args: &[f64], state: &mut dyn Any) -> Result<f64> {
-        let state = state.downcast_mut::<ChaikinState>().unwrap();
-        let high = args[0];
-        let low = args[1];
-        let close = args[2];
-        let volume = args[3];
-
-        let mfm = if high == low { 0.0 } else { ((close - low) - (high - close)) / (high - low) };
-        let mfv = mfm * volume;
-        let prev_adl = state.adl_buffer.back().cloned().unwrap_or(0.0);
-        let adl = prev_adl + mfv;
-        state.adl_buffer.push_back(adl);
-
-        if state.adl_buffer.len() > state.slow_period {
-            state.adl_buffer.pop_front();
-        }
-
-        if state.adl_buffer.len() >= state.fast_period {
-            let ema_fast = self.calculate_ema(&state.adl_buffer, state.fast_period);
-            if state.adl_buffer.len() >= state.slow_period {
-                let ema_slow = self.calculate_ema(&state.adl_buffer, state.slow_period);
-                return Ok(ema_fast - ema_slow);
-            }
-        }
-
-        Ok(0.0)
-    }
-
-    fn init_state(&self) -> Box<dyn Any> {
-        Box::new(ChaikinState {
-            fast_period: self.fast_period,
-            slow_period: self.slow_period,
-            adl_buffer: VecDeque::with_capacity(self.slow_period),
-        })
-    }
-
-    fn generate_mql5(&self, _args: &[String]) -> String {
-        format!("iAD(_Symbol, _Period)")
-    }
 }
-
-impl Chaikin {
-    fn calculate_ema(&self, data: &VecDeque<f64>, period: usize) -> f64 {
-        let mut ema = data[0];
-        let alpha = 2.0 / (period as f64 + 1.0);
-        for i in 1..data.len() {
-            ema = alpha * data[i] + (1.0 - alpha) * ema;
-        }
-        ema
-    }
-}
-
 // --- BWMFI (Market Facilitation Index) ---
 pub struct BWMFI;
+
+impl BWMFI {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
 
 impl Indicator for BWMFI {
     fn alias(&self) -> &'static str { "BWMFI" }
@@ -454,7 +324,15 @@ impl Indicator for BWMFI {
             DataType::NumericSeries, // volume
         ]
     }
+    fn calculation_mode(&self) -> crate::functions::traits::CalculationMode {
+        crate::functions::traits::CalculationMode::Vectorized
+    }
+    fn generate_mql5(&self, _args: &[String]) -> String {
+        "iBWMFI(_Symbol, _Period)".to_string()
+    }
+}
 
+impl crate::functions::traits::VectorizedIndicator for BWMFI {
     fn calculate_vectorized(&self, args: &[IndicatorArg]) -> Result<dsl::Expr> {
         let high = match &args[0] {
             IndicatorArg::Series(expr) => expr.clone(),
@@ -470,23 +348,5 @@ impl Indicator for BWMFI {
         };
 
         Ok((high - low) / volume)
-    }
-
-    fn calculate_stateful(&self, args: &[f64], _state: &mut dyn Any) -> Result<f64> {
-        let high = args[0];
-        let low = args[1];
-        let volume = args[2];
-        if volume == 0.0 {
-            return Ok(0.0);
-        }
-        Ok((high - low) / volume)
-    }
-
-    fn init_state(&self) -> Box<dyn Any> {
-        Box::new(())
-    }
-
-    fn generate_mql5(&self, _args: &[String]) -> String {
-        "iBWMFI(_Symbol, _Period)".to_string()
     }
 }
