@@ -1,127 +1,128 @@
-use std::collections::HashMap;
-use std::sync::Arc;
-use crate::functions::manifest::{IndicatorManifest, TIER1_INDICATORS, TIER2_INDICATORS};
-use crate::functions::primitives;
-use crate::functions::traits::{Indicator, Primitive};
-use crate::functions::indicators::*;
+use crate::functions::{
+    indicators::{
+        momentum::{
+            AC, AO, CCI,
+            DeMarker, Momentum, RSI, RVI, Stochastic, WilliamsR,
+        },
+        trend::{
+            Bears, BollingerBands, Bulls, DEMA, EMA, Envelopes, MACD, SAR, SMA, TEMA,
+            TriX,
+        },
+        volatility::{ADX, ATR, StdDev},
+        volume::{BWMFI, Chaikin, Force, MFI, OBV, Volumes},
+    },
+    primitives::{self, And, Or},
+};
+use std::{collections::HashMap, sync::Arc};
+
+use super::traits::Indicator;
 
 pub struct FunctionRegistry {
-    primitives: HashMap<String, Arc<dyn Primitive>>,
     indicators: HashMap<String, Arc<dyn Indicator>>,
-    manifest: IndicatorManifest,
-    config: RegistryConfig,
-}
-
-pub struct RegistryConfig {
-    pub primitive_weight: f64,
-    pub enable_cache: bool,
-    pub cache_size_mb: usize,
+    primitives: HashMap<String, Arc<dyn primitives::Primitive>>,
 }
 
 impl FunctionRegistry {
-    pub fn new(config: RegistryConfig) -> Self {
+    pub fn new() -> Self {
         let mut registry = Self {
-            primitives: HashMap::new(),
             indicators: HashMap::new(),
-            manifest: IndicatorManifest::default(),
-            config,
+            primitives: HashMap::new(),
         };
-        
-        registry.register_primitives();
         registry.register_indicators();
+        registry.register_primitives();
         registry
     }
-    
-    fn register_primitives(&mut self) {
-        self.add_primitive(primitives::MovingAverage { method: primitives::MAMethod::Simple });
-        self.add_primitive(primitives::MovingAverage { method: primitives::MAMethod::Exponential });
-        self.add_primitive(primitives::MovingAverage { method: primitives::MAMethod::Linear });
-        self.add_primitive(primitives::MovingAverage { method: primitives::MAMethod::Smoothed });
-        self.add_primitive(primitives::Highest);
-        self.add_primitive(primitives::Lowest);
-        self.add_primitive(primitives::Sum);
-        self.add_primitive(primitives::StdDev);
-        self.add_primitive(primitives::Momentum);
-        self.add_primitive(primitives::Shift);
-        self.add_primitive(primitives::Absolute);
-        self.add_primitive(primitives::Divide);
-        self.add_primitive(primitives::Multiply);
-        self.add_primitive(primitives::Add);
-        self.add_primitive(primitives::Subtract);
+
+    pub fn get_indicator(&self, name: &str) -> Option<Arc<dyn Indicator>> {
+        self.indicators.get(name).cloned()
     }
 
-    fn add_primitive<P: Primitive + 'static>(&mut self, primitive: P) {
-        self.primitives.insert(primitive.alias().to_string(), Arc::new(primitive));
+    pub fn get_primitive(&self, name: &str) -> Option<Arc<dyn primitives::Primitive>> {
+        self.primitives.get(name).cloned()
     }
 
     fn register_indicators(&mut self) {
-        for &alias in TIER1_INDICATORS.iter().chain(TIER2_INDICATORS.iter()) {
-            if let Some(indicator) = self.build_indicator(alias) {
-                self.indicators.insert(alias.to_string(), indicator);
-            }
+        let indicators: Vec<Arc<dyn Indicator>> = vec![
+            Arc::new(RSI::new(14)),
+            Arc::new(Stochastic::new(14, 3, 3)),
+            Arc::new(CCI::new(14)),
+            Arc::new(WilliamsR::new(14)),
+            Arc::new(Momentum::new(14)),
+            Arc::new(AC::new()),
+            Arc::new(AO::new()),
+            Arc::new(RVI::new(10)),
+            Arc::new(DeMarker::new(14)),
+            Arc::new(SMA::new(14)),
+            Arc::new(EMA::new(14)),
+            Arc::new(MACD::new(12, 26, 9)),
+            Arc::new(BollingerBands::new(20, 2.0)),
+            Arc::new(Envelopes::new(14, 0.1)),
+            Arc::new(SAR::new(0.02, 0.2)),
+            Arc::new(Bears::new(13)),
+            Arc::new(Bulls::new(13)),
+            Arc::new(DEMA::new(14)),
+            Arc::new(TEMA::new(14)),
+            Arc::new(TriX::new(14)),
+            Arc::new(ATR::new(14)),
+            Arc::new(ADX::new(14)),
+            Arc::new(StdDev::new(14)),
+            Arc::new(OBV::new()),
+            Arc::new(MFI::new(14)),
+            Arc::new(Force::new(13)),
+            Arc::new(Volumes::new()),
+            Arc::new(Chaikin::new(3, 10)),
+            Arc::new(BWMFI::new()),
+        ];
+
+        for indicator in indicators {
+            self.indicators
+                .insert(indicator.alias().to_string(), indicator);
         }
     }
 
-    fn build_indicator(&self, alias: &str) -> Option<Arc<dyn Indicator>> {
-        match alias {
-            // Tier 1
-            "SMA" => Some(Arc::new(SMA { period: 14 })),
-            "EMA" => Some(Arc::new(EMA { period: 14 })),
-            "RSI" => Some(Arc::new(RSI { period: 14 })),
-            "MACD" => Some(Arc::new(MACD { fast_period: 12, slow_period: 26, signal_period: 9 })),
-            "BB" => Some(Arc::new(BollingerBands { period: 20, deviation: 2.0 })),
-            "ATR" => Some(Arc::new(ATR { period: 14 })),
-            "Stochastic" => Some(Arc::new(Stochastic { k_period: 14, d_period: 3, slowing: 3 })),
-            "ADX" => Some(Arc::new(ADX { period: 14 })),
-            "OBV" => Some(Arc::new(OBV)),
-            "CCI" => Some(Arc::new(CCI { period: 14 })),
-
-            // Tier 2
-            "WilliamsR" => Some(Arc::new(WilliamsR { period: 14 })),
-            "MFI" => Some(Arc::new(MFI { period: 14 })),
-            "ROC" => Some(Arc::new(ROC { period: 14 })),
-            "DeMarker" => Some(Arc::new(DeMarker { period: 14 })),
-            "StdDev" => Some(Arc::new(StdDev { period: 20 })),
-            "Envelopes" => Some(Arc::new(Envelopes { period: 20, deviation: 0.1 })),
-            "SAR" => Some(Arc::new(SAR { step: 0.02, max: 0.2 })),
-            "Force" => Some(Arc::new(Force { period: 13 })),
-            "Bears" => Some(Arc::new(Bears)),
-            "Bulls" => Some(Arc::new(Bulls)),
-            "Momentum" => Some(Arc::new(Momentum { period: 14 })),
-            "DEMA" => Some(Arc::new(DEMA { period: 14 })),
-            "TEMA" => Some(Arc::new(TEMA { period: 14 })),
-            "RVI" => Some(Arc::new(RVI { period: 10 })),
-            "TriX" => Some(Arc::new(TriX { period: 15 })),
-            "Volumes" => Some(Arc::new(Volumes)),
-            "Chaikin" => Some(Arc::new(Chaikin { fast_period: 3, slow_period: 10 })),
-            "BWMFI" => Some(Arc::new(BWMFI)),
-            "AC" => Some(Arc::new(AC)),
-            "AO" => Some(Arc::new(AO)),
-
-            _ => None,
-        }
-    }
-    
-    pub fn get_indicator(&self, alias: &str) -> Option<Arc<dyn Indicator>> {
-        self.indicators.get(alias).cloned()
-    }
-    
-    pub fn get_primitive(&self, alias: &str) -> Option<Arc<dyn Primitive>> {
-        self.primitives.get(alias).cloned()
-    }
-    
-    pub fn get_function(&self, alias: &str) -> Option<FunctionRef> {
-        if let Some(prim) = self.get_primitive(alias) {
-            return Some(FunctionRef::Primitive(prim));
-        }
-        if let Some(ind) = self.get_indicator(alias) {
-            return Some(FunctionRef::Indicator(ind));
-        }
-        None
+    fn register_primitives(&mut self) {
+        self.primitives
+            .insert("And".to_string(), Arc::new(And {}));
+        self.primitives.insert("Or".to_string(), Arc::new(Or {}));
     }
 }
 
-pub enum FunctionRef {
-    Primitive(Arc<dyn Primitive>),
-    Indicator(Arc<dyn Indicator>),
+impl Default for FunctionRegistry {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_registry_indicator_retrieval() {
+        let registry = FunctionRegistry::new();
+        let rsi_indicator = registry.get_indicator("RSI");
+        assert!(rsi_indicator.is_some());
+        assert_eq!(rsi_indicator.unwrap().alias(), "RSI");
+    }
+
+    #[test]
+    fn test_registry_primitive_retrieval() {
+        let registry = FunctionRegistry::new();
+        let and_primitive = registry.get_primitive("And");
+        assert!(and_primitive.is_some());
+    }
+
+    #[test]
+    fn test_indicator_not_found() {
+        let registry = FunctionRegistry::new();
+        let non_existent = registry.get_indicator("NonExistent");
+        assert!(non_existent.is_none());
+    }
+
+    #[test]
+    fn test_primitive_not_found() {
+        let registry = FunctionRegistry::new();
+        let non_existent = registry.get_primitive("NonExistent");
+        assert!(non_existent.is_none());
+    }
 }
