@@ -4,6 +4,7 @@ use crate::functions::manifest::{IndicatorManifest, TIER1_INDICATORS, TIER2_INDI
 use crate::functions::primitives;
 use crate::functions::traits::{Indicator, Primitive};
 use crate::functions::indicators::*;
+use crate::functions::indicators::trend::EnvelopeBand;
 
 pub struct FunctionRegistry {
     primitives: HashMap<String, Arc<dyn Primitive>>,
@@ -82,11 +83,11 @@ impl FunctionRegistry {
             "ROC" => Some(Arc::new(ROC { period: 14 })),
             "DeMarker" => Some(Arc::new(DeMarker { period: 14 })),
             "StdDev" => Some(Arc::new(StdDev { period: 20 })),
-            "Envelopes" => Some(Arc::new(Envelopes { period: 20, deviation: 0.1 })),
+            "Envelopes" => Some(Arc::new(Envelopes { period: 20, deviation: 0.1, band: EnvelopeBand::Upper })),
             "SAR" => Some(Arc::new(SAR { step: 0.02, max: 0.2 })),
             "Force" => Some(Arc::new(Force { period: 13 })),
-            "Bears" => Some(Arc::new(Bears)),
-            "Bulls" => Some(Arc::new(Bulls)),
+            "Bears" => Some(Arc::new(Bears { period: 13 })),
+            "Bulls" => Some(Arc::new(Bulls { period: 13 })),
             "Momentum" => Some(Arc::new(Momentum { period: 14 })),
             "DEMA" => Some(Arc::new(DEMA { period: 14 })),
             "TEMA" => Some(Arc::new(TEMA { period: 14 })),

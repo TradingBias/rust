@@ -1,8 +1,9 @@
 use std::any::Any;
+use std::collections::VecDeque;
 use anyhow::{Result, bail};
 use polars::lazy::dsl;
 use polars::prelude::{ewm_mean, EWMOptions};
-use crate::functions::traits::{Indicator, IndicatorArg};
+use crate::functions::traits::{Indicator, IndicatorArg, CalculationMode};
 use crate::types::{DataType, ScaleType};
 
 // --- ATR (Average True Range) ---
@@ -10,12 +11,6 @@ pub struct ATR {
     pub period: usize,
 }
 
-pub struct ATRState {
-    period: usize,
-    prev_close: Option<f64>,
-    true_ranges: Vec<f64>,
-    atr: Option<f64>,
-}
 
 impl Indicator for ATR {
     fn alias(&self) -> &'static str { "ATR" }
@@ -46,20 +41,25 @@ impl Indicator for ATR {
             _ => bail!("ATR: third arg must be close series"),
         };
 
-        let prev_close = close.shift(1);
+        let period = match &args[3] {
+            IndicatorArg::Scalar(p) => *p as usize,
+            _ => bail!("ATR: fourth arg must be scalar period"),
+        };
+
+        let prev_close = close.shift(dsl::lit(1));
 
         let tr1 = high.clone() - low.clone();
         let tr2 = (high - prev_close.clone()).abs();
         let tr3 = (low - prev_close).abs();
 
-        let true_range = dsl::max(tr1, dsl::max(tr2, tr3));
+        let tr_intermediate_max = dsl::when(tr2.clone().gt(tr3.clone())).then(tr2).otherwise(tr3);
+        let true_range = dsl::when(tr1.clone().gt(tr_intermediate_max.clone())).then(tr1).otherwise(tr_intermediate_max);
 
-        let atr = ewm_mean(
-            true_range,
-            EWMOptions {
-                alpha: 1.0 / self.period as f64,
+        let atr = true_range.ewm_mean(
+            polars::prelude::EWMOptions {
+                alpha: 1.0 / period as f64,
                 adjust: false,
-                min_periods: self.period,
+                min_periods: period,
                 ..Default::default()
             },
         );
@@ -67,44 +67,12 @@ impl Indicator for ATR {
         Ok(atr)
     }
 
-    fn calculate_stateful(&self, args: &[f64], state: &mut dyn Any) -> Result<f64> {
-        let state = state.downcast_mut::<ATRState>().unwrap();
-        let high = args[0];
-        let low = args[1];
-        let close = args[2];
-
-        if let Some(prev_close) = state.prev_close {
-            let tr1 = high - low;
-            let tr2 = (high - prev_close).abs();
-            let tr3 = (low - prev_close).abs();
-            let true_range = tr1.max(tr2).max(tr3);
-
-            state.true_ranges.push(true_range);
-            if state.true_ranges.len() > state.period {
-                state.true_ranges.remove(0);
-            }
-
-            if state.true_ranges.len() == state.period {
-                let atr = if let Some(prev_atr) = state.atr {
-                    (prev_atr * (state.period - 1) as f64 + true_range) / state.period as f64
-                } else {
-                    state.true_ranges.iter().sum::<f64>() / state.period as f64
-                };
-                state.atr = Some(atr);
-            }
-        }
-
-        state.prev_close = Some(close);
-        Ok(state.atr.unwrap_or(0.0))
+    fn calculate_stateful(&self, _args: &[f64], _state: &mut dyn Any) -> Result<f64> {
+        bail!("ATR is a vectorized indicator")
     }
 
     fn init_state(&self) -> Box<dyn Any> {
-        Box::new(ATRState {
-            period: self.period,
-            prev_close: None,
-            true_ranges: Vec::with_capacity(self.period),
-            atr: None,
-        })
+        Box::new(())
     }
 
     fn generate_mql5(&self, _args: &[String]) -> String {
@@ -129,6 +97,7 @@ pub struct ADXState {
     p_dm_smooth: f64,
     m_dm_smooth: f64,
     tr_smooth: f64,
+    adx: Option<f64>,
 }
 
 impl Indicator for ADX {
@@ -187,18 +156,22 @@ impl Indicator for ADX {
                  state.m_dm_smooth = (state.m_dm_smooth * (state.period - 1) as f64 + m_dm) / state.period as f64;
                  state.tr_smooth = (state.tr_smooth * (state.period - 1) as f64 + tr) / state.period as f64;
 
-                let p_di = 100.0 * state.p_dm_smooth / state.tr_smooth;
-                let m_di = 100.0 * state.m_dm_smooth / state.tr_smooth;
+                let p_di = if state.tr_smooth == 0.0 { 0.0 } else { 100.0 * state.p_dm_smooth / state.tr_smooth };
+                let m_di = if state.tr_smooth == 0.0 { 0.0 } else { 100.0 * state.m_dm_smooth / state.tr_smooth };
 
-                let dx = 100.0 * (p_di - m_di).abs() / (p_di + m_di);
+                let dx = if (p_di + m_di) == 0.0 { 0.0 } else { 100.0 * (p_di - m_di).abs() / (p_di + m_di) };
                 state.adx_buffer.push_back(dx);
 
-                if state.adx_buffer.len() > state.period {
-                    state.adx_buffer.pop_front();
+                 if let Some(prev_adx) = state.adx {
+                     state.adx = Some((prev_adx * (state.period - 1) as f64 + dx) / state.period as f64);
+                 } else {
+                     state.adx_buffer.push_back(dx);
+                     if state.adx_buffer.len() == state.period {
+                         state.adx = Some(state.adx_buffer.iter().sum::<f64>() / state.period as f64);
+                     }
                 }
 
-                if state.adx_buffer.len() == state.period {
-                    let adx: f64 = state.adx_buffer.iter().sum::<f64>() / state.period as f64;
+                 if let Some(adx) = state.adx {
                     return Ok(adx);
                 }
             }
@@ -223,6 +196,7 @@ impl Indicator for ADX {
             p_dm_smooth: 0.0,
             m_dm_smooth: 0.0,
             tr_smooth: 0.0,
+            adx: None,
         })
     }
 
@@ -236,10 +210,6 @@ pub struct StdDev {
     pub period: usize,
 }
 
-pub struct StdDevState {
-    period: usize,
-    buffer: VecDeque<f64>,
-}
 
 impl Indicator for StdDev {
     fn alias(&self) -> &'static str { "StdDev" }
@@ -260,36 +230,23 @@ impl Indicator for StdDev {
             _ => bail!("StdDev: first arg must be a series"),
         };
 
-        Ok(series.rolling_std(polars::prelude::RollingOptionsFixedWindow {
-            window_size: self.period,
+        let period = match &args[1] {
+            IndicatorArg::Scalar(p) => *p as usize,
+            _ => bail!("StdDev: second arg must be scalar period"),
+        };
+
+        Ok(series.rolling_std(polars::prelude::RollingOptions {
+            window_size: polars::prelude::Duration::new(period as i64),
             ..Default::default()
         }))
     }
 
-    fn calculate_stateful(&self, args: &[f64], state: &mut dyn Any) -> Result<f64> {
-        let state = state.downcast_mut::<StdDevState>().unwrap();
-        let value = args[0];
-        state.buffer.push_back(value);
-        if state.buffer.len() > state.period {
-            state.buffer.pop_front();
-        }
-
-        if state.buffer.len() < state.period {
-            return Ok(0.0);
-        }
-
-        let sum: f64 = state.buffer.iter().sum();
-        let mean = sum / state.period as f64;
-        let variance: f64 = state.buffer.iter().map(|v| (v - mean).powi(2)).sum::<f64>() / state.period as f64;
-
-        Ok(variance.sqrt())
+    fn calculate_stateful(&self, _args: &[f64], _state: &mut dyn Any) -> Result<f64> {
+        bail!("StdDev is a vectorized indicator")
     }
 
     fn init_state(&self) -> Box<dyn Any> {
-        Box::new(StdDevState {
-            period: self.period,
-            buffer: VecDeque::with_capacity(self.period),
-        })
+        Box::new(())
     }
 
     fn generate_mql5(&self, _args: &[String]) -> String {

@@ -180,7 +180,7 @@ impl Primitive for Momentum {
     fn execute(&self, args: &[dsl::Expr]) -> Result<dsl::Expr> {
         let series = &args[0];
         let period = extract_literal_int(&args[1])?;
-        Ok(series.clone() - series.clone().shift(period.try_into().unwrap()))
+        Ok(series.clone() - series.clone().shift(dsl::lit(period)))
     }
     fn generate_mql5(&self, args: &[String]) -> String { format!("iMomentum({}, {}, {}, {}, {})", args[0], args[1], args[2], args[3], args[4]) }
 }
@@ -195,7 +195,7 @@ impl Primitive for Shift {
     fn execute(&self, args: &[dsl::Expr]) -> Result<dsl::Expr> {
         let series = &args[0];
         let offset = extract_literal_int(&args[1])?;
-        Ok(series.clone().shift(offset.try_into().unwrap()))
+        Ok(series.clone().shift(dsl::lit(offset)))
     }
     fn generate_mql5(&self, _args: &[String]) -> String { "// MQL5 for Shift not implemented".to_string() }
 }
@@ -208,7 +208,8 @@ impl Primitive for Absolute {
     fn input_types(&self) -> Vec<crate::types::DataType> { vec![] }
     fn output_type(&self) -> crate::types::DataType { crate::types::DataType::NumericSeries }
     fn execute(&self, args: &[dsl::Expr]) -> Result<dsl::Expr> {
-        Ok(args[0].clone().abs())
+        let series = args[0].clone();
+        Ok(dsl::when(series.clone().lt(dsl::lit(0.0))).then(series * dsl::lit(-1.0)).otherwise(series))
     }
     fn generate_mql5(&self, args: &[String]) -> String { format!("MathAbs({})", args[0]) }
 }
