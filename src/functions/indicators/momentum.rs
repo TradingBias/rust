@@ -9,8 +9,6 @@ use crate::types::{DataType, ScaleType};
 use crate::functions::indicators::trend::{SMA, SMAState};
 
 // --- AC (Accelerator Oscillator) ---
-pub struct AC;
-
 pub struct AOState {
     slow_sma_state: SMAState,
     fast_sma_state: SMAState,
@@ -616,7 +614,6 @@ impl Indicator for AC {
 
 // --- AO (Awesome Oscillator) ---
 pub struct AO;
-
 impl Indicator for AO {
     fn alias(&self) -> &'static str { "AO" }
     fn ui_name(&self) -> &'static str { "Awesome Oscillator" }

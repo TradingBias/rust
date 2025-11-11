@@ -467,7 +467,10 @@ impl Indicator for Bears {
     }
 
     fn init_state(&self) -> Box<dyn Any> {
-        let period = 13; // Default period
+        // This is tricky because the period is not known at initialization.
+        // We'll rely on the caller to provide the period.
+        // For now, we'll use a default, but this should be improved.
+        let period = 13;
         Box::new(EMAState {
             period,
             prev_ema: None,
@@ -527,7 +530,10 @@ impl Indicator for Bulls {
     }
 
     fn init_state(&self) -> Box<dyn Any> {
-        let period = 13; // Default period
+        // This is tricky because the period is not known at initialization.
+        // We'll rely on the caller to provide the period.
+        // For now, we'll use a default, but this should be improved.
+        let period = 13;
         Box::new(EMAState {
             period,
             prev_ema: None,
