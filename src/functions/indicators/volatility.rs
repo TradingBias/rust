@@ -1,10 +1,14 @@
+use crate::{
+    functions::traits::{Indicator, IndicatorArg, VectorizedIndicator},
+    types::{DataType, ScaleType},
+};
+use anyhow::{bail, Result};
+use polars::{
+    lazy::dsl,
+    prelude::{lit, Duration, EWMOptions, RollingOptions},
+};
 use std::any::Any;
-use anyhow::{Result, bail};
-use polars::lazy::dsl;
-use polars::prelude::{ewm_mean, EWMOptions};
-use crate::functions::traits::{Indicator, IndicatorArg, VectorizedIndicator};
-use crate::types::{DataType, ScaleType};
-use std::collections::VecDeque; // Added VecDeque import
+use std::collections::VecDeque;
 
 // --- ATR (Average True Range) ---
 pub struct ATR {
@@ -18,11 +22,21 @@ impl ATR {
 }
 
 impl Indicator for ATR {
-    fn alias(&self) -> &'static str { "ATR" }
-    fn ui_name(&self) -> &'static str { "Average True Range" }
-    fn scale_type(&self) -> ScaleType { ScaleType::Volatility }
-    fn value_range(&self) -> Option<(f64, f64)> { None }
-    fn arity(&self) -> usize { 4 } // high, low, close, period
+    fn alias(&self) -> &'static str {
+        "ATR"
+    }
+    fn ui_name(&self) -> &'static str {
+        "Average True Range"
+    }
+    fn scale_type(&self) -> ScaleType {
+        ScaleType::Volatility
+    }
+    fn value_range(&self) -> Option<(f64, f64)> {
+        None
+    }
+    fn arity(&self) -> usize {
+        4
+    } // high, low, close, period
     fn input_types(&self) -> Vec<DataType> {
         vec![
             DataType::NumericSeries, // high
@@ -39,7 +53,7 @@ impl Indicator for ATR {
     }
 }
 
-impl crate::functions::traits::VectorizedIndicator for ATR {
+impl VectorizedIndicator for ATR {
     fn calculate_vectorized(&self, args: &[IndicatorArg]) -> Result<dsl::Expr> {
         let high = match &args[0] {
             IndicatorArg::Series(expr) => expr.clone(),
@@ -54,23 +68,20 @@ impl crate::functions::traits::VectorizedIndicator for ATR {
             _ => bail!("ATR: third arg must be close series"),
         };
 
-        let prev_close = close.shift(1);
+        let prev_close = close.shift(lit(1));
 
         let tr1 = high.clone() - low.clone();
         let tr2 = (high - prev_close.clone()).abs();
         let tr3 = (low - prev_close).abs();
 
-        let true_range = dsl::max(tr1, dsl::max(tr2, tr3));
+        let true_range = dsl::max_horizontal(vec![tr1, tr2, tr3])?;
 
-        let atr = ewm_mean(
-            true_range,
-            EWMOptions {
-                alpha: 1.0 / self.period as f64,
-                adjust: false,
-                min_periods: self.period,
-                ..Default::default()
-            },
-        );
+        let atr = true_range.ewm_mean(EWMOptions {
+            alpha: 1.0 / self.period as f64,
+            adjust: false,
+            min_periods: self.period,
+            ..Default::default()
+        });
 
         Ok(atr)
     }
@@ -101,11 +112,21 @@ pub struct ADXState {
 }
 
 impl Indicator for ADX {
-    fn alias(&self) -> &'static str { "ADX" }
-    fn ui_name(&self) -> &'static str { "Average Directional Index" }
-    fn scale_type(&self) -> ScaleType { ScaleType::Oscillator0_100 }
-    fn value_range(&self) -> Option<(f64, f64)> { Some((0.0, 100.0)) }
-    fn arity(&self) -> usize { 4 } // high, low, close, period
+    fn alias(&self) -> &'static str {
+        "ADX"
+    }
+    fn ui_name(&self) -> &'static str {
+        "Average Directional Index"
+    }
+    fn scale_type(&self) -> ScaleType {
+        ScaleType::Oscillator0_100
+    }
+    fn value_range(&self) -> Option<(f64, f64)> {
+        Some((0.0, 100.0))
+    }
+    fn arity(&self) -> usize {
+        4
+    } // high, low, close, period
     fn input_types(&self) -> Vec<DataType> {
         vec![
             DataType::NumericSeries, // high
@@ -131,12 +152,22 @@ impl crate::functions::traits::StatefulIndicator for ADX {
         let low = args[1];
         let close = args[2];
 
-        if let (Some(prev_high), Some(prev_low), Some(prev_close)) = (state.prev_high, state.prev_low, state.prev_close) {
+        if let (Some(prev_high), Some(prev_low), Some(prev_close)) =
+            (state.prev_high, state.prev_low, state.prev_close)
+        {
             let up_move = high - prev_high;
             let down_move = prev_low - low;
 
-            let p_dm = if up_move > down_move && up_move > 0.0 { up_move } else { 0.0 };
-            let m_dm = if down_move > up_move && down_move > 0.0 { down_move } else { 0.0 };
+            let p_dm = if up_move > down_move && up_move > 0.0 {
+                up_move
+            } else {
+                0.0
+            };
+            let m_dm = if down_move > up_move && down_move > 0.0 {
+                down_move
+            } else {
+                0.0
+            };
 
             let tr1 = high - low;
             let tr2 = (high - prev_close).abs();
@@ -154,9 +185,12 @@ impl crate::functions::traits::StatefulIndicator for ADX {
             }
 
             if state.p_dm_buffer.len() == state.period {
-                 state.p_dm_smooth = (state.p_dm_smooth * (state.period - 1) as f64 + p_dm) / state.period as f64;
-                 state.m_dm_smooth = (state.m_dm_smooth * (state.period - 1) as f64 + m_dm) / state.period as f64;
-                 state.tr_smooth = (state.tr_smooth * (state.period - 1) as f64 + tr) / state.period as f64;
+                state.p_dm_smooth =
+                    (state.p_dm_smooth * (state.period - 1) as f64 + p_dm) / state.period as f64;
+                state.m_dm_smooth =
+                    (state.m_dm_smooth * (state.period - 1) as f64 + m_dm) / state.period as f64;
+                state.tr_smooth =
+                    (state.tr_smooth * (state.period - 1) as f64 + tr) / state.period as f64;
 
                 let p_di = 100.0 * state.p_dm_smooth / state.tr_smooth;
                 let m_di = 100.0 * state.m_dm_smooth / state.tr_smooth;
@@ -209,11 +243,21 @@ impl StdDev {
 }
 
 impl Indicator for StdDev {
-    fn alias(&self) -> &'static str { "StdDev" }
-    fn ui_name(&self) -> &'static str { "Standard Deviation" }
-    fn scale_type(&self) -> ScaleType { ScaleType::Volatility }
-    fn value_range(&self) -> Option<(f64, f64)> { None }
-    fn arity(&self) -> usize { 2 } // series, period
+    fn alias(&self) -> &'static str {
+        "StdDev"
+    }
+    fn ui_name(&self) -> &'static str {
+        "Standard Deviation"
+    }
+    fn scale_type(&self) -> ScaleType {
+        ScaleType::Volatility
+    }
+    fn value_range(&self) -> Option<(f64, f64)> {
+        None
+    }
+    fn arity(&self) -> usize {
+        2
+    } // series, period
     fn input_types(&self) -> Vec<DataType> {
         vec![
             DataType::NumericSeries, // series
@@ -224,20 +268,26 @@ impl Indicator for StdDev {
         crate::functions::traits::CalculationMode::Vectorized
     }
     fn generate_mql5(&self, _args: &[String]) -> String {
-        format!("iStdDev(_Symbol, _Period, {}, 0, MODE_SMA, PRICE_CLOSE)", self.period)
+        format!(
+            "iStdDev(_Symbol, _Period, {}, 0, MODE_SMA, PRICE_CLOSE)",
+            self.period
+        )
     }
 }
 
-impl crate::functions::traits::VectorizedIndicator for StdDev {
+impl VectorizedIndicator for StdDev {
     fn calculate_vectorized(&self, args: &[IndicatorArg]) -> Result<dsl::Expr> {
         let series = match &args[0] {
             IndicatorArg::Series(expr) => expr.clone(),
             _ => bail!("StdDev: first arg must be a series"),
         };
 
-        Ok(series.rolling_std(polars::prelude::RollingOptionsFixedWindow {
-            window_size: self.period,
+        let options = RollingOptions {
+            window_size: Duration::parse(&format!("{}i", self.period)),
+            min_periods: self.period,
             ..Default::default()
-        }))
+        };
+
+        Ok(series.rolling_std(options))
     }
 }

@@ -1,11 +1,13 @@
-use std::collections::VecDeque;
-use std::any::Any;
-use anyhow::{Result, bail};
-use polars::prelude::{DataType as PolarsDataType, Duration};
-use polars::lazy::dsl;
-use crate::functions::primitives::{MovingAverage, MAMethod, StdDev};
-use crate::functions::traits::{Indicator, IndicatorArg, Primitive};
-use crate::types::{DataType, ScaleType};
+use crate::{
+    functions::{
+        primitives::{MAMethod, MovingAverage, Primitive, StdDev},
+        traits::{Indicator, IndicatorArg},
+    },
+    types::{DataType, ScaleType},
+};
+use anyhow::{bail, Result};
+use polars::{lazy::dsl, prelude::lit};
+use std::{any::Any, collections::VecDeque};
 
 // --- SMA ---
 pub struct SMA {
@@ -19,17 +21,32 @@ impl SMA {
 }
 
 impl Indicator for SMA {
-    fn alias(&self) -> &'static str { "SMA" }
-    fn ui_name(&self) -> &'static str { "Simple Moving Average" }
-    fn scale_type(&self) -> ScaleType { ScaleType::Price }
-    fn value_range(&self) -> Option<(f64, f64)> { None }
-    fn arity(&self) -> usize { 2 }
-    fn input_types(&self) -> Vec<DataType> { vec![DataType::NumericSeries, DataType::Integer] }
+    fn alias(&self) -> &'static str {
+        "SMA"
+    }
+    fn ui_name(&self) -> &'static str {
+        "Simple Moving Average"
+    }
+    fn scale_type(&self) -> ScaleType {
+        ScaleType::Price
+    }
+    fn value_range(&self) -> Option<(f64, f64)> {
+        None
+    }
+    fn arity(&self) -> usize {
+        2
+    }
+    fn input_types(&self) -> Vec<DataType> {
+        vec![DataType::NumericSeries, DataType::Integer]
+    }
     fn calculation_mode(&self) -> crate::functions::traits::CalculationMode {
         crate::functions::traits::CalculationMode::Vectorized
     }
     fn generate_mql5(&self, args: &[String]) -> String {
-        format!("iMA({}, {}, {}, 0, MODE_SMA, {}, {})", args[0], args[1], self.period, args[2], args[3])
+        format!(
+            "iMA({}, {}, {}, 0, MODE_SMA, {}, {})",
+            args[0], args[1], self.period, args[2], args[3]
+        )
     }
 }
 
@@ -43,7 +60,9 @@ impl crate::functions::traits::VectorizedIndicator for SMA {
             IndicatorArg::Scalar(p) => *p as i64,
             _ => bail!("SMA: second arg must be scalar period"),
         };
-        let ma = MovingAverage { method: MAMethod::Simple };
+        let ma = MovingAverage {
+            method: MAMethod::Simple,
+        };
         ma.execute(&[series, dsl::lit(period)])
     }
 }
@@ -60,17 +79,32 @@ impl EMA {
 }
 
 impl Indicator for EMA {
-    fn alias(&self) -> &'static str { "EMA" }
-    fn ui_name(&self) -> &'static str { "Exponential Moving Average" }
-    fn scale_type(&self) -> ScaleType { ScaleType::Price }
-    fn value_range(&self) -> Option<(f64, f64)> { None }
-    fn arity(&self) -> usize { 2 }
-    fn input_types(&self) -> Vec<DataType> { vec![DataType::NumericSeries, DataType::Integer] }
+    fn alias(&self) -> &'static str {
+        "EMA"
+    }
+    fn ui_name(&self) -> &'static str {
+        "Exponential Moving Average"
+    }
+    fn scale_type(&self) -> ScaleType {
+        ScaleType::Price
+    }
+    fn value_range(&self) -> Option<(f64, f64)> {
+        None
+    }
+    fn arity(&self) -> usize {
+        2
+    }
+    fn input_types(&self) -> Vec<DataType> {
+        vec![DataType::NumericSeries, DataType::Integer]
+    }
     fn calculation_mode(&self) -> crate::functions::traits::CalculationMode {
         crate::functions::traits::CalculationMode::Vectorized
     }
     fn generate_mql5(&self, args: &[String]) -> String {
-        format!("iMA({}, {}, {}, 0, MODE_EMA, {}, {})", args[0], args[1], self.period, args[2], args[3])
+        format!(
+            "iMA({}, {}, {}, 0, MODE_EMA, {}, {})",
+            args[0], args[1], self.period, args[2], args[3]
+        )
     }
 }
 
@@ -84,7 +118,9 @@ impl crate::functions::traits::VectorizedIndicator for EMA {
             IndicatorArg::Scalar(p) => *p as i64,
             _ => bail!("EMA: second arg must be scalar period"),
         };
-        let ma = MovingAverage { method: MAMethod::Exponential };
+        let ma = MovingAverage {
+            method: MAMethod::Exponential,
+        };
         ma.execute(&[series, dsl::lit(period)])
     }
 }
@@ -98,22 +134,53 @@ pub struct MACD {
 
 impl MACD {
     pub fn new(fast_period: usize, slow_period: usize, signal_period: usize) -> Self {
-        Self { fast_period, slow_period, signal_period }
+        Self {
+            fast_period,
+            slow_period,
+            signal_period,
+        }
     }
 }
 
 impl Indicator for MACD {
-    fn alias(&self) -> &'static str { "MACD" }
-    fn ui_name(&self) -> &'static str { "Moving Average Convergence/Divergence" }
-    fn scale_type(&self) -> ScaleType { ScaleType::OscillatorCentered }
-    fn value_range(&self) -> Option<(f64, f64)> { None }
-    fn arity(&self) -> usize { 4 }
-    fn input_types(&self) -> Vec<DataType> { vec![DataType::NumericSeries, DataType::Integer, DataType::Integer, DataType::Integer] }
+    fn alias(&self) -> &'static str {
+        "MACD"
+    }
+    fn ui_name(&self) -> &'static str {
+        "Moving Average Convergence/Divergence"
+    }
+    fn scale_type(&self) -> ScaleType {
+        ScaleType::OscillatorCentered
+    }
+    fn value_range(&self) -> Option<(f64, f64)> {
+        None
+    }
+    fn arity(&self) -> usize {
+        4
+    }
+    fn input_types(&self) -> Vec<DataType> {
+        vec![
+            DataType::NumericSeries,
+            DataType::Integer,
+            DataType::Integer,
+            DataType::Integer,
+        ]
+    }
     fn calculation_mode(&self) -> crate::functions::traits::CalculationMode {
         crate::functions::traits::CalculationMode::Vectorized
     }
     fn generate_mql5(&self, args: &[String]) -> String {
-        format!("iMACD({}, {}, {}, {}, {}, {}, {}, {})", args[0], args[1], self.fast_period, self.slow_period, self.signal_period, args[2], args[3], args[4])
+        format!(
+            "iMACD({}, {}, {}, {}, {}, {}, {}, {})",
+            args[0],
+            args[1],
+            self.fast_period,
+            self.slow_period,
+            self.signal_period,
+            args[2],
+            args[3],
+            args[4]
+        )
     }
 }
 
@@ -123,18 +190,23 @@ impl crate::functions::traits::VectorizedIndicator for MACD {
             IndicatorArg::Series(expr) => expr.clone(),
             _ => bail!("MACD: first arg must be series"),
         };
-        let ema_fast_primitive = MovingAverage { method: MAMethod::Exponential };
-        let ema_slow_primitive = MovingAverage { method: MAMethod::Exponential };
+        let ema_fast_primitive = MovingAverage {
+            method: MAMethod::Exponential,
+        };
+        let ema_slow_primitive = MovingAverage {
+            method: MAMethod::Exponential,
+        };
 
-        let ema_fast = ema_fast_primitive.execute(&[series.clone(), dsl::lit(self.fast_period as i64)])?;
-        let ema_slow = ema_slow_primitive.execute(&[series, dsl::lit(self.slow_period as i64)])?;
-        
+        let ema_fast = ema_fast_primitive
+            .execute(&[series.clone(), dsl::lit(self.fast_period as i64)])?;
+        let ema_slow =
+            ema_slow_primitive.execute(&[series, dsl::lit(self.slow_period as i64)])?;
+
         let macd_line = ema_fast - ema_slow;
-        
+
         Ok(macd_line)
     }
 }
-
 
 // --- Bollinger Bands ---
 pub struct BollingerBands {
@@ -149,17 +221,36 @@ impl BollingerBands {
 }
 
 impl Indicator for BollingerBands {
-    fn alias(&self) -> &'static str { "BB" }
-    fn ui_name(&self) -> &'static str { "Bollinger Bands" }
-    fn scale_type(&self) -> ScaleType { ScaleType::Price }
-    fn value_range(&self) -> Option<(f64, f64)> { None }
-    fn arity(&self) -> usize { 3 }
-    fn input_types(&self) -> Vec<DataType> { vec![DataType::NumericSeries, DataType::Integer, DataType::Float] }
+    fn alias(&self) -> &'static str {
+        "BB"
+    }
+    fn ui_name(&self) -> &'static str {
+        "Bollinger Bands"
+    }
+    fn scale_type(&self) -> ScaleType {
+        ScaleType::Price
+    }
+    fn value_range(&self) -> Option<(f64, f64)> {
+        None
+    }
+    fn arity(&self) -> usize {
+        3
+    }
+    fn input_types(&self) -> Vec<DataType> {
+        vec![
+            DataType::NumericSeries,
+            DataType::Integer,
+            DataType::Float,
+        ]
+    }
     fn calculation_mode(&self) -> crate::functions::traits::CalculationMode {
         crate::functions::traits::CalculationMode::Vectorized
     }
     fn generate_mql5(&self, args: &[String]) -> String {
-        format!("iBands({}, {}, {}, {}, 0, {}, {}, {})", args[0], args[1], self.period, self.deviation, args[2], args[3], args[4])
+        format!(
+            "iBands({}, {}, {}, {}, 0, {}, {}, {})",
+            args[0], args[1], self.period, self.deviation, args[2], args[3], args[4]
+        )
     }
 }
 
@@ -172,7 +263,9 @@ impl crate::functions::traits::VectorizedIndicator for BollingerBands {
         let period = self.period as i64;
         let deviation = self.deviation;
 
-        let sma = MovingAverage { method: MAMethod::Simple };
+        let sma = MovingAverage {
+            method: MAMethod::Simple,
+        };
         let std_dev = StdDev;
 
         let middle_band = sma.execute(&[series.clone(), dsl::lit(period)])?;
@@ -198,11 +291,21 @@ impl Envelopes {
 }
 
 impl Indicator for Envelopes {
-    fn alias(&self) -> &'static str { "Envelopes" }
-    fn ui_name(&self) -> &'static str { "Envelopes" }
-    fn scale_type(&self) -> ScaleType { ScaleType::Price }
-    fn value_range(&self) -> Option<(f64, f64)> { None }
-    fn arity(&self) -> usize { 3 } // close, period, deviation
+    fn alias(&self) -> &'static str {
+        "Envelopes"
+    }
+    fn ui_name(&self) -> &'static str {
+        "Envelopes"
+    }
+    fn scale_type(&self) -> ScaleType {
+        ScaleType::Price
+    }
+    fn value_range(&self) -> Option<(f64, f64)> {
+        None
+    }
+    fn arity(&self) -> usize {
+        3
+    } // close, period, deviation
     fn input_types(&self) -> Vec<DataType> {
         vec![
             DataType::NumericSeries, // close
@@ -214,7 +317,10 @@ impl Indicator for Envelopes {
         crate::functions::traits::CalculationMode::Vectorized
     }
     fn generate_mql5(&self, _args: &[String]) -> String {
-        format!("iEnvelopes(_Symbol, _Period, {}, MODE_SMA, 0, PRICE_CLOSE, {})", self.period, self.deviation)
+        format!(
+            "iEnvelopes(_Symbol, _Period, {}, MODE_SMA, 0, PRICE_CLOSE, {})",
+            self.period, self.deviation
+        )
     }
 }
 
@@ -225,7 +331,9 @@ impl crate::functions::traits::VectorizedIndicator for Envelopes {
             _ => bail!("Envelopes: first arg must be close series"),
         };
 
-        let ma = MovingAverage { method: MAMethod::Simple };
+        let ma = MovingAverage {
+            method: MAMethod::Simple,
+        };
         let middle_line = ma.execute(&[close, dsl::lit(self.period as i64)])?;
 
         let upper_band = middle_line.clone() * (dsl::lit(1.0) + dsl::lit(self.deviation));
@@ -257,11 +365,21 @@ pub struct SARState {
 }
 
 impl Indicator for SAR {
-    fn alias(&self) -> &'static str { "SAR" }
-    fn ui_name(&self) -> &'static str { "Parabolic SAR" }
-    fn scale_type(&self) -> ScaleType { ScaleType::Price }
-    fn value_range(&self) -> Option<(f64, f64)> { None }
-    fn arity(&self) -> usize { 4 } // high, low, step, max
+    fn alias(&self) -> &'static str {
+        "SAR"
+    }
+    fn ui_name(&self) -> &'static str {
+        "Parabolic SAR"
+    }
+    fn scale_type(&self) -> ScaleType {
+        ScaleType::Price
+    }
+    fn value_range(&self) -> Option<(f64, f64)> {
+        None
+    }
+    fn arity(&self) -> usize {
+        4
+    } // high, low, step, max
     fn input_types(&self) -> Vec<DataType> {
         vec![
             DataType::NumericSeries, // high
@@ -338,11 +456,21 @@ impl Bears {
 }
 
 impl Indicator for Bears {
-    fn alias(&self) -> &'static str { "Bears" }
-    fn ui_name(&self) -> &'static str { "Bears Power" }
-    fn scale_type(&self) -> ScaleType { ScaleType::OscillatorCentered } // Changed from Price to OscillatorCentered
-    fn value_range(&self) -> Option<(f64, f64)> { None }
-    fn arity(&self) -> usize { 3 } // low, close, period
+    fn alias(&self) -> &'static str {
+        "Bears"
+    }
+    fn ui_name(&self) -> &'static str {
+        "Bears Power"
+    }
+    fn scale_type(&self) -> ScaleType {
+        ScaleType::OscillatorCentered
+    } // Changed from Price to OscillatorCentered
+    fn value_range(&self) -> Option<(f64, f64)> {
+        None
+    }
+    fn arity(&self) -> usize {
+        3
+    } // low, close, period
     fn input_types(&self) -> Vec<DataType> {
         vec![
             DataType::NumericSeries, // low
@@ -354,7 +482,10 @@ impl Indicator for Bears {
         crate::functions::traits::CalculationMode::Vectorized
     }
     fn generate_mql5(&self, args: &[String]) -> String {
-        format!("iBearsPower(_Symbol, _Period, {}, PRICE_CLOSE)", args[2])
+        format!(
+            "iBearsPower(_Symbol, _Period, {}, PRICE_CLOSE)",
+            args[2]
+        )
     }
 }
 
@@ -373,7 +504,9 @@ impl crate::functions::traits::VectorizedIndicator for Bears {
             _ => bail!("Bears: third arg must be scalar period"),
         };
 
-        let ema = MovingAverage { method: MAMethod::Exponential };
+        let ema = MovingAverage {
+            method: MAMethod::Exponential,
+        };
         let ema_val = ema.execute(&[close, dsl::lit(period)])?;
 
         Ok(low - ema_val)
@@ -392,11 +525,21 @@ impl Bulls {
 }
 
 impl Indicator for Bulls {
-    fn alias(&self) -> &'static str { "Bulls" }
-    fn ui_name(&self) -> &'static str { "Bulls Power" }
-    fn scale_type(&self) -> ScaleType { ScaleType::OscillatorCentered } // Changed from Price to OscillatorCentered
-    fn value_range(&self) -> Option<(f64, f64)> { None }
-    fn arity(&self) -> usize { 3 } // high, close, period
+    fn alias(&self) -> &'static str {
+        "Bulls"
+    }
+    fn ui_name(&self) -> &'static str {
+        "Bulls Power"
+    }
+    fn scale_type(&self) -> ScaleType {
+        ScaleType::OscillatorCentered
+    } // Changed from Price to OscillatorCentered
+    fn value_range(&self) -> Option<(f64, f64)> {
+        None
+    }
+    fn arity(&self) -> usize {
+        3
+    } // high, close, period
     fn input_types(&self) -> Vec<DataType> {
         vec![
             DataType::NumericSeries, // high
@@ -408,7 +551,10 @@ impl Indicator for Bulls {
         crate::functions::traits::CalculationMode::Vectorized
     }
     fn generate_mql5(&self, args: &[String]) -> String {
-        format!("iBullsPower(_Symbol, _Period, {}, PRICE_CLOSE)", args[2])
+        format!(
+            "iBullsPower(_Symbol, _Period, {}, PRICE_CLOSE)",
+            args[2]
+        )
     }
 }
 
@@ -427,7 +573,9 @@ impl crate::functions::traits::VectorizedIndicator for Bulls {
             _ => bail!("Bulls: third arg must be scalar period"),
         };
 
-        let ema = MovingAverage { method: MAMethod::Exponential };
+        let ema = MovingAverage {
+            method: MAMethod::Exponential,
+        };
         let ema_val = ema.execute(&[close, dsl::lit(period)])?;
 
         Ok(high - ema_val)
@@ -445,11 +593,21 @@ impl DEMA {
 }
 
 impl Indicator for DEMA {
-    fn alias(&self) -> &'static str { "DEMA" }
-    fn ui_name(&self) -> &'static str { "Double Exponential Moving Average" }
-    fn scale_type(&self) -> ScaleType { ScaleType::Price }
-    fn value_range(&self) -> Option<(f64, f64)> { None }
-    fn arity(&self) -> usize { 2 } // close, period
+    fn alias(&self) -> &'static str {
+        "DEMA"
+    }
+    fn ui_name(&self) -> &'static str {
+        "Double Exponential Moving Average"
+    }
+    fn scale_type(&self) -> ScaleType {
+        ScaleType::Price
+    }
+    fn value_range(&self) -> Option<(f64, f64)> {
+        None
+    }
+    fn arity(&self) -> usize {
+        2
+    } // close, period
     fn input_types(&self) -> Vec<DataType> {
         vec![
             DataType::NumericSeries, // close
@@ -460,7 +618,10 @@ impl Indicator for DEMA {
         crate::functions::traits::CalculationMode::Vectorized
     }
     fn generate_mql5(&self, _args: &[String]) -> String {
-        format!("iMAOnArray(DEMA_buffer, 0, {}, 0, MODE_EMA, 0)", self.period)
+        format!(
+            "iMAOnArray(DEMA_buffer, 0, {}, 0, MODE_EMA, 0)",
+            self.period
+        )
     }
 }
 
@@ -471,10 +632,14 @@ impl crate::functions::traits::VectorizedIndicator for DEMA {
             _ => bail!("DEMA: first arg must be close series"),
         };
 
-        let ema1 = MovingAverage { method: MAMethod::Exponential };
+        let ema1 = MovingAverage {
+            method: MAMethod::Exponential,
+        };
         let ema1_val = ema1.execute(&[close, dsl::lit(self.period as i64)])?;
 
-        let ema2 = MovingAverage { method: MAMethod::Exponential };
+        let ema2 = MovingAverage {
+            method: MAMethod::Exponential,
+        };
         let ema2_val = ema2.execute(&[ema1_val.clone(), dsl::lit(self.period as i64)])?;
 
         Ok(dsl::lit(2.0) * ema1_val - ema2_val)
@@ -493,11 +658,21 @@ impl TEMA {
 }
 
 impl Indicator for TEMA {
-    fn alias(&self) -> &'static str { "TEMA" }
-    fn ui_name(&self) -> &'static str { "Triple Exponential Moving Average" }
-    fn scale_type(&self) -> ScaleType { ScaleType::Price }
-    fn value_range(&self) -> Option<(f64, f64)> { None }
-    fn arity(&self) -> usize { 2 } // close, period
+    fn alias(&self) -> &'static str {
+        "TEMA"
+    }
+    fn ui_name(&self) -> &'static str {
+        "Triple Exponential Moving Average"
+    }
+    fn scale_type(&self) -> ScaleType {
+        ScaleType::Price
+    }
+    fn value_range(&self) -> Option<(f64, f64)> {
+        None
+    }
+    fn arity(&self) -> usize {
+        2
+    } // close, period
     fn input_types(&self) -> Vec<DataType> {
         vec![
             DataType::NumericSeries, // close
@@ -508,7 +683,10 @@ impl Indicator for TEMA {
         crate::functions::traits::CalculationMode::Vectorized
     }
     fn generate_mql5(&self, _args: &[String]) -> String {
-        format!("iMAOnArray(TEMA_buffer, 0, {}, 0, MODE_EMA, 0)", self.period)
+        format!(
+            "iMAOnArray(TEMA_buffer, 0, {}, 0, MODE_EMA, 0)",
+            self.period
+        )
     }
 }
 
@@ -519,13 +697,19 @@ impl crate::functions::traits::VectorizedIndicator for TEMA {
             _ => bail!("TEMA: first arg must be close series"),
         };
 
-        let ema1 = MovingAverage { method: MAMethod::Exponential };
+        let ema1 = MovingAverage {
+            method: MAMethod::Exponential,
+        };
         let ema1_val = ema1.execute(&[close, dsl::lit(self.period as i64)])?;
 
-        let ema2 = MovingAverage { method: MAMethod::Exponential };
+        let ema2 = MovingAverage {
+            method: MAMethod::Exponential,
+        };
         let ema2_val = ema2.execute(&[ema1_val.clone(), dsl::lit(self.period as i64)])?;
 
-        let ema3 = MovingAverage { method: MAMethod::Exponential };
+        let ema3 = MovingAverage {
+            method: MAMethod::Exponential,
+        };
         let ema3_val = ema3.execute(&[ema2_val.clone(), dsl::lit(self.period as i64)])?;
 
         Ok(dsl::lit(3.0) * (ema1_val - ema2_val) + ema3_val)
@@ -543,11 +727,21 @@ impl TriX {
 }
 
 impl Indicator for TriX {
-    fn alias(&self) -> &'static str { "TriX" }
-    fn ui_name(&self) -> &'static str { "Triple Exponential Average" }
-    fn scale_type(&self) -> ScaleType { ScaleType::OscillatorCentered }
-    fn value_range(&self) -> Option<(f64, f64)> { None }
-    fn arity(&self) -> usize { 2 } // close, period
+    fn alias(&self) -> &'static str {
+        "TriX"
+    }
+    fn ui_name(&self) -> &'static str {
+        "Triple Exponential Average"
+    }
+    fn scale_type(&self) -> ScaleType {
+        ScaleType::OscillatorCentered
+    }
+    fn value_range(&self) -> Option<(f64, f64)> {
+        None
+    }
+    fn arity(&self) -> usize {
+        2
+    } // close, period
     fn input_types(&self) -> Vec<DataType> {
         vec![
             DataType::NumericSeries, // close
@@ -569,15 +763,22 @@ impl crate::functions::traits::VectorizedIndicator for TriX {
             _ => bail!("TriX: first arg must be close series"),
         };
 
-        let ema1 = MovingAverage { method: MAMethod::Exponential };
+        let ema1 = MovingAverage {
+            method: MAMethod::Exponential,
+        };
         let ema1_val = ema1.execute(&[close, dsl::lit(self.period as i64)])?;
 
-        let ema2 = MovingAverage { method: MAMethod::Exponential };
+        let ema2 = MovingAverage {
+            method: MAMethod::Exponential,
+        };
         let ema2_val = ema2.execute(&[ema1_val, dsl::lit(self.period as i64)])?;
 
-        let ema3 = MovingAverage { method: MAMethod::Exponential };
+        let ema3 = MovingAverage {
+            method: MAMethod::Exponential,
+        };
         let ema3_val = ema3.execute(&[ema2_val, dsl::lit(self.period as i64)])?;
+        let prev_ema3 = ema3_val.clone().shift(lit(1));
 
-        Ok(ema3_val.pct_change(1))
+        Ok((ema3_val - prev_ema3.clone()) / prev_ema3)
     }
 }

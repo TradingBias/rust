@@ -1,10 +1,12 @@
-use std::any::Any;
-use anyhow::{Result, bail};
-use polars::lazy::dsl::{self, col, cum_sum, when}; // Corrected import for cum_sum and when
-use polars::prelude::EWMOptions; // Added EWMOptions import
-use crate::functions::traits::{Indicator, IndicatorArg, VectorizedIndicator}; // Added VectorizedIndicator
-use crate::types::{DataType, ScaleType};
-use std::collections::VecDeque; // Added VecDeque import
+use crate::{
+    functions::traits::{Indicator, IndicatorArg, VectorizedIndicator},
+    types::{DataType, ScaleType},
+};
+use anyhow::{bail, Result};
+use polars::{
+    lazy::dsl::{self, when},
+    prelude::{lit, Duration, EWMOptions, RollingOptions},
+};
 
 // --- OBV (On-Balance Volume) ---
 pub struct OBV;
@@ -16,11 +18,21 @@ impl OBV {
 }
 
 impl Indicator for OBV {
-    fn alias(&self) -> &'static str { "OBV" }
-    fn ui_name(&self) -> &'static str { "On-Balance Volume" }
-    fn scale_type(&self) -> ScaleType { ScaleType::Volume }
-    fn value_range(&self) -> Option<(f64, f64)> { None }
-    fn arity(&self) -> usize { 2 } // close, volume
+    fn alias(&self) -> &'static str {
+        "OBV"
+    }
+    fn ui_name(&self) -> &'static str {
+        "On-Balance Volume"
+    }
+    fn scale_type(&self) -> ScaleType {
+        ScaleType::Volume
+    }
+    fn value_range(&self) -> Option<(f64, f64)> {
+        None
+    }
+    fn arity(&self) -> usize {
+        2
+    } // close, volume
     fn input_types(&self) -> Vec<DataType> {
         vec![
             DataType::NumericSeries, // close
@@ -35,7 +47,7 @@ impl Indicator for OBV {
     }
 }
 
-impl crate::functions::traits::VectorizedIndicator for OBV {
+impl VectorizedIndicator for OBV {
     fn calculate_vectorized(&self, args: &[IndicatorArg]) -> Result<dsl::Expr> {
         let close = match &args[0] {
             IndicatorArg::Series(expr) => expr.clone(),
@@ -46,14 +58,14 @@ impl crate::functions::traits::VectorizedIndicator for OBV {
             _ => bail!("OBV: second arg must be volume series"),
         };
 
-        let prev_close = close.shift(1);
+        let prev_close = close.clone().shift(lit(1));
         let signed_volume = when(close.clone().gt(prev_close.clone()))
             .then(volume.clone())
             .when(close.lt(prev_close))
             .then(-volume)
             .otherwise(dsl::lit(0.0));
 
-        Ok(cum_sum(signed_volume, false))
+        Ok(signed_volume.cum_sum(false))
     }
 }
 
@@ -69,11 +81,21 @@ impl MFI {
 }
 
 impl Indicator for MFI {
-    fn alias(&self) -> &'static str { "MFI" }
-    fn ui_name(&self) -> &'static str { "Money Flow Index" }
-    fn scale_type(&self) -> ScaleType { ScaleType::Oscillator0_100 }
-    fn value_range(&self) -> Option<(f64, f64)> { Some((0.0, 100.0)) }
-    fn arity(&self) -> usize { 5 } // high, low, close, volume, period
+    fn alias(&self) -> &'static str {
+        "MFI"
+    }
+    fn ui_name(&self) -> &'static str {
+        "Money Flow Index"
+    }
+    fn scale_type(&self) -> ScaleType {
+        ScaleType::Oscillator0_100
+    }
+    fn value_range(&self) -> Option<(f64, f64)> {
+        Some((0.0, 100.0))
+    }
+    fn arity(&self) -> usize {
+        5
+    } // high, low, close, volume, period
     fn input_types(&self) -> Vec<DataType> {
         vec![
             DataType::NumericSeries, // high
@@ -91,7 +113,7 @@ impl Indicator for MFI {
     }
 }
 
-impl crate::functions::traits::VectorizedIndicator for MFI {
+impl VectorizedIndicator for MFI {
     fn calculate_vectorized(&self, args: &[IndicatorArg]) -> Result<dsl::Expr> {
         let high = match &args[0] {
             IndicatorArg::Series(expr) => expr.clone(),
@@ -111,7 +133,7 @@ impl crate::functions::traits::VectorizedIndicator for MFI {
         };
 
         let typical_price = (high + low + close.clone()) / dsl::lit(3.0);
-        let prev_typical_price = typical_price.shift(1);
+        let prev_typical_price = typical_price.clone().shift(lit(1));
 
         let raw_money_flow = typical_price * volume;
 
@@ -123,15 +145,15 @@ impl crate::functions::traits::VectorizedIndicator for MFI {
             .then(raw_money_flow)
             .otherwise(dsl::lit(0.0));
 
-        let positive_mf_sum = positive_money_flow.rolling_sum(polars::prelude::RollingOptionsFixedWindow {
-            window_size: self.period,
+        let options = RollingOptions {
+            window_size: Duration::parse(&format!("{}i", self.period)),
+            min_periods: self.period,
             ..Default::default()
-        });
+        };
 
-        let negative_mf_sum = negative_money_flow.rolling_sum(polars::prelude::RollingOptionsFixedWindow {
-            window_size: self.period,
-            ..Default::default()
-        });
+        let positive_mf_sum = positive_money_flow.rolling_sum(options.clone());
+
+        let negative_mf_sum = negative_money_flow.rolling_sum(options);
 
         let money_ratio = positive_mf_sum.clone() / negative_mf_sum;
         let money_flow_index = dsl::lit(100.0) - (dsl::lit(100.0) / (dsl::lit(1.0) + money_ratio));
@@ -151,11 +173,21 @@ impl Force {
 }
 
 impl Indicator for Force {
-    fn alias(&self) -> &'static str { "Force" }
-    fn ui_name(&self) -> &'static str { "Force Index" }
-    fn scale_type(&self) -> ScaleType { ScaleType::Volume }
-    fn value_range(&self) -> Option<(f64, f64)> { None }
-    fn arity(&self) -> usize { 3 } // close, volume, period
+    fn alias(&self) -> &'static str {
+        "Force"
+    }
+    fn ui_name(&self) -> &'static str {
+        "Force Index"
+    }
+    fn scale_type(&self) -> ScaleType {
+        ScaleType::Volume
+    }
+    fn value_range(&self) -> Option<(f64, f64)> {
+        None
+    }
+    fn arity(&self) -> usize {
+        3
+    } // close, volume, period
     fn input_types(&self) -> Vec<DataType> {
         vec![
             DataType::NumericSeries, // close
@@ -167,11 +199,14 @@ impl Indicator for Force {
         crate::functions::traits::CalculationMode::Vectorized
     }
     fn generate_mql5(&self, _args: &[String]) -> String {
-        format!("iForce(_Symbol, _Period, {}, MODE_EMA, PRICE_CLOSE)", self.period)
+        format!(
+            "iForce(_Symbol, _Period, {}, MODE_EMA, PRICE_CLOSE)",
+            self.period
+        )
     }
 }
 
-impl crate::functions::traits::VectorizedIndicator for Force {
+impl VectorizedIndicator for Force {
     fn calculate_vectorized(&self, args: &[IndicatorArg]) -> Result<dsl::Expr> {
         let close = match &args[0] {
             IndicatorArg::Series(expr) => expr.clone(),
@@ -182,7 +217,7 @@ impl crate::functions::traits::VectorizedIndicator for Force {
             _ => bail!("Force: second arg must be volume series"),
         };
 
-        let force = (close.clone() - close.shift(1)) * volume;
+        let force = (close.clone() - close.shift(lit(1))) * volume;
 
         Ok(force.ewm_mean(EWMOptions {
             alpha: 2.0 / (self.period as f64 + 1.0),
@@ -202,11 +237,21 @@ impl Volumes {
 }
 
 impl Indicator for Volumes {
-    fn alias(&self) -> &'static str { "Volumes" }
-    fn ui_name(&self) -> &'static str { "Volumes" }
-    fn scale_type(&self) -> ScaleType { ScaleType::Volume }
-    fn value_range(&self) -> Option<(f64, f64)> { None }
-    fn arity(&self) -> usize { 1 } // volume
+    fn alias(&self) -> &'static str {
+        "Volumes"
+    }
+    fn ui_name(&self) -> &'static str {
+        "Volumes"
+    }
+    fn scale_type(&self) -> ScaleType {
+        ScaleType::Volume
+    }
+    fn value_range(&self) -> Option<(f64, f64)> {
+        None
+    }
+    fn arity(&self) -> usize {
+        1
+    } // volume
     fn input_types(&self) -> Vec<DataType> {
         vec![DataType::NumericSeries]
     }
@@ -218,7 +263,7 @@ impl Indicator for Volumes {
     }
 }
 
-impl crate::functions::traits::VectorizedIndicator for Volumes {
+impl VectorizedIndicator for Volumes {
     fn calculate_vectorized(&self, args: &[IndicatorArg]) -> Result<dsl::Expr> {
         let volume = match &args[0] {
             IndicatorArg::Series(expr) => expr.clone(),
@@ -235,16 +280,29 @@ pub struct Chaikin {
 
 impl Chaikin {
     pub fn new(fast_period: usize, slow_period: usize) -> Self {
-        Self { fast_period, slow_period }
+        Self {
+            fast_period,
+            slow_period,
+        }
     }
 }
 
 impl Indicator for Chaikin {
-    fn alias(&self) -> &'static str { "Chaikin" }
-    fn ui_name(&self) -> &'static str { "Chaikin Oscillator" }
-    fn scale_type(&self) -> ScaleType { ScaleType::Volume }
-    fn value_range(&self) -> Option<(f64, f64)> { None }
-    fn arity(&self) -> usize { 5 } // high, low, close, volume, period
+    fn alias(&self) -> &'static str {
+        "Chaikin"
+    }
+    fn ui_name(&self) -> &'static str {
+        "Chaikin Oscillator"
+    }
+    fn scale_type(&self) -> ScaleType {
+        ScaleType::Volume
+    }
+    fn value_range(&self) -> Option<(f64, f64)> {
+        None
+    }
+    fn arity(&self) -> usize {
+        5
+    } // high, low, close, volume, period
     fn input_types(&self) -> Vec<DataType> {
         vec![
             DataType::NumericSeries, // high
@@ -262,7 +320,7 @@ impl Indicator for Chaikin {
     }
 }
 
-impl crate::functions::traits::VectorizedIndicator for Chaikin {
+impl VectorizedIndicator for Chaikin {
     fn calculate_vectorized(&self, args: &[IndicatorArg]) -> Result<dsl::Expr> {
         let high = match &args[0] {
             IndicatorArg::Series(expr) => expr.clone(),
@@ -281,9 +339,10 @@ impl crate::functions::traits::VectorizedIndicator for Chaikin {
             _ => bail!("Chaikin: fourth arg must be volume series"),
         };
 
-        let money_flow_multiplier = ((close.clone() - low) - (high.clone() - close.clone())) / (high - low.clone());
+        let money_flow_multiplier =
+            ((close.clone() - low.clone()) - (high.clone() - close.clone())) / (high - low);
         let money_flow_volume = money_flow_multiplier * volume;
-        let adl = cum_sum(money_flow_volume, false);
+        let adl = money_flow_volume.cum_sum(false);
 
         let ema_fast = adl.clone().ewm_mean(EWMOptions {
             alpha: 2.0 / (self.fast_period as f64 + 1.0),
@@ -312,11 +371,21 @@ impl BWMFI {
 }
 
 impl Indicator for BWMFI {
-    fn alias(&self) -> &'static str { "BWMFI" }
-    fn ui_name(&self) -> &'static str { "Market Facilitation Index" }
-    fn scale_type(&self) -> ScaleType { ScaleType::Volume }
-    fn value_range(&self) -> Option<(f64, f64)> { None }
-    fn arity(&self) -> usize { 3 } // high, low, volume
+    fn alias(&self) -> &'static str {
+        "BWMFI"
+    }
+    fn ui_name(&self) -> &'static str {
+        "Market Facilitation Index"
+    }
+    fn scale_type(&self) -> ScaleType {
+        ScaleType::Volume
+    }
+    fn value_range(&self) -> Option<(f64, f64)> {
+        None
+    }
+    fn arity(&self) -> usize {
+        3
+    } // high, low, volume
     fn input_types(&self) -> Vec<DataType> {
         vec![
             DataType::NumericSeries, // high
@@ -332,7 +401,7 @@ impl Indicator for BWMFI {
     }
 }
 
-impl crate::functions::traits::VectorizedIndicator for BWMFI {
+impl VectorizedIndicator for BWMFI {
     fn calculate_vectorized(&self, args: &[IndicatorArg]) -> Result<dsl::Expr> {
         let high = match &args[0] {
             IndicatorArg::Series(expr) => expr.clone(),
