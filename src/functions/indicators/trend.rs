@@ -156,11 +156,20 @@ impl Indicator for MACD {
             IndicatorArg::Series(expr) => expr.clone(),
             _ => bail!("MACD: first arg must be series"),
         };
+        let fast_period = match &args[1] {
+            IndicatorArg::Scalar(p) => *p as i64,
+            _ => bail!("MACD: second arg must be scalar fast_period"),
+        };
+        let slow_period = match &args[2] {
+            IndicatorArg::Scalar(p) => *p as i64,
+            _ => bail!("MACD: third arg must be scalar slow_period"),
+        };
+
         let ema_fast_primitive = MovingAverage { method: MAMethod::Exponential };
         let ema_slow_primitive = MovingAverage { method: MAMethod::Exponential };
 
-        let ema_fast = ema_fast_primitive.execute(&[series.clone(), dsl::lit(self.fast_period as i64)])?;
-        let ema_slow = ema_slow_primitive.execute(&[series, dsl::lit(self.slow_period as i64)])?;
+        let ema_fast = ema_fast_primitive.execute(&[series.clone(), dsl::lit(fast_period)])?;
+        let ema_slow = ema_slow_primitive.execute(&[series, dsl::lit(slow_period)])?;
         
         let macd_line = ema_fast - ema_slow;
         
@@ -222,8 +231,14 @@ impl Indicator for BollingerBands {
             IndicatorArg::Series(expr) => expr.clone(),
             _ => bail!("BB: first arg must be series"),
         };
-        let period = self.period as i64;
-        let deviation = self.deviation;
+        let period = match &args[1] {
+            IndicatorArg::Scalar(p) => *p as i64,
+            _ => bail!("BB: second arg must be scalar period"),
+        };
+        let deviation = match &args[2] {
+            IndicatorArg::Scalar(d) => *d,
+            _ => bail!("BB: third arg must be scalar deviation"),
+        };
 
         let sma = MovingAverage { method: MAMethod::Simple };
         let std_dev = StdDev;
@@ -272,9 +287,15 @@ impl Indicator for BollingerBands {
 }
 
 // --- Envelopes ---
+pub enum EnvelopeBand {
+    Upper,
+    Lower,
+}
+
 pub struct Envelopes {
     pub period: usize,
     pub deviation: f64,
+    pub band: EnvelopeBand,
 }
 
 impl Indicator for Envelopes {
@@ -296,35 +317,28 @@ impl Indicator for Envelopes {
             IndicatorArg::Series(expr) => expr.clone(),
             _ => bail!("Envelopes: first arg must be close series"),
         };
+        let period = match &args[1] {
+            IndicatorArg::Scalar(p) => *p as i64,
+            _ => bail!("Envelopes: second arg must be scalar period"),
+        };
 
         let ma = MovingAverage { method: MAMethod::Simple };
-        let middle_line = ma.execute(&[close, dsl::lit(self.period as i64)])?;
+        let middle_line = ma.execute(&[close, dsl::lit(period)])?;
 
-        let upper_band = middle_line.clone() * (dsl::lit(1.0) + dsl::lit(self.deviation));
-        let _lower_band = middle_line * (dsl::lit(1.0) - dsl::lit(self.deviation));
+        let band = match self.band {
+            EnvelopeBand::Upper => middle_line.clone() * (dsl::lit(1.0) + dsl::lit(self.deviation)),
+            EnvelopeBand::Lower => middle_line.clone() * (dsl::lit(1.0) - dsl::lit(self.deviation)),
+        };
 
-        Ok(upper_band)
+        Ok(band)
     }
 
-    fn calculate_stateful(&self, args: &[f64], state: &mut dyn Any) -> Result<f64> {
-        let state = state.downcast_mut::<SMAState>().unwrap();
-        state.buffer.push_back(args[0]);
-        if state.buffer.len() > self.period {
-            state.buffer.pop_front();
-        }
-        if state.buffer.len() < self.period {
-            return Ok(0.0);
-        }
-        let sum: f64 = state.buffer.iter().sum();
-        let ma = sum / self.period as f64;
-        Ok(ma * (1.0 + self.deviation))
+    fn calculate_stateful(&self, _args: &[f64], _state: &mut dyn Any) -> Result<f64> {
+        bail!("Envelopes is a vectorized indicator")
     }
 
     fn init_state(&self) -> Box<dyn Any> {
-        Box::new(SMAState {
-            buffer: VecDeque::with_capacity(self.period),
-            period: self.period,
-        })
+        Box::new(())
     }
 
     fn generate_mql5(&self, _args: &[String]) -> String {
@@ -341,10 +355,12 @@ pub struct SAR {
 pub struct SARState {
     step: f64,
     max: f64,
-    sar: f64,
-    ep: f64,
+    sar: Option<f64>,
+    ep: Option<f64>,
     af: f64,
     is_rising: bool,
+    highs: VecDeque<f64>,
+    lows: VecDeque<f64>,
 }
 
 impl Indicator for SAR {
@@ -375,43 +391,71 @@ impl Indicator for SAR {
         let high = args[0];
         let low = args[1];
 
+        state.highs.push_back(high);
+        state.lows.push_back(low);
+
+        if state.sar.is_none() {
+            if state.highs.len() < 2 {
+                return Ok(low); // Not enough data yet
+            }
+            let prev_high = state.highs[0];
+            let prev_low = state.lows[0];
+
+            state.is_rising = high > prev_high;
+            if state.is_rising {
+                state.ep = Some(high);
+                state.sar = Some(prev_low);
+            } else {
+                state.ep = Some(low);
+                state.sar = Some(prev_high);
+            }
+        }
+
+        let mut sar = state.sar.unwrap();
+        let mut ep = state.ep.unwrap();
+
         if state.is_rising {
-            state.sar = state.sar + state.af * (state.ep - state.sar);
-            if high > state.ep {
-                state.ep = high;
+            sar = sar + state.af * (ep - sar);
+            if high > ep {
+                ep = high;
                 state.af = (state.af + state.step).min(state.max);
             }
-            if low < state.sar {
+            if low < sar {
                 state.is_rising = false;
-                state.sar = state.ep;
-                state.ep = low;
+                sar = ep;
+                ep = low;
                 state.af = state.step;
             }
         } else {
-            state.sar = state.sar - state.af * (state.sar - state.ep);
-            if low < state.ep {
-                state.ep = low;
+            sar = sar - state.af * (sar - ep);
+            if low < ep {
+                ep = low;
                 state.af = (state.af + state.step).min(state.max);
             }
-            if high > state.sar {
+            if high > sar {
                 state.is_rising = true;
-                state.sar = state.ep;
-                state.ep = high;
+                sar = ep;
+                ep = high;
                 state.af = state.step;
             }
         }
 
-        Ok(state.sar)
+        state.sar = Some(sar);
+        state.ep = Some(ep);
+
+        Ok(sar)
     }
 
     fn init_state(&self) -> Box<dyn Any> {
         Box::new(SARState {
             step: self.step,
             max: self.max,
-            sar: 0.0,
-            ep: 0.0,
+            sar: None,
+            ep: None,
             af: self.step,
             is_rising: true,
+            highs: VecDeque::with_capacity(2),
+            lows: VecDeque::with_capacity(2),
         })
     }
 
@@ -421,7 +465,9 @@ impl Indicator for SAR {
 }
 
 // --- Bears Power ---
-pub struct Bears;
+pub struct Bears {
+    pub period: usize,
+}
 
 impl Indicator for Bears {
     fn alias(&self) -> &'static str { "Bears" }
@@ -446,6 +492,7 @@ impl Indicator for Bears {
             IndicatorArg::Series(expr) => expr.clone(),
             _ => bail!("Bears: second arg must be close series"),
         };
+
         let period = match &args[2] {
             IndicatorArg::Scalar(p) => *p as i64,
             _ => bail!("Bears: third arg must be scalar period"),
@@ -457,25 +504,12 @@ impl Indicator for Bears {
         Ok(low - ema_val)
     }
 
-    fn calculate_stateful(&self, args: &[f64], state: &mut dyn Any) -> Result<f64> {
-        let state = state.downcast_mut::<EMAState>().unwrap();
-        let low = args[0];
-        let close = args[1];
-        let ema_indicator = EMA { period: state.period };
-        let ema = ema_indicator.calculate_stateful(&[close], state)?;
-        Ok(low - ema)
+    fn calculate_stateful(&self, _args: &[f64], _state: &mut dyn Any) -> Result<f64> {
+        bail!("Bears Power is a vectorized indicator")
     }
 
     fn init_state(&self) -> Box<dyn Any> {
-        // This is tricky because the period is not known at initialization.
-        // We'll rely on the caller to provide the period.
-        // For now, we'll use a default, but this should be improved.
-        let period = 13;
-        Box::new(EMAState {
-            period,
-            prev_ema: None,
-            init_buffer: VecDeque::with_capacity(period),
-        })
+        Box::new(())
     }
 
     fn generate_mql5(&self, args: &[String]) -> String {
@@ -484,7 +518,9 @@ impl Indicator for Bears {
 }
 
 // --- Bulls Power ---
-pub struct Bulls;
+pub struct Bulls {
+    pub period: usize,
+}
 
 impl Indicator for Bulls {
     fn alias(&self) -> &'static str { "Bulls" }
@@ -509,6 +545,7 @@ impl Indicator for Bulls {
             IndicatorArg::Series(expr) => expr.clone(),
             _ => bail!("Bulls: second arg must be close series"),
         };
+
         let period = match &args[2] {
             IndicatorArg::Scalar(p) => *p as i64,
             _ => bail!("Bulls: third arg must be scalar period"),
@@ -520,25 +557,12 @@ impl Indicator for Bulls {
         Ok(high - ema_val)
     }
 
-    fn calculate_stateful(&self, args: &[f64], state: &mut dyn Any) -> Result<f64> {
-        let state = state.downcast_mut::<EMAState>().unwrap();
-        let high = args[0];
-        let close = args[1];
-        let ema_indicator = EMA { period: state.period };
-        let ema = ema_indicator.calculate_stateful(&[close], state)?;
-        Ok(high - ema)
+    fn calculate_stateful(&self, _args: &[f64], _state: &mut dyn Any) -> Result<f64> {
+        bail!("Bulls Power is a vectorized indicator")
     }
 
     fn init_state(&self) -> Box<dyn Any> {
-        // This is tricky because the period is not known at initialization.
-        // We'll rely on the caller to provide the period.
-        // For now, we'll use a default, but this should be improved.
-        let period = 13;
-        Box::new(EMAState {
-            period,
-            prev_ema: None,
-            init_buffer: VecDeque::with_capacity(period),
-        })
+        Box::new(())
     }
 
     fn generate_mql5(&self, args: &[String]) -> String {
@@ -551,12 +575,6 @@ pub struct DEMA {
     pub period: usize,
 }
 
-pub struct DEMAState {
-    ema1_state: EMAState,
-    ema2_state: EMAState,
-    ema1_indicator: EMA,
-    ema2_indicator: EMA,
-}
 
 impl Indicator for DEMA {
     fn alias(&self) -> &'static str { "DEMA" }
@@ -576,33 +594,26 @@ impl Indicator for DEMA {
             IndicatorArg::Series(expr) => expr.clone(),
             _ => bail!("DEMA: first arg must be close series"),
         };
+        let period = match &args[1] {
+            IndicatorArg::Scalar(p) => *p as i64,
+            _ => bail!("DEMA: second arg must be scalar period"),
+        };
 
         let ema1 = MovingAverage { method: MAMethod::Exponential };
-        let ema1_val = ema1.execute(&[close, dsl::lit(self.period as i64)])?;
+        let ema1_val = ema1.execute(&[close, dsl::lit(period)])?;
 
         let ema2 = MovingAverage { method: MAMethod::Exponential };
-        let ema2_val = ema2.execute(&[ema1_val.clone(), dsl::lit(self.period as i64)])?;
+        let ema2_val = ema2.execute(&[ema1_val.clone(), dsl::lit(period)])?;
 
         Ok(dsl::lit(2.0) * ema1_val - ema2_val)
     }
 
-    fn calculate_stateful(&self, args: &[f64], state: &mut dyn Any) -> Result<f64> {
-        let state = state.downcast_mut::<DEMAState>().unwrap();
-        let close = args[0];
-
-        let ema1 = state.ema1_indicator.calculate_stateful(&[close], &mut state.ema1_state)?;
-        let ema2 = state.ema2_indicator.calculate_stateful(&[ema1], &mut state.ema2_state)?;
-
-        Ok(2.0 * ema1 - ema2)
+    fn calculate_stateful(&self, _args: &[f64], _state: &mut dyn Any) -> Result<f64> {
+        bail!("DEMA is a vectorized indicator")
     }
 
     fn init_state(&self) -> Box<dyn Any> {
-        Box::new(DEMAState {
-            ema1_state: EMAState { period: self.period, prev_ema: None, init_buffer: VecDeque::with_capacity(self.period) },
-            ema2_state: EMAState { period: self.period, prev_ema: None, init_buffer: VecDeque::with_capacity(self.period) },
-            ema1_indicator: EMA { period: self.period },
-            ema2_indicator: EMA { period: self.period },
-        })
+        Box::new(())
     }
 
     fn generate_mql5(&self, _args: &[String]) -> String {
@@ -615,14 +626,6 @@ pub struct TEMA {
     pub period: usize,
 }
 
-pub struct TEMAState {
-    ema1_state: EMAState,
-    ema2_state: EMAState,
-    ema3_state: EMAState,
-    ema1_indicator: EMA,
-    ema2_indicator: EMA,
-    ema3_indicator: EMA,
-}
 
 impl Indicator for TEMA {
     fn alias(&self) -> &'static str { "TEMA" }
@@ -642,39 +645,29 @@ impl Indicator for TEMA {
             IndicatorArg::Series(expr) => expr.clone(),
             _ => bail!("TEMA: first arg must be close series"),
         };
+        let period = match &args[1] {
+            IndicatorArg::Scalar(p) => *p as i64,
+            _ => bail!("TEMA: second arg must be scalar period"),
+        };
 
         let ema1 = MovingAverage { method: MAMethod::Exponential };
-        let ema1_val = ema1.execute(&[close, dsl::lit(self.period as i64)])?;
+        let ema1_val = ema1.execute(&[close, dsl::lit(period)])?;
 
         let ema2 = MovingAverage { method: MAMethod::Exponential };
-        let ema2_val = ema2.execute(&[ema1_val.clone(), dsl::lit(self.period as i64)])?;
+        let ema2_val = ema2.execute(&[ema1_val.clone(), dsl::lit(period)])?;
 
         let ema3 = MovingAverage { method: MAMethod::Exponential };
-        let ema3_val = ema3.execute(&[ema2_val.clone(), dsl::lit(self.period as i64)])?;
+        let ema3_val = ema3.execute(&[ema2_val.clone(), dsl::lit(period)])?;
 
         Ok(dsl::lit(3.0) * (ema1_val - ema2_val) + ema3_val)
     }
 
-    fn calculate_stateful(&self, args: &[f64], state: &mut dyn Any) -> Result<f64> {
-        let state = state.downcast_mut::<TEMAState>().unwrap();
-        let close = args[0];
-
-        let ema1 = state.ema1_indicator.calculate_stateful(&[close], &mut state.ema1_state)?;
-        let ema2 = state.ema2_indicator.calculate_stateful(&[ema1], &mut state.ema2_state)?;
-        let ema3 = state.ema3_indicator.calculate_stateful(&[ema2], &mut state.ema3_state)?;
-
-        Ok(3.0 * (ema1 - ema2) + ema3)
+    fn calculate_stateful(&self, _args: &[f64], _state: &mut dyn Any) -> Result<f64> {
+        bail!("TEMA is a vectorized indicator")
     }
 
     fn init_state(&self) -> Box<dyn Any> {
-        Box::new(TEMAState {
-            ema1_state: EMAState { period: self.period, prev_ema: None, init_buffer: VecDeque::with_capacity(self.period) },
-            ema2_state: EMAState { period: self.period, prev_ema: None, init_buffer: VecDeque::with_capacity(self.period) },
-            ema3_state: EMAState { period: self.period, prev_ema: None, init_buffer: VecDeque::with_capacity(self.period) },
-            ema1_indicator: EMA { period: self.period },
-            ema2_indicator: EMA { period: self.period },
-            ema3_indicator: EMA { period: self.period },
-        })
+        Box::new(())
     }
 
     fn generate_mql5(&self, _args: &[String]) -> String {
@@ -687,15 +680,6 @@ pub struct TriX {
     pub period: usize,
 }
 
-pub struct TriXState {
-    ema1_state: EMAState,
-    ema2_state: EMAState,
-    ema3_state: EMAState,
-    ema1_indicator: EMA,
-    ema2_indicator: EMA,
-    ema3_indicator: EMA,
-    prev_ema3: Option<f64>,
-}
 
 impl Indicator for TriX {
     fn alias(&self) -> &'static str { "TriX" }
@@ -715,50 +699,30 @@ impl Indicator for TriX {
             IndicatorArg::Series(expr) => expr.clone(),
             _ => bail!("TriX: first arg must be close series"),
         };
+        let period = match &args[1] {
+            IndicatorArg::Scalar(p) => *p as i64,
+            _ => bail!("TriX: second arg must be scalar period"),
+        };
 
         let ema1 = MovingAverage { method: MAMethod::Exponential };
-        let ema1_val = ema1.execute(&[close, dsl::lit(self.period as i64)])?;
+        let ema1_val = ema1.execute(&[close, dsl::lit(period)])?;
 
         let ema2 = MovingAverage { method: MAMethod::Exponential };
-        let ema2_val = ema2.execute(&[ema1_val, dsl::lit(self.period as i64)])?;
+        let ema2_val = ema2.execute(&[ema1_val, dsl::lit(period)])?;
 
         let ema3 = MovingAverage { method: MAMethod::Exponential };
-        let ema3_val = ema3.execute(&[ema2_val, dsl::lit(self.period as i64)])?;
+        let ema3_val = ema3.execute(&[ema2_val, dsl::lit(period)])?;
 
-        Ok(ema3_val.pct_change(1))
+        let prev_ema3 = ema3_val.clone().shift(dsl::lit(1));
+        Ok(((ema3_val - prev_ema3.clone()) / prev_ema3) * dsl::lit(100.0))
     }
 
-    fn calculate_stateful(&self, args: &[f64], state: &mut dyn Any) -> Result<f64> {
-        let state = state.downcast_mut::<TriXState>().unwrap();
-        let close = args[0];
-
-        let ema1 = state.ema1_indicator.calculate_stateful(&[close], &mut state.ema1_state)?;
-        let ema2 = state.ema2_indicator.calculate_stateful(&[ema1], &mut state.ema2_state)?;
-        let ema3 = state.ema3_indicator.calculate_stateful(&[ema2], &mut state.ema3_state)?;
-
-        let roc = if let Some(prev_ema3) = state.prev_ema3 {
-            if prev_ema3 != 0.0 {
-                (ema3 - prev_ema3) / prev_ema3
-            } else {
-                0.0
-            }
-        } else {
-            0.0
-        };
-        state.prev_ema3 = Some(ema3);
-        Ok(roc)
+    fn calculate_stateful(&self, _args: &[f64], _state: &mut dyn Any) -> Result<f64> {
+        bail!("TriX is a vectorized indicator")
     }
 
     fn init_state(&self) -> Box<dyn Any> {
-        Box::new(TriXState {
-            ema1_state: EMAState { period: self.period, prev_ema: None, init_buffer: VecDeque::with_capacity(self.period) },
-            ema2_state: EMAState { period: self.period, prev_ema: None, init_buffer: VecDeque::with_capacity(self.period) },
-            ema3_state: EMAState { period: self.period, prev_ema: None, init_buffer: VecDeque::with_capacity(self.period) },
-            ema1_indicator: EMA { period: self.period },
-            ema2_indicator: EMA { period: self.period },
-            ema3_indicator: EMA { period: self.period },
-            prev_ema3: None,
-        })
+        Box::new(())
     }
 
     fn generate_mql5(&self, _args: &[String]) -> String {

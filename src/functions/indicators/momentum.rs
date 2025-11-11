@@ -8,20 +8,15 @@ use crate::functions::traits::{Indicator, IndicatorArg};
 use crate::types::{DataType, ScaleType};
 use crate::functions::indicators::trend::{SMA, SMAState};
 
-// --- AC (Accelerator Oscillator) ---
-pub struct AOState {
-    slow_sma_state: SMAState,
-    fast_sma_state: SMAState,
-    slow_sma_indicator: SMA,
-    fast_sma_indicator: SMA,
+/// State for stateful RSI calculation
+pub struct RSIState {
+    period: usize,
+    gains: VecDeque<f64>,
+    losses: VecDeque<f64>,
+    avg_gain: Option<f64>,
+    avg_loss: Option<f64>,
+    prev_close: Option<f64>,
 }
-
-pub struct ACState {
-    ao_state: AOState,
-    ao_indicator: AO,
-    ao_buffer: VecDeque<f64>,
-}
-
 pub struct RSI {
     pub period: usize,
 }
@@ -37,15 +32,6 @@ impl RSI {
     }
 }
 
-/// State for stateful RSI calculation
-pub struct RSIState {
-    period: usize,
-    gains: VecDeque<f64>,
-    losses: VecDeque<f64>,
-    avg_gain: Option<f64>,
-    avg_loss: Option<f64>,
-    prev_close: Option<f64>,
-}
 
 impl Indicator for RSI {
     fn alias(&self) -> &'static str { "RSI" }
@@ -71,7 +57,7 @@ impl Indicator for RSI {
         };
         
         // Step 1: Calculate price changes
-        let delta = series.diff(1, NullBehavior::Ignore);
+        let delta = series.clone() - series.shift(dsl::lit(1));
         
         // Step 2: Separate gains and losses
         let gains = delta.clone().clip(dsl::lit(0.0), dsl::lit(f64::INFINITY));
@@ -109,12 +95,12 @@ impl Indicator for RSI {
         state.gains.push_back(gain);
         state.losses.push_back(loss);
         
-        if state.gains.len() > state.period {
+        if state.gains.len() > self.period {
             state.gains.pop_front();
             state.losses.pop_front();
         }
         
-        if state.gains.len() < state.period {
+        if state.gains.len() < self.period {
             state.prev_close = Some(close);
             return Ok(50.0);
         }
@@ -171,15 +157,6 @@ pub struct Stochastic {
     pub slowing: usize,
 }
 
-pub struct StochasticState {
-    k_period: usize,
-    d_period: usize,
-    slowing: usize,
-    highs: VecDeque<f64>,
-    lows: VecDeque<f64>,
-    closes: VecDeque<f64>,
-    k_values: VecDeque<f64>,
-}
 
 impl Indicator for Stochastic {
     fn alias(&self) -> &'static str { "Stochastic" }
@@ -212,74 +189,47 @@ impl Indicator for Stochastic {
             _ => bail!("Stochastic: third arg must be close series"),
         };
 
-        let highest_high = high.rolling_max(polars::prelude::RollingOptionsFixedWindow {
-            window_size: self.k_period,
+        let k_period = match &args[3] {
+            IndicatorArg::Scalar(p) => *p as usize,
+            _ => bail!("Stochastic: fourth arg must be scalar k_period"),
+        };
+        let d_period = match &args[4] {
+            IndicatorArg::Scalar(p) => *p as usize,
+            _ => bail!("Stochastic: fifth arg must be scalar d_period"),
+        };
+        let slowing = match &args[5] {
+            IndicatorArg::Scalar(p) => *p as usize,
+            _ => bail!("Stochastic: sixth arg must be scalar slowing"),
+        };
+
+        let highest_high = high.rolling_max(polars::prelude::RollingOptions {
+            window_size: polars::prelude::Duration::new(k_period as i64),
             ..Default::default()
         });
-        let lowest_low = low.rolling_min(polars::prelude::RollingOptionsFixedWindow {
-            window_size: self.k_period,
+        let lowest_low = low.rolling_min(polars::prelude::RollingOptions {
+            window_size: polars::prelude::Duration::new(k_period as i64),
             ..Default::default()
         });
 
         let percent_k = (close - lowest_low.clone()) / (highest_high - lowest_low) * dsl::lit(100.0);
-        let percent_d = percent_k.rolling_mean(polars::prelude::RollingOptionsFixedWindow {
-            window_size: self.d_period,
+        let slowed_k = percent_k.rolling_mean(polars::prelude::RollingOptions {
+            window_size: polars::prelude::Duration::new(slowing as i64),
+            ..Default::default()
+        });
+        let percent_d = slowed_k.rolling_mean(polars::prelude::RollingOptions {
+            window_size: polars::prelude::Duration::new(d_period as i64),
             ..Default::default()
         });
 
         Ok(percent_d)
     }
 
-    fn calculate_stateful(&self, args: &[f64], state: &mut dyn Any) -> Result<f64> {
-        let state = state.downcast_mut::<StochasticState>().unwrap();
-        let high = args[0];
-        let low = args[1];
-        let close = args[2];
-
-        state.highs.push_back(high);
-        state.lows.push_back(low);
-        state.closes.push_back(close);
-
-        if state.highs.len() > state.k_period {
-            state.highs.pop_front();
-            state.lows.pop_front();
-            state.closes.pop_front();
-        }
-
-        if state.highs.len() == state.k_period {
-            let highest_high = state.highs.iter().cloned().fold(f64::NEG_INFINITY, f64::max);
-            let lowest_low = state.lows.iter().cloned().fold(f64::INFINITY, f64::min);
-
-            let percent_k = if highest_high == lowest_low {
-                0.0
-            } else {
-                (close - lowest_low) / (highest_high - lowest_low) * 100.0
-            };
-
-            state.k_values.push_back(percent_k);
-            if state.k_values.len() > state.d_period {
-                state.k_values.pop_front();
-            }
-
-            if state.k_values.len() == state.d_period {
-                let sum_k: f64 = state.k_values.iter().sum();
-                let percent_d = sum_k / state.d_period as f64;
-                return Ok(percent_d);
-            }
-        }
-        Ok(0.0)
+    fn calculate_stateful(&self, _args: &[f64], _state: &mut dyn Any) -> Result<f64> {
+        bail!("Stochastic is a vectorized indicator")
     }
 
     fn init_state(&self) -> Box<dyn Any> {
-        Box::new(StochasticState {
-            k_period: self.k_period,
-            d_period: self.d_period,
-            slowing: self.slowing,
-            highs: VecDeque::with_capacity(self.k_period),
-            lows: VecDeque::with_capacity(self.k_period),
-            closes: VecDeque::with_capacity(self.k_period),
-            k_values: VecDeque::with_capacity(self.d_period),
-        })
+        Box::new(())
     }
 
     fn generate_mql5(&self, _args: &[String]) -> String {
@@ -292,10 +242,6 @@ pub struct CCI {
     pub period: usize,
 }
 
-pub struct CCIState {
-    period: usize,
-    tp_buffer: VecDeque<f64>,
-}
 
 impl Indicator for CCI {
     fn alias(&self) -> &'static str { "CCI" }
@@ -326,14 +272,19 @@ impl Indicator for CCI {
             _ => bail!("CCI: third arg must be close series"),
         };
 
+        let period = match &args[3] {
+            IndicatorArg::Scalar(p) => *p as usize,
+            _ => bail!("CCI: fourth arg must be scalar period"),
+        };
+
         let typical_price = (high + low + close) / dsl::lit(3.0);
-        let sma_tp = typical_price.rolling_mean(polars::prelude::RollingOptionsFixedWindow {
-            window_size: self.period,
+        let sma_tp = typical_price.clone().rolling_mean(polars::prelude::RollingOptions {
+            window_size: polars::prelude::Duration::new(period as i64),
             ..Default::default()
         });
 
-        let mean_deviation = (typical_price.clone() - sma_tp.clone()).abs().rolling_mean(polars::prelude::RollingOptionsFixedWindow {
-            window_size: self.period,
+        let mean_deviation = (typical_price.clone() - sma_tp.clone()).abs().rolling_mean(polars::prelude::RollingOptions {
+            window_size: polars::prelude::Duration::new(period as i64),
             ..Default::default()
         });
 
@@ -341,40 +292,12 @@ impl Indicator for CCI {
         Ok(cci)
     }
 
-    fn calculate_stateful(&self, args: &[f64], state: &mut dyn Any) -> Result<f64> {
-        let state = state.downcast_mut::<CCIState>().unwrap();
-        let high = args[0];
-        let low = args[1];
-        let close = args[2];
-
-        let typical_price = (high + low + close) / 3.0;
-        state.tp_buffer.push_back(typical_price);
-
-        if state.tp_buffer.len() > state.period {
-            state.tp_buffer.pop_front();
-        }
-
-        if state.tp_buffer.len() == state.period {
-            let sum_tp: f64 = state.tp_buffer.iter().sum();
-            let sma_tp = sum_tp / state.period as f64;
-
-            let mean_deviation: f64 = state.tp_buffer.iter().map(|tp| (tp - sma_tp).abs()).sum::<f64>() / state.period as f64;
-
-            if mean_deviation == 0.0 {
-                return Ok(0.0);
-            }
-
-            let cci = (typical_price - sma_tp) / (0.015 * mean_deviation);
-            return Ok(cci);
-        }
-        Ok(0.0)
+    fn calculate_stateful(&self, _args: &[f64], _state: &mut dyn Any) -> Result<f64> {
+        bail!("CCI is a vectorized indicator")
     }
 
     fn init_state(&self) -> Box<dyn Any> {
-        Box::new(CCIState {
-            period: self.period,
-            tp_buffer: VecDeque::with_capacity(self.period),
-        })
+        Box::new(())
     }
 
     fn generate_mql5(&self, _args: &[String]) -> String {
@@ -387,11 +310,6 @@ pub struct WilliamsR {
     pub period: usize,
 }
 
-pub struct WilliamsRState {
-    period: usize,
-    highs: VecDeque<f64>,
-    lows: VecDeque<f64>,
-}
 
 impl Indicator for WilliamsR {
     fn alias(&self) -> &'static str { "WilliamsR" }
@@ -422,50 +340,29 @@ impl Indicator for WilliamsR {
             _ => bail!("WilliamsR: third arg must be close series"),
         };
 
-        let highest_high = high.rolling_max(polars::prelude::RollingOptionsFixedWindow {
-            window_size: self.period,
+        let period = match &args[3] {
+            IndicatorArg::Scalar(p) => *p as usize,
+            _ => bail!("WilliamsR: fourth arg must be scalar period"),
+        };
+
+        let highest_high = high.rolling_max(polars::prelude::RollingOptions {
+            window_size: polars::prelude::Duration::new(period as i64),
             ..Default::default()
         });
-        let lowest_low = low.rolling_min(polars::prelude::RollingOptionsFixedWindow {
-            window_size: self.period,
+        let lowest_low = low.rolling_min(polars::prelude::RollingOptions {
+            window_size: polars::prelude::Duration::new(period as i64),
             ..Default::default()
         });
 
         Ok(((highest_high.clone() - close) / (highest_high - lowest_low)) * dsl::lit(-100.0))
     }
 
-    fn calculate_stateful(&self, args: &[f64], state: &mut dyn Any) -> Result<f64> {
-        let state = state.downcast_mut::<WilliamsRState>().unwrap();
-        let high = args[0];
-        let low = args[1];
-        let close = args[2];
-
-        state.highs.push_back(high);
-        state.lows.push_back(low);
-
-        if state.highs.len() > state.period {
-            state.highs.pop_front();
-            state.lows.pop_front();
-        }
-
-        if state.highs.len() == state.period {
-            let highest_high = state.highs.iter().cloned().fold(f64::NEG_INFINITY, f64::max);
-            let lowest_low = state.lows.iter().cloned().fold(f64::INFINITY, f64::min);
-            if highest_high == lowest_low {
-                return Ok(0.0);
-            }
-            return Ok(((highest_high - close) / (highest_high - lowest_low)) * -100.0);
-        }
-
-        Ok(0.0)
+    fn calculate_stateful(&self, _args: &[f64], _state: &mut dyn Any) -> Result<f64> {
+        bail!("WilliamsR is a vectorized indicator")
     }
 
     fn init_state(&self) -> Box<dyn Any> {
-        Box::new(WilliamsRState {
-            period: self.period,
-            highs: VecDeque::with_capacity(self.period),
-            lows: VecDeque::with_capacity(self.period),
-        })
+        Box::new(())
     }
 
     fn generate_mql5(&self, _args: &[String]) -> String {
@@ -478,10 +375,6 @@ pub struct ROC {
     pub period: usize,
 }
 
-pub struct ROCState {
-    period: usize,
-    prices: VecDeque<f64>,
-}
 
 impl Indicator for ROC {
     fn alias(&self) -> &'static str { "ROC" }
@@ -501,42 +394,30 @@ impl Indicator for ROC {
             IndicatorArg::Series(expr) => expr.clone(),
             _ => bail!("ROC: first arg must be close series"),
         };
+        let period = match &args[1] {
+            IndicatorArg::Scalar(p) => *p as i64,
+            _ => bail!("ROC: second arg must be scalar period"),
+        };
 
-        let prev_close = close.shift(self.period);
+        let prev_close = close.shift(dsl::lit(period));
 
         Ok(((close - prev_close.clone()) / prev_close) * dsl::lit(100.0))
     }
 
-    fn calculate_stateful(&self, args: &[f64], state: &mut dyn Any) -> Result<f64> {
-        let state = state.downcast_mut::<ROCState>().unwrap();
-        let close = args[0];
-        state.prices.push_back(close);
-        if state.prices.len() > state.period {
-            state.prices.pop_front();
-        }
-
-        if state.prices.len() == state.period {
-            let prev_price = state.prices[0];
-            if prev_price == 0.0 {
-                return Ok(0.0);
-            }
-            return Ok(((close - prev_price) / prev_price) * 100.0);
-        }
-
-        Ok(0.0)
+    fn calculate_stateful(&self, _args: &[f64], _state: &mut dyn Any) -> Result<f64> {
+        bail!("ROC is a vectorized indicator")
     }
 
     fn init_state(&self) -> Box<dyn Any> {
-        Box::new(ROCState {
-            period: self.period,
-            prices: VecDeque::with_capacity(self.period),
-        })
+        Box::new(())
     }
 
     fn generate_mql5(&self, _args: &[String]) -> String {
         format!("iMomentum(_Symbol, _Period, {}, PRICE_CLOSE)", self.period)
     }
 }
+
+// --- AC (Accelerator Oscillator) ---
 
 // --- AC (Accelerator Oscillator) ---
 pub struct AC;
@@ -565,46 +446,19 @@ impl Indicator for AC {
         };
 
         let median_price = (high + low) / dsl::lit(2.0);
-        let ao = median_price.rolling_mean(polars::prelude::RollingOptionsFixedWindow { window_size: 5, ..Default::default() }) -
-                 median_price.rolling_mean(polars::prelude::RollingOptionsFixedWindow { window_size: 34, ..Default::default() });
+        let ao = median_price.clone().rolling_mean(polars::prelude::RollingOptions { window_size: polars::prelude::Duration::new(5), ..Default::default() }) -
+                 median_price.rolling_mean(polars::prelude::RollingOptions { window_size: polars::prelude::Duration::new(34), ..Default::default() });
 
-        let ac = ao.clone() - ao.rolling_mean(polars::prelude::RollingOptionsFixedWindow { window_size: 5, ..Default::default() });
+        let ac = ao.clone() - ao.rolling_mean(polars::prelude::RollingOptions { window_size: polars::prelude::Duration::new(5), ..Default::default() });
         Ok(ac)
     }
 
-    fn calculate_stateful(&self, args: &[f64], state: &mut dyn Any) -> Result<f64> {
-        let state = state.downcast_mut::<ACState>().unwrap();
-        let high = args[0];
-        let low = args[1];
-
-        let median_price = (high + low) / 2.0;
-        let ao = state.ao_indicator.calculate_stateful(&[high, low], &mut state.ao_state)?;
-
-        state.ao_buffer.push_back(ao);
-        if state.ao_buffer.len() > 5 {
-            state.ao_buffer.pop_front();
-        }
-
-        if state.ao_buffer.len() < 5 {
-            return Ok(0.0);
-        }
-
-        let sma_ao: f64 = state.ao_buffer.iter().sum::<f64>() / 5.0;
-
-        Ok(ao - sma_ao)
+    fn calculate_stateful(&self, _args: &[f64], _state: &mut dyn Any) -> Result<f64> {
+        bail!("AC is a vectorized indicator")
     }
 
     fn init_state(&self) -> Box<dyn Any> {
-        Box::new(ACState {
-            ao_state: AOState {
-                slow_sma_state: SMAState { period: 34, buffer: VecDeque::with_capacity(34) },
-                fast_sma_state: SMAState { period: 5, buffer: VecDeque::with_capacity(5) },
-                slow_sma_indicator: SMA { period: 34 },
-                fast_sma_indicator: SMA { period: 5 },
-            },
-            ao_indicator: AO,
-            ao_buffer: VecDeque::with_capacity(5),
-        })
+        Box::new(())
     }
 
     fn generate_mql5(&self, _args: &[String]) -> String {
@@ -638,32 +492,18 @@ impl Indicator for AO {
         };
 
         let median_price = (high + low) / dsl::lit(2.0);
-        let ao = median_price.rolling_mean(polars::prelude::RollingOptionsFixedWindow { window_size: 5, ..Default::default() }) -
-                 median_price.rolling_mean(polars::prelude::RollingOptionsFixedWindow { window_size: 34, ..Default::default() });
+        let ao = median_price.clone().rolling_mean(polars::prelude::RollingOptions { window_size: polars::prelude::Duration::new(5), ..Default::default() }) -
+                 median_price.rolling_mean(polars::prelude::RollingOptions { window_size: polars::prelude::Duration::new(34), ..Default::default() });
 
         Ok(ao)
     }
 
-    fn calculate_stateful(&self, args: &[f64], state: &mut dyn Any) -> Result<f64> {
-        let state = state.downcast_mut::<AOState>().unwrap();
-        let high = args[0];
-        let low = args[1];
-
-        let median_price = (high + low) / 2.0;
-
-        let slow_sma = state.slow_sma_indicator.calculate_stateful(&[median_price], &mut state.slow_sma_state)?;
-        let fast_sma = state.fast_sma_indicator.calculate_stateful(&[median_price], &mut state.fast_sma_state)?;
-
-        Ok(fast_sma - slow_sma)
+    fn calculate_stateful(&self, _args: &[f64], _state: &mut dyn Any) -> Result<f64> {
+        bail!("AO is a vectorized indicator")
     }
 
     fn init_state(&self) -> Box<dyn Any> {
-        Box::new(AOState {
-            slow_sma_state: SMAState { period: 34, buffer: VecDeque::with_capacity(34) },
-            fast_sma_state: SMAState { period: 5, buffer: VecDeque::with_capacity(5) },
-            slow_sma_indicator: SMA { period: 34 },
-            fast_sma_indicator: SMA { period: 5 },
-        })
+        Box::new(())
     }
 
     fn generate_mql5(&self, _args: &[String]) -> String {
@@ -676,13 +516,6 @@ pub struct RVI {
     pub period: usize,
 }
 
-pub struct RVIState {
-    period: usize,
-    opens: VecDeque<f64>,
-    highs: VecDeque<f64>,
-    lows: VecDeque<f64>,
-    closes: VecDeque<f64>,
-}
 
 impl Indicator for RVI {
     fn alias(&self) -> &'static str { "RVI" }
@@ -718,53 +551,26 @@ impl Indicator for RVI {
             _ => bail!("RVI: fourth arg must be close series"),
         };
 
-        let numerator = (close.clone() - open.clone()) + 2.0 * (close.shift(1) - open.shift(1)) + 2.0 * (close.shift(2) - open.shift(2)) + (close.shift(3) - open.shift(3));
-        let denominator = (high.clone() - low.clone()) + 2.0 * (high.shift(1) - low.shift(1)) + 2.0 * (high.shift(2) - low.shift(2)) + (high.shift(3) - low.shift(3));
+        let period = match &args[4] {
+            IndicatorArg::Scalar(p) => *p as usize,
+            _ => bail!("RVI: fifth arg must be scalar period"),
+        };
 
-        let rvi = numerator.rolling_sum(polars::prelude::RollingOptionsFixedWindow { window_size: self.period, ..Default::default() }) /
-                  denominator.rolling_sum(polars::prelude::RollingOptionsFixedWindow { window_size: self.period, ..Default::default() });
+        let numerator = (close - open).rolling_sum(polars::prelude::RollingOptions { window_size: polars::prelude::Duration::new(period as i64), ..Default::default() });
+        let denominator = (high - low).rolling_sum(polars::prelude::RollingOptions { window_size: polars::prelude::Duration::new(period as i64), ..Default::default() });
 
-        Ok(rvi)
+        let rvi_num = numerator / dsl::lit(period as f64);
+        let rvi_den = denominator / dsl::lit(period as f64);
+
+        Ok(rvi_num / rvi_den)
     }
 
-    fn calculate_stateful(&self, args: &[f64], state: &mut dyn Any) -> Result<f64> {
-        let state = state.downcast_mut::<RVIState>().unwrap();
-        state.opens.push_back(args[0]);
-        state.highs.push_back(args[1]);
-        state.lows.push_back(args[2]);
-        state.closes.push_back(args[3]);
-
-        if state.opens.len() > self.period {
-            state.opens.pop_front();
-            state.highs.pop_front();
-            state.lows.pop_front();
-            state.closes.pop_front();
-        }
-
-        if state.opens.len() == self.period {
-            let mut num_sum = 0.0;
-            let mut den_sum = 0.0;
-            for i in 3..self.period {
-                num_sum += (state.closes[i] - state.opens[i]) + 2.0 * (state.closes[i-1] - state.opens[i-1]) + 2.0 * (state.closes[i-2] - state.opens[i-2]) + (state.closes[i-3] - state.opens[i-3]);
-                den_sum += (state.highs[i] - state.lows[i]) + 2.0 * (state.highs[i-1] - state.lows[i-1]) + 2.0 * (state.highs[i-2] - state.lows[i-2]) + (state.highs[i-3] - state.lows[i-3]);
-            }
-            if den_sum == 0.0 {
-                return Ok(0.0);
-            }
-            return Ok(num_sum / den_sum);
-        }
-
-        Ok(0.0)
+    fn calculate_stateful(&self, _args: &[f64], _state: &mut dyn Any) -> Result<f64> {
+        bail!("RVI is a vectorized indicator")
     }
 
     fn init_state(&self) -> Box<dyn Any> {
-        Box::new(RVIState {
-            period: self.period,
-            opens: VecDeque::with_capacity(self.period),
-            highs: VecDeque::with_capacity(self.period),
-            lows: VecDeque::with_capacity(self.period),
-            closes: VecDeque::with_capacity(self.period),
-        })
+        Box::new(())
     }
 
     fn generate_mql5(&self, _args: &[String]) -> String {
@@ -777,11 +583,6 @@ pub struct DeMarker {
     pub period: usize,
 }
 
-pub struct DeMarkerState {
-    period: usize,
-    highs: VecDeque<f64>,
-    lows: VecDeque<f64>,
-}
 
 impl Indicator for DeMarker {
     fn alias(&self) -> &'static str { "DeMarker" }
@@ -807,72 +608,38 @@ impl Indicator for DeMarker {
             _ => bail!("DeMarker: second arg must be low series"),
         };
 
-        let de_max = when(high.clone().gt(high.shift(1)))
-            .then(high.clone() - high.shift(1))
+        let period = match &args[2] {
+            IndicatorArg::Scalar(p) => *p as usize,
+            _ => bail!("DeMarker: third arg must be scalar period"),
+        };
+
+        let de_max = when(high.clone().gt(high.shift(dsl::lit(1))))
+            .then(high.clone() - high.shift(dsl::lit(1)))
             .otherwise(dsl::lit(0.0));
 
-        let de_min = when(low.clone().lt(low.shift(1)))
-            .then(low.shift(1) - low.clone())
+        let de_min = when(low.clone().lt(low.shift(dsl::lit(1))))
+            .then(low.shift(dsl::lit(1)) - low.clone())
             .otherwise(dsl::lit(0.0));
 
-        let sma_de_max = de_max.rolling_mean(polars::prelude::RollingOptionsFixedWindow {
-            window_size: self.period,
+        let sma_de_max = de_max.rolling_mean(polars::prelude::RollingOptions {
+            window_size: polars::prelude::Duration::new(period as i64),
             ..Default::default()
         });
 
-        let sma_de_min = de_min.rolling_mean(polars::prelude::RollingOptionsFixedWindow {
-            window_size: self.period,
+        let sma_de_min = de_min.rolling_mean(polars::prelude::RollingOptions {
+            window_size: polars::prelude::Duration::new(period as i64),
             ..Default::default()
         });
 
         Ok(sma_de_max.clone() / (sma_de_max + sma_de_min))
     }
 
-    fn calculate_stateful(&self, args: &[f64], state: &mut dyn Any) -> Result<f64> {
-        let state = state.downcast_mut::<DeMarkerState>().unwrap();
-        let high = args[0];
-        let low = args[1];
-
-        state.highs.push_back(high);
-        state.lows.push_back(low);
-
-        if state.highs.len() > self.period {
-            state.highs.pop_front();
-            state.lows.pop_front();
-        }
-
-        if state.highs.len() == self.period {
-            let mut de_max_sum = 0.0;
-            let mut de_min_sum = 0.0;
-
-            for i in 1..self.period {
-                if state.highs[i] > state.highs[i-1] {
-                    de_max_sum += state.highs[i] - state.highs[i-1];
-                }
-                if state.lows[i] < state.lows[i-1] {
-                    de_min_sum += state.lows[i-1] - state.lows[i];
-                }
-            }
-
-            let sma_de_max = de_max_sum / self.period as f64;
-            let sma_de_min = de_min_sum / self.period as f64;
-
-            if sma_de_max + sma_de_min == 0.0 {
-                return Ok(0.5);
-            }
-
-            return Ok(sma_de_max / (sma_de_max + sma_de_min));
-        }
-
-        Ok(0.5)
+    fn calculate_stateful(&self, _args: &[f64], _state: &mut dyn Any) -> Result<f64> {
+        bail!("DeMarker is a vectorized indicator")
     }
 
     fn init_state(&self) -> Box<dyn Any> {
-        Box::new(DeMarkerState {
-            period: self.period,
-            highs: VecDeque::with_capacity(self.period),
-            lows: VecDeque::with_capacity(self.period),
-        })
+        Box::new(())
     }
 
     fn generate_mql5(&self, _args: &[String]) -> String {
@@ -885,10 +652,6 @@ pub struct Momentum {
     pub period: usize,
 }
 
-pub struct MomentumState {
-    period: usize,
-    prices: VecDeque<f64>,
-}
 
 impl Indicator for Momentum {
     fn alias(&self) -> &'static str { "Momentum" }
@@ -909,30 +672,20 @@ impl Indicator for Momentum {
             _ => bail!("Momentum: first arg must be close series"),
         };
 
-        Ok(close.clone() - close.shift(self.period))
+        let period = match &args[1] {
+            IndicatorArg::Scalar(p) => *p as i64,
+            _ => bail!("Momentum: second arg must be scalar period"),
+        };
+
+        Ok(close.clone() - close.shift(dsl::lit(period)))
     }
 
-    fn calculate_stateful(&self, args: &[f64], state: &mut dyn Any) -> Result<f64> {
-        let state = state.downcast_mut::<MomentumState>().unwrap();
-        let close = args[0];
-        state.prices.push_back(close);
-        if state.prices.len() > self.period {
-            state.prices.pop_front();
-        }
-
-        if state.prices.len() == self.period {
-            let prev_price = state.prices[0];
-            return Ok(close - prev_price);
-        }
-
-        Ok(0.0)
+    fn calculate_stateful(&self, _args: &[f64], _state: &mut dyn Any) -> Result<f64> {
+        bail!("Momentum is a vectorized indicator")
     }
 
     fn init_state(&self) -> Box<dyn Any> {
-        Box::new(MomentumState {
-            period: self.period,
-            prices: VecDeque::with_capacity(self.period),
-        })
+        Box::new(())
     }
 
     fn generate_mql5(&self, _args: &[String]) -> String {
