@@ -58,31 +58,31 @@ This document provides a condensed checklist of all tasks across all phases.
 ## Phase 2: Core Features Implementation (45+ tasks)
 
 ### Configuration System (25 tasks)
-- [ ] 1.1 Create `src/config/traits.rs` with `ConfigSection` trait
-- [ ] 1.2.1 Create `src/config/evolution.rs`
-- [ ] 1.2.2 Implement `EvolutionConfig` struct
-- [ ] 1.2.3 Implement `Default` for `EvolutionConfig`
-- [ ] 1.2.4 Implement `ConfigSection` for `EvolutionConfig`
-- [ ] 1.3.1 Create `src/config/backtesting.rs`
-- [ ] 1.3.2 Implement `BacktestingConfig` struct
-- [ ] 1.3.3 Implement `Default` for `BacktestingConfig`
-- [ ] 1.3.4 Implement `ConfigSection` for `BacktestingConfig`
-- [ ] 1.4.1 Create `src/config/trade_management.rs`
-- [ ] 1.4.2 Implement `TradeManagementConfig` struct
-- [ ] 1.4.3 Implement `Default` for `TradeManagementConfig`
-- [ ] 1.4.4 Implement `ConfigSection` for `TradeManagementConfig`
-- [ ] 1.5.1 Create `src/config/ml.rs`
-- [ ] 1.5.2 Implement `MLConfig` struct
-- [ ] 1.5.3 Implement `Default` for `MLConfig`
-- [ ] 1.5.4 Implement `ConfigSection` for `MLConfig`
-- [ ] 1.6.1 Create `src/config/manager.rs`
-- [ ] 1.6.2 Implement `AppConfig` struct
-- [ ] 1.6.3 Implement `ConfigManager` struct
-- [ ] 1.6.4 Implement `load_from_file()` method
-- [ ] 1.6.5 Implement `save_to_file()` method
-- [ ] 1.7 Update `src/config/mod.rs` with module exports
-- [ ] 1.8 Add `Configuration(String)` variant to `TradebiasError`
-- [ ] 1.9 Add `toml = "0.8"` to `Cargo.toml`
+- [x] 1.1 Create `src/config/traits.rs` with `ConfigSection` trait
+- [x] 1.2.1 Create `src/config/evolution.rs`
+- [x] 1.2.2 Implement `EvolutionConfig` struct
+- [x] 1.2.3 Implement `Default` for `EvolutionConfig`
+- [x] 1.2.4 Implement `ConfigSection` for `EvolutionConfig`
+- [x] 1.3.1 Create `src/config/backtesting.rs`
+- [x] 1.3.2 Implement `BacktestingConfig` struct
+- [x] 1.3.3 Implement `Default` for `BacktestingConfig`
+- [x] 1.3.4 Implement `ConfigSection` for `BacktestingConfig`
+- [x] 1.4.1 Create `src/config/trade_management.rs`
+- [x] 1.4.2 Implement `TradeManagementConfig` struct
+- [x] 1.4.3 Implement `Default` for `TradeManagementConfig`
+- [x] 1.4.4 Implement `ConfigSection` for `TradeManagementConfig`
+- [x] 1.5.1 Create `src/config/ml.rs`
+- [x] 1.5.2 Implement `MLConfig` struct
+- [x] 1.5.3 Implement `Default` for `MLConfig`
+- [x] 1.5.4 Implement `ConfigSection` for `MLConfig`
+- [x] 1.6.1 Create `src/config/manager.rs`
+- [x] 1.6.2 Implement `AppConfig` struct
+- [x] 1.6.3 Implement `ConfigManager` struct
+- [x] 1.6.4 Implement `load_from_file()` method
+- [x] 1.6.5 Implement `save_to_file()` method
+- [x] 1.7 Update `src/config/mod.rs` with module exports
+- [x] 1.8 Add `Configuration(String)` variant to `TradebiasError`
+- [x] 1.9 Add `toml = "0.8"` to `Cargo.toml`
 
 ### Polars DSL Fixes (6 tasks)
 - [ ] 2.1.1 Review Polars method calls in `src/functions/primitives.rs`
