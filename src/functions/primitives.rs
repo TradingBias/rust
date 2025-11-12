@@ -1,6 +1,6 @@
 use anyhow::{bail, Result};
 use polars::prelude::{DataType as PolarsDataType, Duration, EWMOptions, LiteralValue, RollingOptions};
-use polars::lazy::dsl;
+use polars::lazy::dsl::{self, Expr};
 
 pub trait Primitive {
     fn name(&self) -> &'static str;
@@ -99,6 +99,6 @@ impl Primitive for Abs {
         1
     }
     fn execute(&self, args: &[dsl::Expr]) -> Result<dsl::Expr> {
-        Ok(args[0].clone().abs())
+        Ok(dsl::abs(args[0].clone()))
     }
 }
