@@ -4,9 +4,11 @@ use crate::engines::generation::{
     operators::*,
     semantic_mapper::SemanticMapper,
     genome::Genome,
+    ast::StrategyAST,
 };
-use crate::error::TradeBiasError;
+use crate::error::TradebiasError;
 use polars::prelude::*;
+use rand::Rng;
 use rand::SeedableRng;
 use rand::rngs::StdRng;
 use std::collections::HashMap;
@@ -68,7 +70,7 @@ impl EvolutionEngine {
         &mut self,
         data: &DataFrame,
         mut callback: C,
-    ) -> Result<Vec<EliteStrategy>, TradeBiasError> {
+    ) -> Result<Vec<EliteStrategy>, TradebiasError> {
         // Initialize population
         let mut population = self.initialize_population();
 
@@ -89,7 +91,7 @@ impl EvolutionEngine {
                     metrics: metrics.clone(),
                     canonical_string,
                 };
-                self.hall_of_fame.try_add(elite);
+                self.hall_of_fame.try_.add(elite);
             }
 
             // Get best fitness for progress tracking
@@ -130,7 +132,7 @@ impl EvolutionEngine {
         population: &[Genome],
         data: &DataFrame,
         callback: &mut C,
-    ) -> Result<Vec<(Genome, f64, StrategyAST, HashMap<String, f64>)>, TradeBiasError> {
+    ) -> Result<Vec<(Genome, f64, StrategyAST, HashMap<String, f64>)>, TradebiasError> {
         let mut results = Vec::new();
 
         for (i, genome) in population.iter().enumerate() {
@@ -140,7 +142,7 @@ impl EvolutionEngine {
             let ast = self.semantic_mapper.create_strategy_ast(genome)?;
 
             // Run backtest
-            let backtest_result = self.backtester.run(&ast, data)?;
+            let backtest_result = self.backtester.run(ast.as_node(), data)?;
 
             // Calculate fitness
             let fitness = self.calculate_fitness(&backtest_result.metrics);

@@ -1,10 +1,12 @@
 use super::base::DataSplitter;
-use super::types::{DataSplit, SplitConfig, WindowType};
+use super::types::{DataSplit, SplitConfig};
 use crate::error::TradebiasError;
 use polars::prelude::*;
+use chrono::{DateTime, Utc};
 
 pub struct WalkForwardSplitter {
     config: SplitConfig,
+    anchored: bool,
 }
 
 impl WalkForwardSplitter {
@@ -12,27 +14,28 @@ impl WalkForwardSplitter {
         in_sample_pct: f64,
         out_of_sample_pct: f64,
         n_folds: usize,
-        window_type: WindowType,
+        anchored: bool,
     ) -> Self {
         Self {
             config: SplitConfig {
                 in_sample_pct,
                 out_of_sample_pct,
                 n_folds,
-                window_type,
             },
+            anchored,
         }
     }
 }
 
 impl DataSplitter for WalkForwardSplitter {
-    fn split(&self, data: &DataFrame) -> Result<Vec<DataSplit>, TradeBiasError> {
+    fn split(&self, data: &DataFrame) -> Result<Vec<DataSplit>, TradebiasError> {
         let total_rows = data.height();
         let timestamps = data.column("timestamp")?.datetime()?;
 
-        match self.config.window_type {
-            WindowType::Sliding => self.split_sliding(data, total_rows, timestamps),
-            WindowType::Anchored => self.split_anchored(data, total_rows, timestamps),
+        if self.anchored {
+            self.split_anchored(data, total_rows, timestamps)
+        } else {
+            self.split_sliding(data, total_rows, timestamps)
         }
     }
 
@@ -48,7 +51,7 @@ impl WalkForwardSplitter {
         data: &DataFrame,
         total_rows: usize,
         timestamps: &DatetimeChunked,
-    ) -> Result<Vec<DataSplit>, TradeBiasError> {
+    ) -> Result<Vec<DataSplit>, TradebiasError> {
         let window_size = total_rows / (self.config.n_folds + 1);
         let is_size = (window_size as f64 * self.config.in_sample_pct) as usize;
         let oos_size = window_size - is_size;
@@ -87,7 +90,7 @@ impl WalkForwardSplitter {
         data: &DataFrame,
         total_rows: usize,
         timestamps: &DatetimeChunked,
-    ) -> Result<Vec<DataSplit>, TradeBiasError> {
+    ) -> Result<Vec<DataSplit>, TradebiasError> {
         let oos_size = total_rows / (self.config.n_folds + 1);
 
         let mut splits = Vec::new();
@@ -117,4 +120,17 @@ impl WalkForwardSplitter {
 
         Ok(splits)
     }
+}
+
+pub fn get_datetime_at_index(series: &DatetimeChunked, idx: usize) -> Result<DateTime<Utc>, TradebiasError> {
+    let timestamp_ms = series.get(idx).ok_or_else(|| {
+        TradebiasError::Validation(format!("Cannot get timestamp at index {}", idx))
+    })?;
+
+    let timestamp_s = timestamp_ms / 1000;
+    let datetime = DateTime::<Utc>::from_timestamp(timestamp_s, 0).ok_or_else(|| {
+        TradebiasError::Validation(format!("Invalid timestamp: {}", timestamp_ms))
+    })?;
+
+    Ok(datetime)
 }

@@ -1,6 +1,6 @@
 use thiserror::Error;
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, Clone)]
 pub enum TradebiasError {
     #[error("Invalid AST: {0}")]
     InvalidAst(String),

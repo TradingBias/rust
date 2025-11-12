@@ -1,6 +1,7 @@
 use crate::engines::generation::ast::*;
 use crate::functions::registry::FunctionRegistry;
 use crate::error::TradebiasError;
+use crate::types::AstNode;
 
 pub struct LightweightValidator {
     registry: FunctionRegistry,
@@ -13,38 +14,41 @@ impl LightweightValidator {
     }
 
     /// Validate AST structure, types, and arity
-    pub fn validate(&self, ast: &StrategyAST) -> Result<(), TradeBiasError> {
-        match ast {
-            StrategyAST::Rule { condition, action } => {
-                self.validate_node(condition, 0)?;
-                self.validate_node(action, 0)?;
-                Ok(())
-            }
-        }
+    pub fn validate(&self, ast: &StrategyAST) -> Result<(), TradebiasError> {
+        self.validate_node(ast.as_node(), 0)
     }
 
     fn validate_node(&self, node: &AstNode, depth: usize) -> Result<(), TradebiasError> {
         // Depth check
         if depth > self.max_depth {
-            return Err(TradeBiasError::Validation(format!(
+            return Err(TradebiasError::Validation(format!(
                 "AST depth {} exceeds maximum {}",
                 depth, self.max_depth
             )));
         }
 
         match node {
+            AstNode::Rule { condition, action } => {
+                self.validate_node(condition, depth + 1)?;
+                self.validate_node(action, depth + 1)?;
+                Ok(())
+            }
             AstNode::Call { function, args } => {
                 // Function exists?
                 let func = self.registry.get_function(function).ok_or_else(|| {
-                    TradeBiasError::Validation(format!("Unknown function: {}", function))
+                    TradebiasError::Validation(format!("Unknown function: {}", function))
                 })?;
 
                 // Arity matches?
-                if args.len() != func.arity() {
-                    return Err(TradeBiasError::Validation(format!(
+                let arity = match func {
+                    crate::functions::strategy::StrategyFunction::Indicator(i) => i.arity(),
+                    crate::functions::strategy::StrategyFunction::Primitive(p) => p.arity(),
+                };
+                if args.len() != arity {
+                    return Err(TradebiasError::Validation(format!(
                         "Function {} expects {} args, got {}",
                         function,
-                        func.arity(),
+                        arity,
                         args.len()
                     )));
                 }
