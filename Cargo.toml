@@ -7,7 +7,7 @@ edition = "2021"
 config = { version = "0.15.16", features = ["json", "toml"] }
 egui = "0.32.3"
 oxigen = "2.2.2"
-polars = { version = "0.51.0", features = ["lazy", "rolling_window", "ewma", "temporal", "dtype-full"] }
+polars = { version = "0.51.0", features = ["lazy", "rolling_window", "ewma", "temporal", "dtype-full", "cum_agg"] }
 chrono = { version = "0.4.38", features = ["serde"] }
 rand = "0.8.5"
 rayon = "1.11.0"

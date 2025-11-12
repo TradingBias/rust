@@ -1,17 +1,80 @@
 # Phase 0: Polars 0.51.0 Migration Plan
 
 **Created**: November 12, 2025
-**Status**: Ready for implementation
+**Status**: Stage 1 Complete - Tasks 1.1, 1.2, 2.1, 2.2, 2.3 ✅
+**Current Stage**: Ready for Stage 2-4 Implementation
 **Priority**: CRITICAL - Must be completed before Phase 1
 **Blocking**: All other phases depend on this migration
 
+## 📋 TL;DR FOR JULES AI
+
+**Status**: Stage 1 complete (45/86 errors fixed). You need to implement Tasks 2.4-3.11 (Stages 2-4).
+
+**Key Rule**: If `cargo check` fails → STOP, REPORT error, HALT. Do NOT troubleshoot.
+
+**Dependencies**: Task 3.6 must finish before 3.7.
+
+**Must Read First**: `AGENTS.md` (Core Principles 1-3)
+
+**Start Below** at "🤖 INSTRUCTIONS FOR JULES AI" section ⬇️
+
+---
+
 ## Overview
 
-The project has successfully resolved the `raw_table_mut` dependency conflict by upgrading to Polars 0.51.0. However, this upgrade introduces 86 API compatibility errors that must be fixed before any other work can proceed.
+The project has successfully resolved the `raw_table_mut` dependency conflict by upgrading to Polars 0.51.0. However, this upgrade introduced 86 API compatibility errors.
 
 **Dependency Status**: ✅ **SOLVED** - hashbrown conflict resolved
-**Code Status**: ⚠️ **86 compilation errors** due to Polars API breaking changes
-**Goal**: Update all project code to be compatible with Polars 0.51.0 API
+**Stage 1 Status**: ✅ **COMPLETED** - Tasks 1.1, 1.2, 2.1, 2.2, 2.3 implemented
+**Remaining Work**: Tasks 2.4 through 3.11 (approx. 41 errors remaining)
+**Goal**: Complete remaining Polars 0.51.0 API compatibility fixes
+
+---
+
+## 🤖 INSTRUCTIONS FOR JULES AI
+
+**IMPORTANT**: Before implementing any task, you MUST read and follow the core principles in `AGENTS.md`:
+
+### Core Principles Summary (see AGENTS.md for full details):
+
+1. **Ground-Truth First**: Always check the actual code (trait definitions, imports, types) before implementing. The code is your source of truth, not this documentation.
+
+2. **Incremental Validation**: Make small changes, run `cargo check` after EACH logical change, do not proceed until it passes.
+
+3. **Execute, Verify, Report, and Halt**:
+   - Execute the instruction exactly as given
+   - Verify success/failure with `cargo check`
+   - Report the precise outcome
+   - **HALT and STOP** - Do NOT try to fix errors yourself
+   - Wait for next explicit instruction
+
+### Implementation Instructions:
+
+**Task**: Implement all remaining tasks (Tasks 2.4 through 3.11) listed below.
+
+**Process**:
+1. Read each task description carefully
+2. **BEFORE IMPLEMENTING**: Check the actual code (trait definitions, imports, types) - use Ground-Truth First principle
+3. Implement the fix as described
+4. After implementing each task (or small task group), run `cargo check`
+5. **IF cargo check PASSES**: Continue to next task
+6. **IF cargo check FAILS WITH ANY ERROR**:
+   ```
+   ⛔ STOP IMMEDIATELY
+   📋 REPORT the exact error message (copy-paste full error)
+   🚫 DO NOT attempt to fix, debug, or troubleshoot
+   🚫 DO NOT proceed to the next task
+   ⏸️  HALT and await further instructions from human
+   ```
+
+**Important Notes**:
+- Task 3.7 (StrategyAST imports) depends on Task 3.6 (module errors) being fixed first
+- Follow the Incremental Validation principle: small changes, frequent `cargo check` runs
+- Always verify trait signatures and import paths in the actual code before implementing
+- The task descriptions are guides based on Polars 0.41→0.51 changes, but actual code may differ
+- You are an **Implementer**, not a Problem Solver - execute instructions, verify, report, halt
+
+---
 
 ## Error Breakdown
 
@@ -273,39 +336,24 @@ grep -rn "dsl::abs" src/ --include="*.rs"
 
 ---
 
-#### Task 2.4: Fix `cum_sum()` Method (2 files)
+#### Task 2.4: Fix `cum_sum()` Method (2 files) ✅ **COMPLETED**
 **Error**: `error[E0599]: no method named 'cum_sum' found for enum 'polars::prelude::Expr'`
 
-**Root Cause**: The `cum_sum()` method may have been renamed or moved in Polars 0.51.0.
+**Root Cause**: The `cum_sum()` method requires the `cum_agg` feature flag in Polars 0.51.0, which was not enabled in Cargo.toml.
 
-**Investigation Needed**: Check Polars 0.51.0 docs for cumulative sum API.
+**Solution**:
+Add the `cum_agg` feature to Polars in Cargo.toml:
 
-**Possible Solution Patterns**:
-```rust
-// OLD (polars 0.41):
-expr.cum_sum(false)
-
-// NEW (polars 0.51) - Possible new name:
-expr.cumsum(false)
-// OR
-expr.cumulative_sum()
-// OR check if it's now cum_sum with different signature
+```toml
+polars = { version = "0.51.0", features = ["lazy", "rolling_window", "ewma", "temporal", "dtype-full", "cum_agg"] }
 ```
 
-**Files to Fix**:
-1-2. (Files using `.cum_sum()`)
+**Files Fixed**:
+1. `src/functions/indicators/volume.rs` (lines 72, 365)
 
-**Search Command**:
-```bash
-grep -rn "\.cum_sum(" src/ --include="*.rs"
-```
+**Note**: The method name remains `cum_sum(false)` - no code changes needed, only the feature flag.
 
-**Action Required**:
-1. Check Polars 0.51.0 documentation for cumulative sum
-2. Update method name if changed
-3. Update parameters if signature changed
-
-**Verification**: Run `cargo build 2>&1 | grep "cum_sum"` should return 0 errors
+**Verification**: ✅ Run `cargo check 2>&1 | grep "cum_sum"` returns 0 errors
 
 ---
 
@@ -654,35 +702,31 @@ let vec: Vec<Arc<dyn Indicator>> = iter.map(|x| Arc::new((**x).clone())).collect
 
 ## Implementation Order
 
-Execute tasks in this order to minimize cascading errors:
+### **Stage 1: Core API Changes** ✅ **COMPLETED**
+1. ✅ Task 1.1 - Add `output_type` to all indicators (30 files)
+2. ✅ Task 1.2 - Fix `Series::new()` signatures (15 files)
+3. ✅ Task 2.1 - Fix datetime accessors (4 files)
+4. ✅ Task 2.2 - Fix `RollingOptions` imports (4 files)
+5. ✅ Task 2.3 - Fix `abs()` method (3 files)
 
-### **Stage 1: Core API Changes** (Estimated: 2-3 hours)
-1. Task 1.1 - Add `output_type` to all indicators (30 files)
-2. Task 1.2 - Fix `Series::new()` signatures (15 files)
-3. Task 2.2 - Fix `RollingOptions` imports (4 files)
-
-**Checkpoint**: Run `cargo build` - should reduce errors from 86 to ~40
-
-### **Stage 2: Method Changes** (Estimated: 1-2 hours)
-4. Task 2.1 - Fix datetime accessors (4 files)
-5. Task 2.3 - Fix `abs()` method (3 files)
+### **Stage 2: Remaining Method Changes** ⚠️ **TO BE IMPLEMENTED BY JULES**
 6. Task 2.4 - Fix `cum_sum()` method (2 files)
 7. Task 2.5 - Fix `diff()` method (1 file)
 8. Task 2.6 - Fix `LiteralValue::Int64` (2 files)
 
-**Checkpoint**: Run `cargo build` - should reduce errors from ~40 to ~20
+**Checkpoint**: Run `cargo check` after implementing these tasks
 
-### **Stage 3: Structural Changes** (Estimated: 1-2 hours)
+### **Stage 3: Structural Changes** ⚠️ **TO BE IMPLEMENTED BY JULES**
 9. Task 2.7 - Add `window_type` field (2 files)
-10. Task 3.2 - Fix `DataFrame::new()` (1 file)
-11. Task 3.3 - Fix cache type mismatch (1 file)
-12. Task 3.6 - Fix module errors (2 files)
-13. Task 3.7 - Fix StrategyAST imports (2 files)
+10. Task 3.1 - Fix capitalization (3 files)
+11. Task 3.2 - Fix `DataFrame::new()` (1 file)
+12. Task 3.3 - Fix cache type mismatch (1 file)
+13. Task 3.6 - Fix module errors (2 files) ⚠️ **MUST BE DONE BEFORE 3.7**
+14. Task 3.7 - Fix StrategyAST imports (2 files) ⚠️ **DEPENDS ON 3.6**
 
-**Checkpoint**: Run `cargo build` - should reduce errors from ~20 to ~10
+**Checkpoint**: Run `cargo check` after implementing these tasks
 
-### **Stage 4: Cleanup** (Estimated: 1 hour)
-14. Task 3.1 - Fix capitalization (3 files)
+### **Stage 4: Cleanup** ⚠️ **TO BE IMPLEMENTED BY JULES**
 15. Task 3.4 - Fix PlSmallStr reference (1 file)
 16. Task 3.5 - Fix trait bounds (6 files)
 17. Task 3.8 - Fix borrow checker issues (1 file)
@@ -690,7 +734,21 @@ Execute tasks in this order to minimize cascading errors:
 19. Task 3.10 - Fix ambiguous types (2 files)
 20. Task 3.11 - Fix iterator type (1 file)
 
-**Final Checkpoint**: Run `cargo build` - should compile successfully ✅
+**Final Checkpoint**: Run `cargo check` - should compile successfully ✅
+
+---
+
+## 🤖 JULES: IMPLEMENTATION STRATEGY
+
+**Recommended Approach**: Implement tasks in stage order (2 → 3 → 4), running `cargo check` after each stage.
+
+**Critical Dependency**: Task 3.6 MUST complete successfully before Task 3.7.
+
+**Remember**:
+- If `cargo check` fails at ANY point → STOP, REPORT, HALT
+- Do not try to debug or fix unexpected errors
+- Do not deviate from the task descriptions
+- Verify all types and imports in actual code (Ground-Truth First)
 
 ---
 
@@ -769,29 +827,27 @@ After completing each stage:
 
 ## Status Tracking
 
-Track progress by marking tasks as you complete them:
+- [x] **Stage 1: Core API Changes** ✅ **COMPLETED** (~45 errors fixed)
+  - [x] Task 1.1 - output_type implementations (30 errors)
+  - [x] Task 1.2 - Series::new() fixes (15 errors)
+  - [x] Task 2.1 - Datetime accessors (4 errors)
+  - [x] Task 2.2 - RollingOptions imports (4 errors)
+  - [x] Task 2.3 - abs() method (3 errors)
 
-- [ ] **Stage 1: Core API Changes** (45 errors)
-  - [ ] Task 1.1 - output_type implementations (30 errors)
-  - [ ] Task 1.2 - Series::new() fixes (15 errors)
-  - [ ] Task 2.2 - RollingOptions imports (4 errors)
-
-- [ ] **Stage 2: Method Changes** (15 errors)
-  - [ ] Task 2.1 - Datetime accessors (4 errors)
-  - [ ] Task 2.3 - abs() method (3 errors)
-  - [ ] Task 2.4 - cum_sum() method (2 errors)
+- [ ] **Stage 2: Remaining Method Changes** ⚠️ **IN PROGRESS** (~3 errors)
+  - [x] Task 2.4 - cum_sum() method (2 errors) ✅ **COMPLETED**
   - [ ] Task 2.5 - diff() method (1 error)
   - [ ] Task 2.6 - LiteralValue::Int64 (2 errors)
 
-- [ ] **Stage 3: Structural Changes** (10 errors)
+- [ ] **Stage 3: Structural Changes** ⚠️ **JULES TO IMPLEMENT** (~10 errors)
   - [ ] Task 2.7 - window_type field (2 errors)
+  - [ ] Task 3.1 - Capitalization (3 errors)
   - [ ] Task 3.2 - DataFrame::new() (1 error)
   - [ ] Task 3.3 - Cache type (1 error)
-  - [ ] Task 3.6 - Module errors (2 errors)
-  - [ ] Task 3.7 - StrategyAST imports (2 errors)
+  - [ ] Task 3.6 - Module errors (2 errors) ⚠️ **Do first**
+  - [ ] Task 3.7 - StrategyAST imports (2 errors) ⚠️ **After 3.6**
 
-- [ ] **Stage 4: Cleanup** (16 errors)
-  - [ ] Task 3.1 - Capitalization (3 errors)
+- [ ] **Stage 4: Cleanup** ⚠️ **JULES TO IMPLEMENT** (~14 errors)
   - [ ] Task 3.4 - PlSmallStr reference (1 error)
   - [ ] Task 3.5 - Trait bounds (6 errors)
   - [ ] Task 3.8 - Borrow checker (1 error)
@@ -799,10 +855,28 @@ Track progress by marking tasks as you complete them:
   - [ ] Task 3.10 - Ambiguous types (2 errors)
   - [ ] Task 3.11 - Iterator type (1 error)
 
-**Final Status**: ⚠️ 86 errors remaining (No tasks implemented yet) → ✅ 0 errors (target)
+**Progress**: ✅ ~45 errors fixed | ⚠️ ~41 errors remaining → ✅ 0 errors (target)
 
 ---
 
-**Last Updated**: 2025-11-12
-**Plan Version**: 1.0
-**Next Review**: After Stage 1 completion
+**Last Updated**: 2025-11-13
+**Plan Version**: 2.0 (Updated for Jules AI implementation)
+**Stage 1**: ✅ Completed (Tasks 1.1, 1.2, 2.1, 2.2, 2.3)
+**Next Review**: After Jules completes remaining stages
+
+---
+
+## 🤖 JULES: QUICK START
+
+**Your Mission**: Implement Tasks 2.4 through 3.11 (Stages 2-4)
+
+**Critical Instructions**:
+1. Read `AGENTS.md` - follow all three core principles
+2. Implement tasks in stage order (Stage 2 → 3 → 4)
+3. Run `cargo check` after each stage
+4. **IF ANY ERROR**: STOP, REPORT exact error, HALT (do not fix)
+5. Task 3.6 must complete before Task 3.7
+
+**Ground-Truth Reminder**: Check actual trait definitions, imports, and types in the code before implementing. This document is a guide, not gospel.
+
+**Start with**: Task 2.4 (cum_sum method) below ⬇️
