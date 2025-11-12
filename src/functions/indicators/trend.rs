@@ -6,7 +6,7 @@ use crate::{
     types::{DataType, ScaleType},
 };
 use anyhow::{bail, Result};
-use polars::{lazy::dsl, prelude::{lit, DataType as PolarsDataType}};
+use polars::{lazy::dsl, prelude::{lit}};
 use std::{any::Any, collections::VecDeque};
 
 // --- SMA ---
@@ -25,8 +25,8 @@ impl Indicator for SMA {
         "SMA"
     }
 
-    fn output_type(&self) -> PolarsDataType {
-        PolarsDataType::Float64
+    fn output_type(&self) -> types::DataType {
+        types::DataType::Float64
     }
     fn ui_name(&self) -> &'static str {
         "Simple Moving Average"
@@ -87,8 +87,8 @@ impl Indicator for EMA {
         "EMA"
     }
 
-    fn output_type(&self) -> PolarsDataType {
-        PolarsDataType::Float64
+    fn output_type(&self) -> types::DataType {
+        types::DataType::Float64
     }
     fn ui_name(&self) -> &'static str {
         "Exponential Moving Average"
@@ -155,8 +155,8 @@ impl Indicator for MACD {
         "MACD"
     }
 
-    fn output_type(&self) -> PolarsDataType {
-        PolarsDataType::Float64
+    fn output_type(&self) -> types::DataType {
+        types::DataType::Float64
     }
     fn ui_name(&self) -> &'static str {
         "Moving Average Convergence/Divergence"
@@ -237,8 +237,8 @@ impl Indicator for BollingerBands {
         "BB"
     }
 
-    fn output_type(&self) -> PolarsDataType {
-        PolarsDataType::Float64
+    fn output_type(&self) -> types::DataType {
+        types::DataType::Float64
     }
     fn ui_name(&self) -> &'static str {
         "Bollinger Bands"
@@ -311,8 +311,8 @@ impl Indicator for Envelopes {
         "Envelopes"
     }
 
-    fn output_type(&self) -> PolarsDataType {
-        PolarsDataType::Float64
+    fn output_type(&self) -> types::DataType {
+        types::DataType::Float64
     }
     fn ui_name(&self) -> &'static str {
         "Envelopes"
@@ -389,8 +389,8 @@ impl Indicator for SAR {
         "SAR"
     }
 
-    fn output_type(&self) -> PolarsDataType {
-        PolarsDataType::Float64
+    fn output_type(&self) -> types::DataType {
+        types::DataType::Float64
     }
     fn ui_name(&self) -> &'static str {
         "Parabolic SAR"
@@ -484,8 +484,8 @@ impl Indicator for Bears {
         "Bears"
     }
 
-    fn output_type(&self) -> PolarsDataType {
-        PolarsDataType::Float64
+    fn output_type(&self) -> types::DataType {
+        types::DataType::Float64
     }
     fn ui_name(&self) -> &'static str {
         "Bears Power"
@@ -557,8 +557,8 @@ impl Indicator for Bulls {
         "Bulls"
     }
 
-    fn output_type(&self) -> PolarsDataType {
-        PolarsDataType::Float64
+    fn output_type(&self) -> types::DataType {
+        types::DataType::Float64
     }
     fn ui_name(&self) -> &'static str {
         "Bulls Power"
@@ -629,8 +629,8 @@ impl Indicator for DEMA {
         "DEMA"
     }
 
-    fn output_type(&self) -> PolarsDataType {
-        PolarsDataType::Float64
+    fn output_type(&self) -> types::DataType {
+        types::DataType::Float64
     }
     fn ui_name(&self) -> &'static str {
         "Double Exponential Moving Average"
@@ -698,8 +698,8 @@ impl Indicator for TEMA {
         "TEMA"
     }
 
-    fn output_type(&self) -> PolarsDataType {
-        PolarsDataType::Float64
+    fn output_type(&self) -> types::DataType {
+        types::DataType::Float64
     }
     fn ui_name(&self) -> &'static str {
         "Triple Exponential Moving Average"
@@ -771,8 +771,8 @@ impl Indicator for TriX {
         "TriX"
     }
 
-    fn output_type(&self) -> PolarsDataType {
-        PolarsDataType::Float64
+    fn output_type(&self) -> types::DataType {
+        types::DataType::Float64
     }
     fn ui_name(&self) -> &'static str {
         "Triple Exponential Average"

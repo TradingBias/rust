@@ -104,7 +104,7 @@ impl FeatureEngineer {
                 }
             }
 
-            let series = Series::new(&format!("return_{}", window), returns);
+            let series = Series::new(format!("return_{}", window).into(), returns);
             features.push(series);
         }
 
@@ -127,7 +127,7 @@ impl FeatureEngineer {
                 }
             }
 
-            let series = Series::new(&format!("distance_sma_{}", window), distances);
+            let series = Series::new(format!("distance_sma_{}", window).into(), distances);
             features.push(series);
         }
 
@@ -155,7 +155,7 @@ impl FeatureEngineer {
             }
         }
 
-        features.push(Series::new("rsi_14", rsi_values));
+        features.push(Series::new("rsi_14".into(), rsi_values));
 
         // Rate of change
         for &window in &self.config.lookback_windows {
@@ -176,7 +176,7 @@ impl FeatureEngineer {
                 }
             }
 
-            features.push(Series::new(&format!("roc_{}", window), roc_values));
+            features.push(Series::new(format!("roc_{}", window).into(), roc_values));
         }
 
         Ok(features)
@@ -205,7 +205,7 @@ impl FeatureEngineer {
                 }
             }
 
-            features.push(Series::new(&format!("volatility_{}", window), vol_values));
+            features.push(Series::new(format!("volatility_{}", window).into(), vol_values));
         }
 
         // Average True Range (ATR)
@@ -221,7 +221,7 @@ impl FeatureEngineer {
             }
         }
 
-        features.push(Series::new("atr_14", atr_values));
+        features.push(Series::new("atr_14".into(), atr_values));
 
         Ok(features)
     }
@@ -253,7 +253,7 @@ impl FeatureEngineer {
                 }
             }
 
-            features.push(Series::new(&format!("volume_ratio_{}", window), ratios));
+            features.push(Series::new(format!("volume_ratio_{}", window).into(), ratios));
         }
 
         Ok(features)
@@ -286,8 +286,8 @@ impl FeatureEngineer {
             }
         }
 
-        features.push(Series::new("hour_of_day", hours));
-        features.push(Series::new("day_of_week", days_of_week));
+        features.push(Series::new("hour_of_day".into(), hours));
+        features.push(Series::new("day_of_week".into(), days_of_week));
 
         Ok(features)
     }

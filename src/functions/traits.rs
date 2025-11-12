@@ -71,6 +71,7 @@ pub trait Primitive: Send + Sync {
     fn arity(&self) -> usize;
     fn input_types(&self) -> Vec<DataType>;
     fn output_type(&self) -> DataType;
+    fn output_type(&self) -> DataType;
     
     /// Execute primitive (always vectorized)
     fn execute(&self, args: &[Expr]) -> Result<Expr>;

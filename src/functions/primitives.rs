@@ -1,5 +1,5 @@
 use anyhow::{bail, Result};
-use polars::prelude::{DataType as PolarsDataType, Duration, EWMOptions, LiteralValue, RollingOptions};
+use polars::prelude::{Duration, EWMOptions, LiteralValue, RollingOptionsFixedWindow};
 use polars::lazy::dsl::{self, Expr};
 
 pub trait Primitive {
@@ -20,8 +20,13 @@ pub struct MovingAverage {
 }
 
 impl Primitive for MovingAverage {
-    fn name(&self) -> &'static str { "MA" }
+    fn ui_name(&self) -> &'static str { "Moving Average" }
+    fn alias(&self) -> &'static str { "MA" }
     fn arity(&self) -> usize { 2 } // series, period
+    fn input_types(&self) -> Vec<crate::types::DataType> {
+        vec![crate::types::DataType::NumericSeries, crate::types::DataType::Integer]
+    }
+    fn output_type(&self) -> crate::types::DataType { crate::types::DataType::NumericSeries }
     fn execute(&self, args: &[dsl::Expr]) -> Result<dsl::Expr> {
         let series = args[0].clone();
         let period = match &args[1] {
@@ -31,8 +36,8 @@ impl Primitive for MovingAverage {
 
         match self.method {
             MAMethod::Simple => {
-                let options = RollingOptions {
-                    window_size: Duration::parse(&format!("{}i", period)),
+                let options = RollingOptionsFixedWindow {
+                    window_size: period as u32,
                     min_periods: period,
                     ..Default::default()
                 };
@@ -49,56 +54,95 @@ impl Primitive for MovingAverage {
             }
         }
     }
+    fn generate_mql5(&self, args: &[String]) -> String {
+        let period_str = match &args[1] {
+            s if s.parse::<i64>().is_ok() => s.clone(),
+            _ => "0".to_string(), // Default or placeholder if not a direct literal
+        };
+        format!("iMA({}, {}, {}, 0, MODE_SMA, {}, {})", args[0], args[1], period_str, args[2], args[3])
+    }
 }
 
 // --- Standard Deviation ---
 pub struct StdDev;
 
 impl Primitive for StdDev {
-    fn name(&self) -> &'static str { "StdDev" }
+    fn ui_name(&self) -> &'static str { "Standard Deviation" }
+    fn alias(&self) -> &'static str { "StdDev" }
     fn arity(&self) -> usize { 2 } // series, period
+    fn input_types(&self) -> Vec<crate::types::DataType> {
+        vec![crate::types::DataType::NumericSeries, crate::types::DataType::Integer]
+    }
+    fn output_type(&self) -> crate::types::DataType { crate::types::DataType::NumericSeries }
     fn execute(&self, args: &[dsl::Expr]) -> Result<dsl::Expr> {
         let series = args[0].clone();
         let period = match &args[1] {
             dsl::Expr::Literal(LiteralValue::Int64(p)) => *p as usize,
             _ => bail!("StdDev period must be an integer literal"),
         };
-        let options = RollingOptions {
-            window_size: Duration::parse(&format!("{}i", period)),
+        let options = RollingOptionsFixedWindow {
+            window_size: period as u32,
             min_periods: period,
             ..Default::default()
         };
         Ok(series.rolling_std(options))
+    }
+    fn generate_mql5(&self, args: &[String]) -> String {
+        let period_str = match &args[1] {
+            s if s.parse::<i64>().is_ok() => s.clone(),
+            _ => "0".to_string(), // Default or placeholder if not a direct literal
+        };
+        format!("iStdDev({}, {}, {}, 0, MODE_SMA, PRICE_CLOSE)", args[0], args[1], period_str)
     }
 }
 
 // --- Logical operators ---
 pub struct And;
 impl Primitive for And {
-    fn name(&self) -> &'static str { "And" }
+    fn ui_name(&self) -> &'static str { "Logical AND" }
+    fn alias(&self) -> &'static str { "And" }
     fn arity(&self) -> usize { 2 } // bool_series, bool_series
+    fn input_types(&self) -> Vec<crate::types::DataType> {
+        vec![crate::types::DataType::BoolSeries, crate::types::DataType::BoolSeries]
+    }
+    fn output_type(&self) -> crate::types::DataType { crate::types::DataType::BoolSeries }
     fn execute(&self, args: &[dsl::Expr]) -> Result<dsl::Expr> {
         Ok(args[0].clone().and(args[1].clone()))
+    }
+    fn generate_mql5(&self, args: &[String]) -> String {
+        format!("({} && {})", args[0], args[1])
     }
 }
 
 pub struct Or;
 impl Primitive for Or {
-    fn name(&self) -> &'static str { "Or" }
+    fn ui_name(&self) -> &'static str { "Logical OR" }
+    fn alias(&self) -> &'static str { "Or" }
     fn arity(&self) -> usize { 2 } // bool_series, bool_series
+    fn input_types(&self) -> Vec<crate::types::DataType> {
+        vec![crate::types::DataType::BoolSeries, crate::types::DataType::BoolSeries]
+    }
+    fn output_type(&self) -> crate::types::DataType { crate::types::DataType::BoolSeries }
     fn execute(&self, args: &[dsl::Expr]) -> Result<dsl::Expr> {
         Ok(args[0].clone().or(args[1].clone()))
+    }
+    fn generate_mql5(&self, args: &[String]) -> String {
+        format!("({} || {})", args[0], args[1])
     }
 }
 pub struct Abs;
 impl Primitive for Abs {
-    fn name(&self) -> &'static str {
-        "Abs"
+    fn ui_name(&self) -> &'static str { "Absolute Value" }
+    fn alias(&self) -> &'static str { "Abs" }
+    fn arity(&self) -> usize { 1 }
+    fn input_types(&self) -> Vec<crate::types::DataType> {
+        vec![crate::types::DataType::NumericSeries]
     }
-    fn arity(&self) -> usize {
-        1
-    }
+    fn output_type(&self) -> crate::types::DataType { crate::types::DataType::NumericSeries }
     fn execute(&self, args: &[dsl::Expr]) -> Result<dsl::Expr> {
         Ok(dsl::abs(args[0].clone()))
+    }
+    fn generate_mql5(&self, args: &[String]) -> String {
+        format!("MathAbs({})", args[0])
     }
 }

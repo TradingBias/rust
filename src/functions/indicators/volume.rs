@@ -5,7 +5,7 @@ use crate::{
 use anyhow::{bail, Result};
 use polars::{
     lazy::dsl::{self, when},
-    prelude::{lit, Duration, EWMOptions, RollingOptions, DataType as PolarsDataType},
+    prelude::{lit, Duration, EWMOptions, RollingOptionsFixedWindow},
 };
 
 // --- OBV (On-Balance Volume) ---
@@ -22,8 +22,8 @@ impl Indicator for OBV {
         "OBV"
     }
 
-    fn output_type(&self) -> PolarsDataType {
-        PolarsDataType::Float64
+    fn output_type(&self) -> types::DataType {
+        types::DataType::Float64
     }
     fn ui_name(&self) -> &'static str {
         "On-Balance Volume"
@@ -89,8 +89,8 @@ impl Indicator for MFI {
         "MFI"
     }
 
-    fn output_type(&self) -> PolarsDataType {
-        PolarsDataType::Float64
+    fn output_type(&self) -> types::DataType {
+        types::DataType::Float64
     }
     fn ui_name(&self) -> &'static str {
         "Money Flow Index"
@@ -153,8 +153,8 @@ impl VectorizedIndicator for MFI {
             .then(raw_money_flow)
             .otherwise(dsl::lit(0.0));
 
-        let options = RollingOptions {
-            window_size: Duration::parse(&format!("{}i", self.period)),
+        let options = RollingOptionsFixedWindow {
+            window_size: self.period as u32,
             min_periods: self.period,
             ..Default::default()
         };
@@ -185,8 +185,8 @@ impl Indicator for Force {
         "Force"
     }
 
-    fn output_type(&self) -> PolarsDataType {
-        PolarsDataType::Float64
+    fn output_type(&self) -> types::DataType {
+        types::DataType::Float64
     }
     fn ui_name(&self) -> &'static str {
         "Force Index"
@@ -253,8 +253,8 @@ impl Indicator for Volumes {
         "Volumes"
     }
 
-    fn output_type(&self) -> PolarsDataType {
-        PolarsDataType::Int64
+    fn output_type(&self) -> types::DataType {
+        types::DataType::Integer
     }
     fn ui_name(&self) -> &'static str {
         "Volumes"
@@ -308,8 +308,8 @@ impl Indicator for Chaikin {
         "Chaikin"
     }
 
-    fn output_type(&self) -> PolarsDataType {
-        PolarsDataType::Float64
+    fn output_type(&self) -> types::DataType {
+        types::DataType::Float64
     }
     fn ui_name(&self) -> &'static str {
         "Chaikin Oscillator"
@@ -395,8 +395,8 @@ impl Indicator for BWMFI {
         "BWMFI"
     }
 
-    fn output_type(&self) -> PolarsDataType {
-        PolarsDataType::Float64
+    fn output_type(&self) -> types::DataType {
+        types::DataType::Float64
     }
     fn ui_name(&self) -> &'static str {
         "Market Facilitation Index"

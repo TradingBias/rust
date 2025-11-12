@@ -43,8 +43,14 @@ Total: **86 compilation errors** across the following categories:
 **Solution Pattern**:
 ```rust
 // Add this method to every indicator implementation
-fn output_type(&self) -> PolarsDataType {
-    PolarsDataType::Float64  // or appropriate type for the indicator
+// Note: Use types::DataType (from crate::types), NOT PolarsDataType
+fn output_type(&self) -> types::DataType {
+    types::DataType::Float64  // or appropriate type for the indicator
+}
+// Or if types::DataType is imported:
+use crate::types::DataType;
+fn output_type(&self) -> DataType {
+    DataType::Float64
 }
 ```
 
@@ -793,7 +799,7 @@ Track progress by marking tasks as you complete them:
   - [ ] Task 3.10 - Ambiguous types (2 errors)
   - [ ] Task 3.11 - Iterator type (1 error)
 
-**Final Status**: ⚠️ 86 errors remaining → ✅ 0 errors (target)
+**Final Status**: ⚠️ 86 errors remaining (No tasks implemented yet) → ✅ 0 errors (target)
 
 ---
 
