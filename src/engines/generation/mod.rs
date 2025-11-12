@@ -8,9 +8,9 @@ pub mod gene_consumer;
 pub mod diversity_validator;
 pub mod lightweight_validator;
 pub mod optimisation;
+pub mod genome;
 
-pub type Genome = Vec<u32>;
-
+pub use genome::Genome;
 pub use ast::*;
 pub use hall_of_fame::{HallOfFame, EliteStrategy};
 pub use evolution_engine::{EvolutionEngine, EvolutionConfig, ProgressCallback};

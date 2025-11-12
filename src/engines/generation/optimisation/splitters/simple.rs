@@ -1,5 +1,5 @@
 use super::base::DataSplitter;
-use super::types::{DataSplit, SplitConfig, WindowType};
+use super::types::{DataSplit, SplitConfig};
 use crate::error::TradebiasError;
 use polars::prelude::*;
 use chrono::{DateTime, Utc};
@@ -15,19 +15,18 @@ impl SimpleSplitter {
                 in_sample_pct,
                 out_of_sample_pct: 1.0 - in_sample_pct,
                 n_folds: 1,
-                window_type: WindowType::Sliding,
             },
         }
     }
 }
 
 impl DataSplitter for SimpleSplitter {
-    fn split(&self, data: &DataFrame) -> Result<Vec<DataSplit>, TradeBiasError> {
+    fn split(&self, data: &DataFrame) -> Result<Vec<DataSplit>, TradebiasError> {
         let total_rows = data.height();
         let is_rows = (total_rows as f64 * self.config.in_sample_pct) as usize;
 
         if is_rows == 0 || is_rows >= total_rows {
-            return Err(TradeBiasError::Validation(
+            return Err(TradebiasError::Validation(
                 "Invalid split: in-sample size is 0 or exceeds data size".to_string(),
             ));
         }
@@ -59,14 +58,14 @@ impl DataSplitter for SimpleSplitter {
     }
 }
 
-pub fn get_datetime_at_index(series: &DatetimeChunked, idx: usize) -> Result<DateTime<Utc>, TradeBiasError> {
+pub fn get_datetime_at_index(series: &DatetimeChunked, idx: usize) -> Result<DateTime<Utc>, TradebiasError> {
     let timestamp_ms = series.get(idx).ok_or_else(|| {
-        TradeBiasError::Validation(format!("Cannot get timestamp at index {}", idx))
+        TradebiasError::Validation(format!("Cannot get timestamp at index {}", idx))
     })?;
 
     let timestamp_s = timestamp_ms / 1000;
     let datetime = DateTime::<Utc>::from_timestamp(timestamp_s, 0).ok_or_else(|| {
-        TradeBiasError::Validation(format!("Invalid timestamp: {}", timestamp_ms))
+        TradebiasError::Validation(format!("Invalid timestamp: {}", timestamp_ms))
     })?;
 
     Ok(datetime)

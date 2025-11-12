@@ -1,4 +1,7 @@
-use crate::engines::generation::{gene_consumer::GeneConsumer, ast::StrategyAST};
+use crate::engines::generation::{
+    gene_consumer::GeneConsumer,
+    ast::{StrategyAST, StrategyMetadata},
+};
 use crate::functions::registry::FunctionRegistry;
 use crate::types::{AstNode, DataType, Value as ConstValue};
 use crate::error::TradebiasError;
@@ -42,9 +45,14 @@ impl SemanticMapper {
             }
         };
 
-        Ok(StrategyAST::Rule {
+        let root = AstNode::Rule {
             condition: Box::new(condition),
             action: Box::new(action),
+        };
+
+        Ok(StrategyAST {
+            root: Box::new(root),
+            metadata: StrategyMetadata::default(),
         })
     }
 
@@ -87,10 +95,10 @@ impl SemanticMapper {
         let func = &functions[func_idx];
 
         // Build arguments
-        let args = self.build_arguments(func.input_types(), consumer, depth + 1)?;
+        let args = self.build_arguments(func, consumer, depth + 1)?;
 
         Ok(AstNode::Call {
-            function: func.alias().to_string(),
+            function: func.name().to_string(),
             args,
         })
     }
@@ -125,7 +133,7 @@ impl SemanticMapper {
         let func = &indicators[func_idx];
 
         // Build arguments with smart parameter generation
-        let args = self.build_indicator_arguments(func.as_ref(), consumer, depth + 1)?;
+        let args = self.build_indicator_arguments(&StrategyFunction::Indicator(func.clone()), consumer, depth + 1)?;
 
         Ok(AstNode::Call {
             function: func.alias().to_string(),
@@ -135,18 +143,22 @@ impl SemanticMapper {
 
     fn build_indicator_arguments(
         &self,
-        func: &dyn StrategyFunction,
+        func: &StrategyFunction,
         consumer: &mut GeneConsumer,
         depth: usize,
     ) -> Result<Vec<Box<AstNode>>, TradebiasError> {
         let input_types = func.input_types();
         let mut args = Vec::new();
 
+        let indicator = func.as_indicator().ok_or_else(|| {
+            TradebiasError::Generation("Expected an indicator".to_string())
+        })?;
+
         for arg_type in input_types {
             match arg_type {
                 DataType::Integer => {
                     // Smart period generation using metadata
-                    if let Some(meta) = self.metadata.get(func.alias()) {
+                    if let Some(meta) = self.metadata.get(indicator.alias()) {
                         if let Some(periods) = &meta.typical_periods {
                             let period = periods[consumer.choose(periods.len())];
                             args.push(Box::new(AstNode::Const(ConstValue::Integer(period as i64))));
@@ -168,11 +180,11 @@ impl SemanticMapper {
 
     fn build_arguments(
         &self,
-        input_types: Vec<DataType>,
+        func: &StrategyFunction,
         consumer: &mut GeneConsumer,
         depth: usize,
     ) -> Result<Vec<Box<AstNode>>, TradebiasError> {
-        input_types
+        func.input_types()
             .into_iter()
             .map(|arg_type| self.build_expression(arg_type, consumer, depth).map(Box::new))
             .collect()

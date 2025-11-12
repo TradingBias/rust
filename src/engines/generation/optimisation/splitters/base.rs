@@ -1,6 +1,6 @@
 use super::types::*;
 use polars::prelude::*;
-use crate::error::TradeBiasError;
+use crate::error::TradebiasError;
 
 pub trait DataSplitter: Send + Sync {
     /// Split data into multiple folds

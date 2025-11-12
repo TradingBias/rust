@@ -1,4 +1,5 @@
 use crate::engines::generation::ast::*;
+use crate::types::{AstNode, Value as ConstValue};
 use std::collections::{HashMap, HashSet};
 
 /// Validates that indicator parameters are diverse
@@ -15,11 +16,9 @@ impl DiversityValidator {
     pub fn validate(&self, ast: &StrategyAST) -> bool {
         let mut indicator_params: HashMap<String, Vec<i32>> = HashMap::new();
 
-        match ast {
-            StrategyAST::Rule { condition, action } => {
-                self.collect_indicator_params(condition, &mut indicator_params);
-                self.collect_indicator_params(action, &mut indicator_params);
-            }
+        if let AstNode::Rule { condition, action } = ast.as_node() {
+            self.collect_indicator_params(condition, &mut indicator_params);
+            self.collect_indicator_params(action, &mut indicator_params);
         }
 
         // Check each indicator type
@@ -34,18 +33,18 @@ impl DiversityValidator {
 
     fn collect_indicator_params(
         &self,
-        node: &ASTNode,
+        node: &AstNode,
         collector: &mut HashMap<String, Vec<i32>>,
     ) {
         match node {
-            ASTNode::Call { function, args } => {
+            AstNode::Call { function, args } => {
                 // If this is an indicator call with integer params
                 if args.len() > 0 {
-                    if let Some(ASTNode::Const(ConstValue::Integer(period))) = args.get(1) {
+                    if let Some(AstNode::Const(ConstValue::Integer(period))) = args.get(1) {
                         collector
                             .entry(function.clone())
                             .or_insert_with(Vec::new)
-                            .push(*period);
+                            .push(*period as i32);
                     }
                 }
 
@@ -54,7 +53,11 @@ impl DiversityValidator {
                     self.collect_indicator_params(arg, collector);
                 }
             }
-            ASTNode::Const(_) => {}
+            AstNode::Const(_) => {}
+            AstNode::Rule { condition, action } => {
+                self.collect_indicator_params(condition, collector);
+                self.collect_indicator_params(action, collector);
+            }
         }
     }
 

@@ -6,7 +6,7 @@ use crate::engines::generation::optimisation::splitters::{
     wfo::WalkForwardSplitter,
     types::WindowType,
 };
-use crate::error::TradeBiasError;
+use crate::error::TradebiasError;
 use polars::prelude::*;
 use std::collections::HashMap;
 

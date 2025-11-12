@@ -5,53 +5,55 @@ This document provides a condensed checklist of all tasks across all phases.
 ## Phase 1: Critical Compilation Fixes (35 tasks)
 
 ### Import & Capitalization (15 tasks)
-- [ ] 1.1.1 Fix `TradeBiasError` → `TradebiasError` in `evolution_engine.rs:8`
-- [ ] 1.1.2 Fix `TradeBiasError` → `TradebiasError` in `optimisation/splitters/base.rs:3`
-- [ ] 1.1.3 Fix `TradeBiasError` → `TradebiasError` in `optimisation/splitters/simple.rs:3`
-- [ ] 1.1.4 Fix `TradeBiasError` → `TradebiasError` in `optimisation/splitters/wfo.rs:4`
-- [ ] 1.1.5 Fix `TradeBiasError` → `TradebiasError` in `optimisation/methods/wfo.rs:9`
-- [ ] 1.1.6 Fix `TradeBiasError` → `TradebiasError` in `lightweight_validator.rs`
-- [ ] 1.2 Remove `ast_converter` module from `src/utils/mod.rs:2`
-- [ ] 1.3 Add `use rand::Rng;` to `evolution_engine.rs`
-- [ ] 1.4.1 Fix `ASTNode` → `AstNode` in `diversity_validator.rs:37`
-- [ ] 1.4.2 Add `use crate::types::AstNode;` to `diversity_validator.rs`
-- [ ] 1.5 Add `use crate::engines::generation::ast::StrategyAST;` to `evolution_engine.rs`
-- [ ] 1.6 Add `use crate::types::AstNode;` to `lightweight_validator.rs`
-- [ ] 1.7.1 Add `pub mod genome;` to `src/engines/generation/mod.rs`
-- [ ] 1.7.2 Add `pub use genome::Genome;` to `src/engines/generation/mod.rs`
+- [x] 1.1.1 Fix `TradeBiasError` → `TradebiasError` in `evolution_engine.rs:8`
+- [x] 1.1.2 Fix `TradeBiasError` → `TradebiasError` in `optimisation/splitters/base.rs:3`
+- [x] 1.1.3 Fix `TradeBiasError` → `TradebiasError` in `optimisation/splitters/simple.rs:3`
+- [x] 1.1.4 Fix `TradeBiasError` → `TradebiasError` in `optimisation/splitters/wfo.rs:4`
+- [x] 1.1.5 Fix `TradeBiasError` → `TradebiasError` in `optimisation/methods/wfo.rs:9`
+- [x] 1.1.6 Fix `TradeBiasError` → `TradebiasError` in `lightweight_validator.rs`
+- [x] 1.2 Remove `ast_converter` module from `src/utils/mod.rs:2`
+- [x] 1.3 Add `use rand::Rng;` to `evolution_engine.rs`
+- [x] 1.4.1 Fix `ASTNode` → `AstNode` in `diversity_validator.rs:37`
+- [x] 1.4.2 Add `use crate::types::AstNode;` to `diversity_validator.rs`
+- [x] 1.5 Add `use crate::engines::generation::ast::StrategyAST;` to `evolution_engine.rs`
+- [x] 1.6 Add `use crate::types::AstNode;` to `lightweight_validator.rs`
+- [x] 1.7.1 Add `pub mod genome;` to `src/engines/generation/mod.rs`
+- [x] 1.7.2 Add `pub use genome::Genome;` to `src/engines/generation/mod.rs`
 
 ### Error Type Extensions (2 tasks)
-- [ ] 2.1.1 Add `Generation(String)` variant to `TradebiasError` in `src/error.rs`
-- [ ] 2.1.2 Add `Validation(String)` variant to `TradebiasError` in `src/error.rs`
-- [ ] 2.1.3 Add `Computation(String)` variant to `TradebiasError` in `src/error.rs`
-- [ ] 2.1.4 Update `Display` implementation for new variants
-- [ ] 2.1.5 Update `Error` implementation if needed
+- [x] 2.1.1 Add `Generation(String)` variant to `TradebiasError` in `src/error.rs`
+- [x] 2.1.2 Add `Validation(String)` variant to `TradebiasError` in `src/error.rs`
+- [x] 2.1.3 Add `Computation(String)` variant to `TradebiasError` in `src/error.rs`
+- [x] 2.1.4 Update `Display` implementation for new variants
+- [x] 2.1.5 Update `Error` implementation if needed
 
 ### Polars API Compatibility (5 tasks)
-- [ ] 3.1.1 Check Polars version in `Cargo.toml`
-- [ ] 3.1.2 Update Polars to version 0.36+ if needed
-- [ ] 3.1.3 Add required Polars feature flags
-- [ ] 3.2.1 Fix `WindowType` usage in `optimisation/splitters/simple.rs`
-- [ ] 3.2.2 Fix `WindowType` usage in `optimisation/splitters/wfo.rs`
+- [x] 3.1.1 Check Polars version in `Cargo.toml`
+- [x] 3.1.2 Update Polars to version 0.36+ if needed
+- [x] 3.1.3 Add required Polars feature flags
+- [x] 3.2.1 Fix `WindowType` usage in `optimisation/splitters/simple.rs`
+- [x] 3.2.2 Fix `WindowType` usage in `optimisation/splitters/wfo.rs`
 
 ### Trait Architecture Redesign (8 tasks)
-- [ ] 4.1.1 Create `StrategyFunction` enum in `src/functions/strategy.rs`
-- [ ] 4.1.2 Implement helper methods on `StrategyFunction` enum
-- [ ] 4.1.3 Remove blanket trait implementations from `src/functions/traits.rs`
-- [ ] 4.1.4 Update `FunctionRegistry` to use enum in `src/functions/registry.rs`
-- [ ] 4.1.5 Update `FunctionRegistry::get_function_by_name()`
-- [ ] 4.1.6 Update `FunctionRegistry::register_indicator()`
-- [ ] 4.1.7 Update `FunctionRegistry::register_primitive()`
-- [ ] 4.1.8 Update `semantic_mapper.rs` to use new registry API
+- [x] 4.1.1 Create `StrategyFunction` enum in `src/functions/strategy.rs`
+- [x] 4.1.2 Implement helper methods on `StrategyFunction` enum
+- [x] 4.1.3 Remove blanket trait implementations from `src/functions/traits.rs`
+- [x] 4.1.4 Update `FunctionRegistry` to use enum in `src/functions/registry.rs`
+- [x] 4.1.5 Update `FunctionRegistry::get_function_by_name()`
+- [x] 4.1.6 Update `FunctionRegistry::register_indicator()`
+- [x] 4.1.7 Update `FunctionRegistry::register_primitive()`
+- [x] 4.1.8 Update `semantic_mapper.rs` to use new registry API
 
 ### AST Type System Resolution (3 tasks)
-- [ ] 5.1.1 Determine relationship between `StrategyAST` and `AstNode`
-- [ ] 5.1.2 Implement `as_node()` method on `StrategyAST` OR remove `StrategyAST`
-- [ ] 5.1.3 Update all backtester calls to use consistent type
+- [x] 5.1.1 Determine relationship between `StrategyAST` and `AstNode`
+- [x] 5.1.2 Implement `as_node()` method on `StrategyAST` OR remove `StrategyAST`
+- [x] 5.1.3 Update all backtester calls to use consistent type
 
 ### Semantic Mapper Fixes (2 tasks)
 - [ ] 6.1.1 Update `build_indicator_arguments` parameter types
 - [ ] 6.1.2 Update method calls to work with enum-based registry
+
+**BLOCKER:** The project does not compile due to an error in the `polars-core` dependency: `no method named 'raw_table_mut' found for struct 'HashMap'`. This prevents further progress.
 
 ## Phase 2: Core Features Implementation (45+ tasks)
 
@@ -171,7 +173,7 @@ This document provides a condensed checklist of all tasks across all phases.
 ## Completion Tracking
 
 Track overall progress:
-- [ ] Phase 1 Complete (0/35)
+- [ ] Phase 1 Complete (33/35)
 - [ ] Phase 2 Complete (0/45)
 - [ ] Phase 3 Complete (0/60)
 - [ ] Project 100% Implemented
