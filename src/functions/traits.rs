@@ -2,6 +2,7 @@ use polars::prelude::*;
 use anyhow::Result;
 use std::any::Any;
 use crate::types::{DataType, ScaleType};
+use crate::functions::strategy::StrategyFunction;
 
 /// Calculation mode for indicators
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -13,10 +14,7 @@ pub enum CalculationMode {
 }
 
 /// Base trait for all indicators
-pub trait Indicator: Send + Sync {
-    /// Unique identifier
-    fn alias(&self) -> &'static str;
-
+pub trait Indicator: StrategyFunction + Send + Sync {
     /// Display name
     fn ui_name(&self) -> &'static str;
 
@@ -28,14 +26,6 @@ pub trait Indicator: Send + Sync {
 
     /// Number of parameters
     fn arity(&self) -> usize;
-
-    /// Input data types
-    fn input_types(&self) -> Vec<DataType>;
-
-    /// Output type
-    fn output_type(&self) -> DataType {
-        DataType::NumericSeries
-    }
 
     /// Returns the calculation mode for this indicator
     fn calculation_mode(&self) -> CalculationMode;
@@ -67,12 +57,9 @@ pub enum IndicatorArg {
 }
 
 /// Primitive function trait
-pub trait Primitive: Send + Sync {
-    fn alias(&self) -> &'static str;
+pub trait Primitive: StrategyFunction + Send + Sync {
     fn ui_name(&self) -> &'static str;
     fn arity(&self) -> usize;
-    fn input_types(&self) -> Vec<DataType>;
-    fn output_type(&self) -> DataType;
     
     /// Execute primitive (always vectorized)
     fn execute(&self, args: &[Expr]) -> Result<Expr>;

@@ -13,6 +13,15 @@ pub enum TradebiasError {
     
     #[error("Backtest error: {0}")]
     BacktestError(String),
+
+    #[error("Generation error: {0}")]
+    Generation(String),
+
+    #[error("Computation error: {0}")]
+    Computation(String),
+
+    #[error("Validation error: {0}")]
+    Validation(String),
     
     #[error("IO error: {0}")]
     Io(#[from] std::io::Error),

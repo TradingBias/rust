@@ -11,34 +11,57 @@ use crate::functions::{
         volatility::{ADX, ATR, StdDev},
         volume::{BWMFI, Chaikin, Force, MFI, OBV, Volumes},
     },
-    primitives::{self, And, Or},
+    primitives::{self, And, Or, Abs},
 };
-use std::{collections::HashMap, sync::Arc};
+use std::{collections::HashMap, sync::Arc, any::Any};
 
-use super::traits::Indicator;
+use super::{
+    strategy::StrategyFunction,
+    traits::{Indicator, Primitive},
+};
+use crate::types::DataType;
 
 pub struct FunctionRegistry {
-    indicators: HashMap<String, Arc<dyn Indicator>>,
-    primitives: HashMap<String, Arc<dyn primitives::Primitive>>,
+    functions: HashMap<String, Arc<dyn StrategyFunction>>,
 }
 
 impl FunctionRegistry {
     pub fn new() -> Self {
         let mut registry = Self {
-            indicators: HashMap::new(),
-            primitives: HashMap::new(),
+            functions: HashMap::new(),
         };
         registry.register_indicators();
         registry.register_primitives();
         registry
     }
 
-    pub fn get_indicator(&self, name: &str) -> Option<Arc<dyn Indicator>> {
-        self.indicators.get(name).cloned()
+    pub fn get_function(&self, name: &str) -> Option<Arc<dyn StrategyFunction>> {
+        self.functions.get(name).cloned()
     }
 
-    pub fn get_primitive(&self, name: &str) -> Option<Arc<dyn primitives::Primitive>> {
-        self.primitives.get(name).cloned()
+    pub fn get_indicator(&self, name: &str) -> Option<Arc<dyn Indicator>> {
+        self.get_function(name)
+            .and_then(|f| f.downcast_arc::<dyn Indicator>().ok())
+    }
+
+    pub fn get_primitive(&self, name: &str) -> Option<Arc<dyn Primitive>> {
+        self.get_function(name)
+            .and_then(|f| f.downcast_arc::<dyn Primitive>().ok())
+    }
+
+    pub fn get_by_output_type(&self, data_type: DataType) -> Vec<Arc<dyn StrategyFunction>> {
+        self.functions
+            .values()
+            .filter(|f| f.output_type() == data_type)
+            .cloned()
+            .collect()
+    }
+
+    pub fn get_indicators(&self) -> Vec<Arc<dyn Indicator>> {
+        self.functions
+            .values()
+            .filter_map(|f| f.clone().downcast_arc::<dyn Indicator>().ok())
+            .collect()
     }
 
     fn register_indicators(&mut self) {
@@ -75,15 +98,17 @@ impl FunctionRegistry {
         ];
 
         for indicator in indicators {
-            self.indicators
-                .insert(indicator.alias().to_string(), indicator);
+            self.functions
+                .insert(indicator.alias().to_string(), indicator as Arc<dyn StrategyFunction>);
         }
     }
 
     fn register_primitives(&mut self) {
-        self.primitives
-            .insert("And".to_string(), Arc::new(And {}));
-        self.primitives.insert("Or".to_string(), Arc::new(Or {}));
+        let primitives: Vec<Arc<dyn Primitive>> = vec![Arc::new(And {}), Arc::new(Or {}), Arc::new(Abs {})];
+        for primitive in primitives {
+            self.functions
+                .insert(primitive.alias().to_string(), primitive as Arc<dyn StrategyFunction>);
+        }
     }
 }
 

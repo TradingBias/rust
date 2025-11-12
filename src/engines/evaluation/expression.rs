@@ -1,11 +1,8 @@
 use crate::{
     data::IndicatorCache,
     error::{Result, TradebiasError},
-    functions::{
-        indicators::Indicator,
-        primitive::Primitive,
-        registry::FunctionRegistry,
-    },
+    functions::traits::{Indicator, Primitive},
+    functions::registry::FunctionRegistry,
     types::{AstNode, Value},
 };
 use polars::prelude::*;
@@ -32,7 +29,7 @@ impl ExpressionBuilder {
     fn build_const(&self, value: &Value) -> Result<Expr> {
         Ok(match value {
             Value::Integer(i) => lit(*i),
-            Value-Float(f) => lit(*f),
+            Value::Float(f) => lit(*f),
             Value::String(s) => col(s),
             Value::Bool(b) => lit(*b),
         })

@@ -25,8 +25,11 @@ impl Backtester {
         }
     }
 
-    pub fn run(&self, ast: &AstNode, data: &DataFrame) -> Result<StrategyResult> {
-        let signal_expr = self.expression_builder.build(ast, data)?;
+    pub fn run(&self, ast: &StrategyAST, data: &DataFrame) -> Result<StrategyResult> {
+        let condition = match ast {
+            StrategyAST::Rule { condition, .. } => condition,
+        };
+        let signal_expr = self.expression_builder.build(condition, data)?;
 
         let signals = data
             .clone()

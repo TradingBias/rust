@@ -31,13 +31,38 @@ Follow these documents **in order** for complete implementation:
 ### Phase 7: Quality Assurance
 - **[10-testing.md](./10-testing.md)** - Testing strategies, verification, and validation
 
+### Phase 8: Evolution & Strategy Generation
+- **[11-evolution-engine.md](./11-evolution-engine.md)** - Genetic programming loop, Hall of Fame, genetic operators
+- **[12-semantic-generation.md](./12-semantic-generation.md)** - Type-driven AST generation, semantic mapping, validators
+
+### Phase 9: Optimization & Validation
+- **[13-optimization-methods.md](./13-optimization-methods.md)** - Walk-Forward Optimization, data splitting, robust validation
+
+### Phase 10: Machine Learning Pipeline
+- **[14-ml-feature-engineering.md](./14-ml-feature-engineering.md)** - Signal extraction, feature engineering, lookahead prevention
+- **[15-ml-meta-labeling.md](./15-ml-meta-labeling.md)** - Triple-barrier labeling, meta-model training, signal filtering
+
+### Phase 11: Robustness & Validation
+- **[16-robustness-validation.md](./16-robustness-validation.md)** - Monte Carlo tests, parameter stability, friction testing
+
+### Phase 12: Supporting Infrastructure
+- **[17-configuration-system.md](./17-configuration-system.md)** - Config manager, settings schemas, UI manifest generation
+- **[18-data-connectors.md](./18-data-connectors.md)** - CSV, Supabase, MT5 connectors with validation and caching
+- **[19-calibration-signal-engines.md](./19-calibration-signal-engines.md)** - Auto-calibration, signal extraction, quality metrics
+
 ## Quick Start for AI Agents
 
 ### Recommended Approach
 1. Read **01-architecture.md** first to understand the overall structure
 2. Read **02-type-system.md** to understand the type system before implementing anything
-3. Implement in order: Primitives → Tier 1 Indicators → Infrastructure → Engines
+3. Implement in order: Primitives → Indicators → Infrastructure → Engines → Evolution → ML
 4. Run tests from **10-testing.md** after each phase
+
+**Note**: Documents 11-19 cover advanced features building on the Python/Rust hybrid architecture described in `docs/project_architecture.md`. These extend the core system with:
+- Genetic programming and evolution (11-13)
+- Machine learning pipeline (14-15)
+- Robustness validation (16)
+- Supporting infrastructure (17-19)
 
 ### Per-Document Structure
 Each document contains:
@@ -130,6 +155,7 @@ All 70+ indicators are built from these 12 primitives:
 
 Use this checklist as you complete each document:
 
+### Core Implementation (Phases 1-7)
 - [ ] 01-architecture.md - Project structure set up
 - [ ] 02-type-system.md - Core types and traits implemented
 - [ ] 03-primitives.md - All 12 primitives working
@@ -140,6 +166,17 @@ Use this checklist as you complete each document:
 - [ ] 08-metrics-engine.md - Metrics calculation working
 - [ ] 09-code-generation.md - MQL5 generation working
 - [ ] 10-testing.md - All tests passing
+
+### Advanced Features (Phases 8-12)
+- [ ] 11-evolution-engine.md - Genetic programming implemented
+- [ ] 12-semantic-generation.md - Type-driven strategy generation working
+- [ ] 13-optimization-methods.md - Walk-Forward Optimization implemented
+- [ ] 14-ml-feature-engineering.md - Feature engineering pipeline working
+- [ ] 15-ml-meta-labeling.md - Meta-labeling and ML filtering implemented
+- [ ] 16-robustness-validation.md - Robustness testing suite implemented
+- [ ] 17-configuration-system.md - Configuration management working
+- [ ] 18-data-connectors.md - Data loading and caching implemented
+- [ ] 19-calibration-signal-engines.md - Calibration and signal extraction working
 
 ## Questions or Issues?
 
