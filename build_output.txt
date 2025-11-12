@@ -1,0 +1,2047 @@
+    Updating crates.io index
+ Downloading crates ...
+  Downloaded ar_archive_writer v0.2.0
+  Downloaded anyhow v1.0.100
+  Downloaded hex v0.4.3
+  Downloaded httparse v1.10.1
+  Downloaded profiling v1.0.17
+  Downloaded psm v0.1.28
+  Downloaded quote v1.0.42
+  Downloaded recursive-proc-macro-impl v0.1.1
+  Downloaded tinyvec_macros v0.1.1
+  Downloaded tracing-core v0.1.34
+  Downloaded zstd-safe v7.2.4
+  Downloaded regex-syntax v0.8.8
+  Downloaded reqwest v0.12.24
+  Downloaded libc v0.2.177
+  Downloaded regex-automata v0.4.13
+  Downloaded typeid v1.0.3
+  Downloaded zeroize v1.8.2
+  Downloaded zerofrom v0.1.6
+  Downloaded serde v1.0.228
+  Downloaded typenum v1.19.0
+  Downloaded unicode-normalization v0.1.25
+  Downloaded url v2.5.7
+  Downloaded unicode-segmentation v1.12.0
+  Downloaded yaml-rust2 v0.10.4
+  Downloaded unicode-width v0.2.2
+  Downloaded sqlparser v0.53.0
+  Downloaded winnow v0.7.13
+  Downloaded tower-http v0.6.6
+  Downloaded tracing v0.1.41
+  Downloaded zerovec v0.11.5
+  Downloaded zerocopy v0.8.27
+  Downloaded zerotrie v0.2.3
+  Downloaded tower v0.5.2
+  Downloaded tokio v1.48.0
+  Downloaded toml_edit v0.22.27
+  Downloaded tokio-util v0.7.17
+  Downloaded ttf-parser v0.25.1
+  Downloaded skiplist v0.6.0
+  Downloaded syn v2.0.110
+  Downloaded simd-json v0.15.1
+  Downloaded serde_json v1.0.145
+  Downloaded rustls-webpki v0.103.8
+  Downloaded rustls v0.23.35
+  Downloaded rustix v1.1.2
+  Downloaded yoke-derive v0.8.1
+  Downloaded yoke v0.8.1
+  Downloaded xxhash-rust v0.8.15
+  Downloaded writeable v0.6.2
+  Downloaded utf8_iter v1.0.4
+  Downloaded ring v0.17.14
+  Downloaded zerofrom-derive v0.1.6
+  Downloaded want v0.3.1
+  Downloaded walkdir v2.5.0
+  Downloaded virtue v0.0.18
+  Downloaded version_check v0.9.5
+  Downloaded value-trait v0.11.0
+  Downloaded uuid v1.18.1
+  Downloaded unty v0.0.4
+  Downloaded untrusted v0.9.0
+  Downloaded unicode-reverse v1.0.9
+  Downloaded unicode-ident v1.0.22
+  Downloaded ucd-trie v0.1.7
+  Downloaded try-lock v0.2.5
+  Downloaded thiserror v1.0.69
+  Downloaded synstructure v0.13.2
+  Downloaded strum_macros v0.27.2
+  Downloaded sync_wrapper v1.0.2
+  Downloaded subtle v2.6.1
+  Downloaded linux-raw-sys v0.11.0
+  Downloaded zstd-sys v2.0.16+zstd.1.5.7
+  Downloaded regex v1.12.2
+  Downloaded rayon-core v1.13.0
+  Downloaded rayon v1.11.0
+  Downloaded polars-plan v0.51.0
+  Downloaded polars-core v0.51.0
+  Downloaded polars-arrow v0.51.0
+  Downloaded lz4-sys v1.11.1+lz4-1.10.0
+  Downloaded zstd v0.13.3
+  Downloaded zerovec-derive v0.11.2
+  Downloaded raw-cpuid v11.6.0
+  Downloaded rand_distr v0.5.1
+  Downloaded rand v0.9.2
+  Downloaded rand v0.8.5
+  Downloaded rand v0.7.3
+  Downloaded quinn-proto v0.11.13
+  Downloaded polars-stream v0.51.0
+  Downloaded object_store v0.12.4
+  Downloaded object v0.32.2
+  Downloaded tracing-attributes v0.1.30
+  Downloaded tower-service v0.3.3
+  Downloaded tower-layer v0.3.3
+  Downloaded toml_write v0.1.2
+  Downloaded toml_parser v1.0.4
+  Downloaded toml_datetime v0.7.3
+  Downloaded toml_datetime v0.6.11
+  Downloaded toml v0.9.8
+  Downloaded toml v0.8.23
+  Downloaded tokio-rustls v0.26.4
+  Downloaded tokio-macros v2.6.0
+  Downloaded tinyvec v1.10.0
+  Downloaded quick-xml v0.38.4
+  Downloaded polars-parquet v0.51.0
+  Downloaded polars-ops v0.51.0
+  Downloaded polars-io v0.51.0
+  Downloaded libm v0.2.15
+  Downloaded itertools v0.14.0
+  Downloaded iri-string v0.7.9
+  Downloaded idna v1.1.0
+  Downloaded icu_properties_data v2.1.1
+  Downloaded hyper v1.8.0
+  Downloaded tinystr v0.8.2
+  Downloaded tiny-keccak v2.0.2
+  Downloaded thiserror-impl v2.0.17
+  Downloaded thiserror-impl v1.0.69
+  Downloaded thiserror v2.0.17
+  Downloaded strength_reduce v0.2.4
+  Downloaded streaming-iterator v0.1.9
+  Downloaded streaming-decompression v0.1.2
+  Downloaded static_assertions v1.1.0
+  Downloaded stacker v0.1.22
+  Downloaded stable_deref_trait v1.2.1
+  Downloaded socket2 v0.6.1
+  Downloaded smallvec v1.15.1
+  Downloaded slotmap v1.0.7
+  Downloaded slab v0.4.11
+  Downloaded siphasher v1.0.1
+  Downloaded simdutf8 v0.1.5
+  Downloaded simd-adler32 v0.3.7
+  Downloaded signal-hook-registry v1.4.6
+  Downloaded signal-hook v0.3.18
+  Downloaded shlex v1.3.0
+  Downloaded sha2 v0.10.9
+  Downloaded serde_urlencoded v0.7.1
+  Downloaded serde_stacker v0.1.14
+  Downloaded serde_spanned v1.0.3
+  Downloaded serde_spanned v0.6.9
+  Downloaded serde_derive v1.0.228
+  Downloaded serde_core v1.0.228
+  Downloaded serde-untagged v0.1.9
+  Downloaded scopeguard v1.2.0
+  Downloaded same-file v1.0.6
+  Downloaded ryu v1.0.20
+  Downloaded rustversion v1.0.22
+  Downloaded rustls-pki-types v1.13.0
+  Downloaded rustls-native-certs v0.8.2
+  Downloaded rustc-hash v2.1.1
+  Downloaded rust-ini v0.21.3
+  Downloaded ron v0.8.1
+  Downloaded rmp-serde v1.3.0
+  Downloaded rmp v0.8.14
+  Downloaded ref-cast-impl v1.0.25
+  Downloaded ref-cast v1.0.25
+  Downloaded polars-compute v0.51.0
+  Downloaded polars v0.51.0
+  Downloaded pest v2.8.3
+  Downloaded mio v1.1.0
+  Downloaded indexmap v2.12.0
+  Downloaded hyper-util v0.1.17
+  Downloaded recursive v0.1.1
+  Downloaded rand_pcg v0.2.1
+  Downloaded rand_core v0.9.3
+  Downloaded rand_core v0.6.4
+  Downloaded rand_core v0.5.1
+  Downloaded rand_chacha v0.9.0
+  Downloaded rand_chacha v0.3.1
+  Downloaded rand_chacha v0.2.2
+  Downloaded quinn v0.11.9
+  Downloaded proc-macro2 v1.0.103
+  Downloaded polars-utils v0.51.0
+  Downloaded polars-sql v0.51.0
+  Downloaded polars-lazy v0.51.0
+  Downloaded polars-expr v0.51.0
+  Downloaded polars-arrow-format v0.2.1
+  Downloaded memchr v2.7.6
+  Downloaded log v0.4.28
+  Downloaded icu_provider v2.1.1
+  Downloaded icu_properties v2.1.1
+  Downloaded icu_normalizer_data v2.1.1
+  Downloaded icu_normalizer v2.1.1
+  Downloaded icu_locale_core v2.1.1
+  Downloaded icu_collections v2.1.1
+  Downloaded hashbrown v0.14.5
+  Downloaded epaint_default_fonts v0.32.3
+  Downloaded encoding_rs v0.8.35
+  Downloaded chrono-tz v0.10.4
+  Downloaded quinn-udp v0.5.14
+  Downloaded polars-time v0.51.0
+  Downloaded polars-parquet-format v0.1.0
+  Downloaded polars-mem-engine v0.51.0
+  Downloaded pest_meta v2.8.3
+  Downloaded pest_generator v2.8.3
+  Downloaded pest_derive v2.8.3
+  Downloaded parking_lot_core v0.9.12
+  Downloaded parking_lot v0.12.5
+  Downloaded once_cell v1.21.3
+  Downloaded miniz_oxide v0.8.9
+  Downloaded memmap2 v0.9.9
+  Downloaded litrs v1.0.0
+  Downloaded jobserver v0.1.34
+  Downloaded ipnet v2.11.0
+  Downloaded iana-time-zone v0.1.64
+  Downloaded hyper-rustls v0.27.7
+  Downloaded http v1.3.1
+  Downloaded hashbrown v0.16.0
+  Downloaded hashbrown v0.15.5
+  Downloaded h2 v0.4.12
+  Downloaded futures-util v0.3.31
+  Downloaded egui v0.32.3
+  Downloaded crossterm v0.29.0
+  Downloaded chrono v0.4.42
+  Downloaded blake3 v1.8.2
+  Downloaded ppv-lite86 v0.2.21
+  Downloaded potential_utf v0.1.4
+  Downloaded polars-schema v0.51.0
+  Downloaded polars-row v0.51.0
+  Downloaded polars-json v0.51.0
+  Downloaded polars-error v0.51.0
+  Downloaded polars-dtype v0.51.0
+  Downloaded planus v1.1.1
+  Downloaded pkg-config v0.3.32
+  Downloaded pin-project-lite v0.2.16
+  Downloaded phf_shared v0.12.1
+  Downloaded phf v0.12.1
+  Downloaded percent-encoding v2.3.2
+  Downloaded pathdiff v0.2.3
+  Downloaded paste v1.0.15
+  Downloaded parking v2.2.1
+  Downloaded oxigen v2.2.2
+  Downloaded owned_ttf_parser v0.25.1
+  Downloaded ordered-multimap v0.7.3
+  Downloaded openssl-probe v0.1.6
+  Downloaded nohash-hasher v0.2.0
+  Downloaded lz4 v1.28.1
+  Downloaded lru-slab v0.1.2
+  Downloaded lock_api v0.4.14
+  Downloaded litemap v0.8.1
+  Downloaded json5 v0.4.1
+  Downloaded itoa v1.0.15
+  Downloaded idna_adapter v1.2.1
+  Downloaded humantime v2.3.0
+  Downloaded http-body-util v0.1.3
+  Downloaded getrandom v0.2.16
+  Downloaded futures v0.3.31
+  Downloaded flate2 v1.1.5
+  Downloaded event-listener v5.4.1
+  Downloaded ethnum v1.5.2
+  Downloaded epaint v0.32.3
+  Downloaded crossbeam-utils v0.8.21
+  Downloaded crossbeam-epoch v0.9.18
+  Downloaded crossbeam-channel v0.5.15
+  Downloaded crc32fast v1.5.0
+  Downloaded config v0.15.18
+  Downloaded compact_str v0.9.0
+  Downloaded comfy-table v7.2.1
+  Downloaded cc v1.2.45
+  Downloaded bytes v1.10.1
+  Downloaded bytemuck_derive v1.10.2
+  Downloaded bytemuck v1.24.0
+  Downloaded boxcar v0.2.14
+  Downloaded bitflags v2.10.0
+  Downloaded bincode v2.0.1
+  Downloaded base64 v0.22.1
+  Downloaded base64 v0.21.7
+  Downloaded async-channel v2.5.0
+  Downloaded arrayvec v0.7.6
+  Downloaded aho-corasick v1.1.4
+  Downloaded pin-utils v0.1.0
+  Downloaded num-traits v0.2.19
+  Downloaded now v0.1.3
+  Downloaded home v0.5.12
+  Downloaded historian v4.0.4
+  Downloaded hashlink v0.10.0
+  Downloaded halfbrown v0.3.0
+  Downloaded getrandom v0.3.4
+  Downloaded getrandom v0.1.16
+  Downloaded futures-sink v0.3.31
+  Downloaded futures-macro v0.3.31
+  Downloaded futures-io v0.3.31
+  Downloaded futures-core v0.3.31
+  Downloaded futures-channel v0.3.31
+  Downloaded fs4 v0.13.1
+  Downloaded foldhash v0.1.5
+  Downloaded fnv v1.0.7
+  Downloaded float-cmp v0.10.0
+  Downloaded find-msvc-tools v0.1.4
+  Downloaded fast-float2 v0.2.3
+  Downloaded erased-serde v0.4.9
+  Downloaded emath v0.32.3
+  Downloaded either v1.15.0
+  Downloaded dyn-clone v1.0.20
+  Downloaded document-features v0.2.12
+  Downloaded dlv-list v0.5.2
+  Downloaded displaydoc v0.2.5
+  Downloaded digest v0.10.7
+  Downloaded crypto-common v0.1.6
+  Downloaded crossbeam-queue v0.3.12
+  Downloaded crossbeam-deque v0.8.6
+  Downloaded cpufeatures v0.2.17
+  Downloaded convert_case v0.6.0
+  Downloaded constant_time_eq v0.3.1
+  Downloaded concurrent-queue v2.5.0
+  Downloaded cfg-if v1.0.4
+  Downloaded castaway v0.2.4
+  Downloaded byteorder v1.5.0
+  Downloaded block-buffer v0.10.4
+  Downloaded bincode_derive v2.0.1
+  Downloaded autocfg v1.5.0
+  Downloaded atomic-waker v1.1.2
+  Downloaded atoi_simd v0.16.1
+  Downloaded async-trait v0.1.89
+  Downloaded async-stream v0.3.6
+  Downloaded arrayref v0.3.9
+  Downloaded arraydeque v0.5.1
+  Downloaded argminmax v0.6.3
+  Downloaded allocator-api2 v0.2.21
+  Downloaded ahash v0.8.12
+  Downloaded http-body v1.0.1
+  Downloaded glob v0.3.3
+  Downloaded generic-array v0.14.9
+  Downloaded futures-task v0.3.31
+  Downloaded futures-executor v0.3.31
+  Downloaded form_urlencoded v1.2.2
+  Downloaded fallible-streaming-iterator v0.1.9
+  Downloaded event-listener-strategy v0.5.4
+  Downloaded errno v0.3.14
+  Downloaded equivalent v1.0.2
+  Downloaded ecolor v0.32.3
+  Downloaded debug_unsafe v0.1.3
+  Downloaded crunchy v0.2.4
+  Downloaded const-random-macro v0.1.16
+  Downloaded const-random v0.1.18
+  Downloaded cfg_aliases v0.2.1
+  Downloaded async-stream-impl v0.3.6
+  Downloaded array-init-cursor v0.2.1
+  Downloaded adler2 v2.0.1
+  Downloaded ab_glyph v0.2.32
+  Downloaded heck v0.5.0
+  Downloaded ab_glyph_rasterizer v0.1.10
+   Compiling proc-macro2 v1.0.103
+   Compiling unicode-ident v1.0.22
+   Compiling quote v1.0.42
+   Compiling libc v0.2.177
+   Compiling serde_core v1.0.228
+   Compiling cfg-if v1.0.4
+   Compiling serde v1.0.228
+   Compiling version_check v0.9.5
+   Compiling find-msvc-tools v0.1.4
+   Compiling memchr v2.7.6
+   Compiling syn v2.0.110
+   Compiling jobserver v0.1.34
+   Compiling shlex v1.3.0
+   Compiling cc v1.2.45
+   Compiling pin-project-lite v0.2.16
+   Compiling crossbeam-utils v0.8.21
+   Compiling futures-core v0.3.31
+   Compiling zerocopy v0.8.27
+   Compiling equivalent v1.0.2
+   Compiling stable_deref_trait v1.2.1
+   Compiling smallvec v1.15.1
+   Compiling futures-sink v0.3.31
+   Compiling itoa v1.0.15
+   Compiling futures-channel v0.3.31
+   Compiling slab v0.4.11
+   Compiling futures-io v0.3.31
+   Compiling futures-task v0.3.31
+   Compiling once_cell v1.21.3
+   Compiling pin-utils v0.1.0
+   Compiling bitflags v2.10.0
+   Compiling mio v1.1.0
+   Compiling socket2 v0.6.1
+   Compiling libm v0.2.15
+   Compiling autocfg v1.5.0
+   Compiling crossbeam-epoch v0.9.18
+   Compiling getrandom v0.2.16
+   Compiling num-traits v0.2.19
+   Compiling ppv-lite86 v0.2.21
+   Compiling rayon-core v1.13.0
+   Compiling either v1.15.0
+   Compiling fnv v1.0.7
+   Compiling crossbeam-deque v0.8.6
+   Compiling ring v0.17.14
+   Compiling litemap v0.8.1
+   Compiling synstructure v0.13.2
+   Compiling writeable v0.6.2
+   Compiling getrandom v0.3.4
+   Compiling hashbrown v0.16.0
+   Compiling indexmap v2.12.0
+   Compiling serde_derive v1.0.228
+   Compiling zerofrom-derive v0.1.6
+   Compiling yoke-derive v0.8.1
+   Compiling zerofrom v0.1.6
+   Compiling zerovec-derive v0.11.2
+   Compiling yoke v0.8.1
+   Compiling futures-macro v0.3.31
+   Compiling futures-util v0.3.31
+   Compiling zerovec v0.11.5
+   Compiling displaydoc v0.2.5
+   Compiling tokio-macros v2.6.0
+   Compiling bytes v1.10.1
+   Compiling tinystr v0.8.2
+   Compiling tokio v1.48.0
+   Compiling http v1.3.1
+   Compiling icu_locale_core v2.1.1
+   Compiling zerotrie v0.2.3
+   Compiling potential_utf v0.1.4
+   Compiling zeroize v1.8.2
+   Compiling parking_lot_core v0.9.12
+   Compiling icu_properties_data v2.1.1
+   Compiling icu_normalizer_data v2.1.1
+   Compiling rustls-pki-types v1.13.0
+   Compiling rayon v1.11.0
+   Compiling icu_provider v2.1.1
+   Compiling icu_collections v2.1.1
+   Compiling http-body v1.0.1
+   Compiling tracing-attributes v0.1.30
+   Compiling tracing-core v0.1.34
+   Compiling scopeguard v1.2.0
+   Compiling httparse v1.10.1
+   Compiling untrusted v0.9.0
+   Compiling percent-encoding v2.3.2
+   Compiling tracing v0.1.41
+   Compiling tokio-util v0.7.17
+   Compiling lock_api v0.4.14
+   Compiling object v0.32.2
+   Compiling tower-service v0.3.3
+   Compiling allocator-api2 v0.2.21
+   Compiling try-lock v0.2.5
+   Compiling ryu v1.0.20
+   Compiling rustls v0.23.35
+   Compiling foldhash v0.1.5
+   Compiling atomic-waker v1.1.2
+   Compiling h2 v0.4.12
+   Compiling hashbrown v0.15.5
+   Compiling want v0.3.1
+   Compiling rustls-webpki v0.103.8
+   Compiling icu_properties v2.1.1
+   Compiling parking_lot v0.12.5
+   Compiling icu_normalizer v2.1.1
+   Compiling ar_archive_writer v0.2.0
+   Compiling rand_core v0.9.3
+   Compiling subtle v2.6.1
+   Compiling serde_json v1.0.145
+   Compiling rand_chacha v0.9.0
+   Compiling psm v0.1.28
+   Compiling hyper v1.8.0
+   Compiling idna_adapter v1.2.1
+   Compiling form_urlencoded v1.2.2
+   Compiling sync_wrapper v1.0.2
+   Compiling ipnet v2.11.0
+   Compiling utf8_iter v1.0.4
+   Compiling openssl-probe v0.1.6
+   Compiling thiserror v2.0.17
+   Compiling iana-time-zone v0.1.64
+   Compiling tower-layer v0.3.3
+   Compiling base64 v0.22.1
+   Compiling tower v0.5.2
+   Compiling hyper-util v0.1.17
+   Compiling chrono v0.4.42
+   Compiling rustls-native-certs v0.8.2
+   Compiling idna v1.1.0
+   Compiling tokio-rustls v0.26.4
+   Compiling rand v0.9.2
+   Compiling futures-executor v0.3.31
+   Compiling thiserror-impl v2.0.17
+   Compiling async-trait v0.1.89
+   Compiling stacker v0.1.22
+   Compiling rustversion v1.0.22
+   Compiling paste v1.0.15
+   Compiling pkg-config v0.3.32
+   Compiling iri-string v0.7.9
+   Compiling futures v0.3.31
+   Compiling hyper-rustls v0.27.7
+   Compiling zstd-sys v2.0.16+zstd.1.5.7
+   Compiling url v2.5.7
+   Compiling serde_urlencoded v0.7.1
+   Compiling http-body-util v0.1.3
+   Compiling aho-corasick v1.1.4
+   Compiling array-init-cursor v0.2.1
+   Compiling regex-syntax v0.8.8
+   Compiling tower-http v0.6.6
+   Compiling crc32fast v1.5.0
+   Compiling same-file v1.0.6
+   Compiling signal-hook v0.3.18
+   Compiling log v0.4.28
+   Compiling reqwest v0.12.24
+   Compiling walkdir v2.5.0
+   Compiling planus v1.1.1
+   Compiling regex-automata v0.4.13
+   Compiling quick-xml v0.38.4
+   Compiling itertools v0.14.0
+   Compiling signal-hook-registry v1.4.6
+   Compiling slotmap v1.0.7
+   Compiling humantime v2.3.0
+   Compiling simd-adler32 v0.3.7
+   Compiling byteorder v1.5.0
+   Compiling virtue v0.0.18
+   Compiling adler2 v2.0.1
+   Compiling miniz_oxide v0.8.9
+   Compiling bincode_derive v2.0.1
+   Compiling object_store v0.12.4
+   Compiling rmp v0.8.14
+   Compiling regex v1.12.2
+   Compiling castaway v0.2.4
+   Compiling polars-arrow-format v0.2.1
+   Compiling bytemuck_derive v1.10.2
+   Compiling lz4-sys v1.11.1+lz4-1.10.0
+   Compiling polars-utils v0.51.0
+   Compiling static_assertions v1.1.0
+   Compiling unty v0.0.4
+   Compiling zstd-safe v7.2.4
+   Compiling simdutf8 v0.1.5
+   Compiling siphasher v1.0.1
+   Compiling phf_shared v0.12.1
+   Compiling bincode v2.0.1
+   Compiling polars-error v0.51.0
+   Compiling compact_str v0.9.0
+   Compiling bytemuck v1.24.0
+   Compiling flate2 v1.1.5
+   Compiling rmp-serde v1.3.0
+   Compiling serde_stacker v0.1.14
+   Compiling uuid v1.18.1
+   Compiling raw-cpuid v11.6.0
+   Compiling memmap2 v0.9.9
+   Compiling polars-schema v0.51.0
+   Compiling chrono-tz v0.10.4
+   Compiling phf v0.12.1
+   Compiling polars-arrow v0.51.0
+   Compiling debug_unsafe v0.1.3
+   Compiling heck v0.5.0
+   Compiling atoi_simd v0.16.1
+   Compiling strum_macros v0.27.2
+   Compiling zstd v0.13.3
+   Compiling streaming-iterator v0.1.9
+   Compiling typenum v1.19.0
+   Compiling dyn-clone v1.0.20
+   Compiling rustix v1.1.2
+   Compiling ethnum v1.5.2
+   Compiling generic-array v0.14.9
+   Compiling polars-compute v0.51.0
+   Compiling linux-raw-sys v0.11.0
+   Compiling unicode-segmentation v1.12.0
+   Compiling skiplist v0.6.0
+   Compiling strength_reduce v0.2.4
+   Compiling fast-float2 v0.2.3
+   Compiling litrs v1.0.0
+   Compiling document-features v0.2.12
+   Compiling boxcar v0.2.14
+   Compiling crossterm v0.29.0
+   Compiling polars-core v0.51.0
+   Compiling unicode-width v0.2.2
+   Compiling comfy-table v7.2.1
+   Compiling block-buffer v0.10.4
+   Compiling crypto-common v0.1.6
+   Compiling rand_distr v0.5.1
+   Compiling polars-ops v0.51.0
+   Compiling xxhash-rust v0.8.15
+   Compiling digest v0.10.7
+   Compiling argminmax v0.6.3
+   Compiling async-stream-impl v0.3.6
+   Compiling blake3 v1.8.2
+   Compiling fallible-streaming-iterator v0.1.9
+   Compiling cpufeatures v0.2.17
+   Compiling crunchy v0.2.4
+   Compiling async-stream v0.3.6
+   Compiling sha2 v0.10.9
+   Compiling streaming-decompression v0.1.2
+   Compiling polars-parquet-format v0.1.0
+   Compiling now v0.1.3
+   Compiling arrayvec v0.7.6
+   Compiling constant_time_eq v0.3.1
+   Compiling arrayref v0.3.9
+   Compiling tiny-keccak v2.0.2
+   Compiling polars-plan v0.51.0
+   Compiling fs4 v0.13.1
+   Compiling recursive-proc-macro-impl v0.1.1
+   Compiling home v0.5.12
+   Compiling getrandom v0.1.16
+   Compiling glob v0.3.3
+   Compiling recursive v0.1.1
+   Compiling concurrent-queue v2.5.0
+   Compiling parking v2.2.1
+   Compiling ucd-trie v0.1.7
+   Compiling const-random-macro v0.1.16
+   Compiling pest v2.8.3
+   Compiling event-listener v5.4.1
+   Compiling typeid v1.0.3
+   Compiling lz4 v1.28.1
+   Compiling winnow v0.7.13
+   Compiling pest_meta v2.8.3
+   Compiling rand_core v0.5.1
+   Compiling event-listener-strategy v0.5.4
+   Compiling const-random v0.1.18
+   Compiling ahash v0.8.12
+   Compiling polars-stream v0.51.0
+   Compiling erased-serde v0.4.9
+   Compiling ttf-parser v0.25.1
+   Compiling pest_generator v2.8.3
+   Compiling dlv-list v0.5.2
+   Compiling async-channel v2.5.0
+   Compiling crossbeam-queue v0.3.12
+   Compiling crossbeam-channel v0.5.15
+   Compiling polars-lazy v0.51.0
+   Compiling ab_glyph_rasterizer v0.1.10
+   Compiling hashbrown v0.14.5
+   Compiling emath v0.32.3
+   Compiling ordered-multimap v0.7.3
+   Compiling ecolor v0.32.3
+   Compiling owned_ttf_parser v0.25.1
+   Compiling ab_glyph v0.2.32
+   Compiling pest_derive v2.8.3
+   Compiling toml_parser v1.0.4
+   Compiling rand_chacha v0.2.2
+   Compiling rand_pcg v0.2.1
+   Compiling hashlink v0.10.0
+   Compiling serde_spanned v0.6.9
+   Compiling toml_datetime v0.6.11
+   Compiling rand_core v0.6.4
+   Compiling toml_datetime v0.7.3
+   Compiling serde_spanned v1.0.3
+   Compiling polars v0.51.0
+   Compiling encoding_rs v0.8.35
+   Compiling epaint_default_fonts v0.32.3
+   Compiling nohash-hasher v0.2.0
+   Compiling profiling v1.0.17
+   Compiling arraydeque v0.5.1
+   Compiling base64 v0.21.7
+   Compiling toml_write v0.1.2
+   Compiling thiserror v1.0.69
+   Compiling anyhow v1.0.100
+   Compiling polars-dtype v0.51.0
+   Compiling yaml-rust2 v0.10.4
+   Compiling toml_edit v0.22.27
+   Compiling ron v0.8.1
+   Compiling epaint v0.32.3
+   Compiling polars-row v0.51.0
+   Compiling polars-parquet v0.51.0
+   Compiling toml v0.9.8
+   Compiling rand_chacha v0.3.1
+   Compiling rand v0.7.3
+   Compiling json5 v0.4.1
+   Compiling serde-untagged v0.1.9
+   Compiling rust-ini v0.21.3
+   Compiling convert_case v0.6.0
+   Compiling thiserror-impl v1.0.69
+   Compiling pathdiff v0.2.3
+   Compiling historian v4.0.4
+   Compiling oxigen v2.2.2
+   Compiling config v0.15.18
+   Compiling rand v0.8.5
+   Compiling egui v0.32.3
+   Compiling toml v0.8.23
+   Compiling polars-time v0.51.0
+   Compiling polars-io v0.51.0
+   Compiling polars-expr v0.51.0
+   Compiling polars-mem-engine v0.51.0
+   Compiling tradebias v0.1.0 (/app)
+error[E0583]: file not found for module `genome`
+  --> src/engines/generation/mod.rs:11:1
+   |
+11 | pub mod genome;
+   | ^^^^^^^^^^^^^^^
+   |
+   = help: to create the module `genome`, create file "src/engines/generation/genome.rs" or "src/engines/generation/genome/mod.rs"
+   = note: if there is a `mod genome` elsewhere in the crate already, import it with `use crate::...` instead
+
+error[E0432]: unresolved import `crate::utils::ast_converter`
+ --> src/engines/generation/hall_of_fame.rs:2:19
+  |
+2 | use crate::utils::ast_converter::AstConverter;
+  |                   ^^^^^^^^^^^^^ could not find `ast_converter` in `utils`
+
+error[E0432]: unresolved import `polars::prelude::RollingOptions`
+ --> src/functions/primitives.rs:2:87
+  |
+2 | use polars::prelude::{DataType as PolarsDataType, Duration, EWMOptions, LiteralValue, RollingOptions};
+  |                                                                                       ^^^^^^^^^^^^^^
+  |                                                                                       |
+  |                                                                                       no `RollingOptions` in `prelude`
+  |                                                                                       help: a similar name exists in the module: `RollingCovOptions`
+
+error[E0432]: unresolved import `polars::prelude::RollingOptions`
+ --> src/functions/indicators/momentum.rs:8:48
+  |
+8 |     prelude::{lit, when, Duration, EWMOptions, RollingOptions, DataType as PolarsDataType},
+  |                                                ^^^^^^^^^^^^^^
+  |                                                |
+  |                                                no `RollingOptions` in `prelude`
+  |                                                help: a similar name exists in the module: `RollingCovOptions`
+
+error[E0432]: unresolved import `polars::prelude::RollingOptions`
+ --> src/functions/indicators/volatility.rs:8:42
+  |
+8 |     prelude::{lit, Duration, EWMOptions, RollingOptions, DataType as PolarsDataType},
+  |                                          ^^^^^^^^^^^^^^
+  |                                          |
+  |                                          no `RollingOptions` in `prelude`
+  |                                          help: a similar name exists in the module: `RollingCovOptions`
+
+error[E0432]: unresolved import `polars::prelude::RollingOptions`
+ --> src/functions/indicators/volume.rs:8:42
+  |
+8 |     prelude::{lit, Duration, EWMOptions, RollingOptions, DataType as PolarsDataType},
+  |                                          ^^^^^^^^^^^^^^
+  |                                          |
+  |                                          no `RollingOptions` in `prelude`
+  |                                          help: a similar name exists in the module: `RollingCovOptions`
+
+error[E0412]: cannot find type `StrategyAST` in this scope
+  --> src/engines/evaluation/backtester.rs:28:29
+   |
+28 |     pub fn run(&self, ast: &StrategyAST, data: &DataFrame) -> Result<StrategyResult> {
+   |                             ^^^^^^^^^^^ not found in this scope
+   |
+help: consider importing this struct through its public re-export
+   |
+ 1 + use crate::engines::generation::StrategyAST;
+   |
+
+error[E0433]: failed to resolve: use of undeclared type `StrategyAST`
+  --> src/engines/evaluation/backtester.rs:30:13
+   |
+30 |             StrategyAST::Rule { condition, .. } => condition,
+   |             ^^^^^^^^^^^ use of undeclared type `StrategyAST`
+   |
+help: consider importing this struct through its public re-export
+   |
+ 1 + use crate::engines::generation::StrategyAST;
+   |
+
+error[E0412]: cannot find type `TradeBiasError` in this scope
+ --> src/engines/generation/optimisation/splitters/base.rs:7:65
+  |
+7 |     fn split(&self, data: &DataFrame) -> Result<Vec<DataSplit>, TradeBiasError>;
+  |                                                                 ^^^^^^^^^^^^^^
+  |
+ ::: src/error.rs:4:1
+  |
+4 | pub enum TradebiasError {
+  | ----------------------- similarly named enum `TradebiasError` defined here
+  |
+help: an enum with a similar name exists
+  |
+7 -     fn split(&self, data: &DataFrame) -> Result<Vec<DataSplit>, TradeBiasError>;
+7 +     fn split(&self, data: &DataFrame) -> Result<Vec<DataSplit>, TradebiasError>;
+  |
+help: you might be missing a type parameter
+  |
+5 | pub trait DataSplitter<TradeBiasError>: Send + Sync {
+  |                       ++++++++++++++++
+
+error[E0412]: cannot find type `TradeBiasError` in this scope
+  --> src/engines/generation/optimisation/methods/base.rs:30:35
+   |
+30 |     ) -> Result<AggregatedResult, TradeBiasError>;
+   |                                   ^^^^^^^^^^^^^^
+   |
+  ::: src/error.rs:4:1
+   |
+ 4 | pub enum TradebiasError {
+   | ----------------------- similarly named enum `TradebiasError` defined here
+   |
+help: an enum with a similar name exists
+   |
+30 -     ) -> Result<AggregatedResult, TradeBiasError>;
+30 +     ) -> Result<AggregatedResult, TradebiasError>;
+   |
+help: you might be missing a type parameter
+   |
+22 | pub trait ValidationMethod<TradeBiasError>: Send + Sync {
+   |                           ++++++++++++++++
+
+error[E0412]: cannot find type `TradeBiasError` in this scope
+  --> src/engines/generation/optimisation/methods/wfo.rs:47:35
+   |
+47 |     ) -> Result<AggregatedResult, TradeBiasError> {
+   |                                   ^^^^^^^^^^^^^^
+   |
+  ::: src/error.rs:4:1
+   |
+ 4 | pub enum TradebiasError {
+   | ----------------------- similarly named enum `TradebiasError` defined here
+   |
+help: an enum with a similar name exists
+   |
+47 -     ) -> Result<AggregatedResult, TradeBiasError> {
+47 +     ) -> Result<AggregatedResult, TradebiasError> {
+   |
+help: you might be missing a type parameter
+   |
+38 | impl<TradeBiasError> ValidationMethod for WalkForwardMethod {
+   |     ++++++++++++++++
+
+error[E0425]: cannot find function `abs` in module `dsl`
+   --> src/functions/primitives.rs:102:17
+    |
+102 |         Ok(dsl::abs(args[0].clone()))
+    |                 ^^^ not found in `dsl`
+
+warning: unused import: `crate::types::*`
+ --> src/engines/metrics/risk.rs:2:5
+  |
+2 | use crate::types::*;
+  |     ^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: unused imports: `AstNode`, `TradebiasError`, and `Value`
+ --> src/engines/evaluation/backtester.rs:3:21
+  |
+3 |     error::{Result, TradebiasError},
+  |                     ^^^^^^^^^^^^^^
+...
+6 |     types::{AstNode, StrategyResult, Value},
+  |             ^^^^^^^                  ^^^^^
+
+warning: unused import: `TradebiasError`
+ --> src/engines/evaluation/portfolio.rs:2:21
+  |
+2 |     error::{Result, TradebiasError},
+  |                     ^^^^^^^^^^^^^^
+
+warning: unused import: `crate::engines::generation::ast::StrategyAST`
+ --> src/engines/generation/operators.rs:1:5
+  |
+1 | use crate::engines::generation::ast::StrategyAST;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `HashSet`
+ --> src/engines/generation/diversity_validator.rs:3:33
+  |
+3 | use std::collections::{HashMap, HashSet};
+  |                                 ^^^^^^^
+
+warning: unused import: `crate::error::TradebiasError`
+ --> src/engines/generation/optimisation/splitters/base.rs:3:5
+  |
+3 | use crate::error::TradebiasError;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::error::TradebiasError`
+ --> src/engines/generation/optimisation/methods/base.rs:3:5
+  |
+3 | use crate::error::TradebiasError;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::error::TradebiasError`
+ --> src/engines/generation/optimisation/methods/wfo.rs:9:5
+  |
+9 | use crate::error::TradebiasError;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `DataType as PolarsDataType`
+ --> src/functions/primitives.rs:2:23
+  |
+2 | use polars::prelude::{DataType as PolarsDataType, Duration, EWMOptions, LiteralValue, RollingOptions};
+  |                       ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `Expr`
+ --> src/functions/primitives.rs:3:31
+  |
+3 | use polars::lazy::dsl::{self, Expr};
+  |                               ^^^^
+
+warning: unused import: `collections::VecDeque`
+  --> src/functions/indicators/trend.rs:10:21
+   |
+10 | use std::{any::Any, collections::VecDeque};
+   |                     ^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `self`
+  --> src/functions/registry.rs:14:18
+   |
+14 |     primitives::{self, And, Or, Abs},
+   |                  ^^^^
+
+error[E0053]: method `output_type` has an incompatible type for trait
+  --> src/functions/indicators/momentum.rs:38:30
+   |
+38 |     fn output_type(&self) -> PolarsDataType {
+   |                              ^^^^^^^^^^^^^^ expected `types::DataType`, found `polars::prelude::DataType`
+   |
+note: type in trait
+  --> src/functions/traits.rs:36:30
+   |
+36 |     fn output_type(&self) -> DataType;
+   |                              ^^^^^^^^
+   = note: expected signature `fn(&RSI) -> types::DataType`
+              found signature `fn(&RSI) -> polars::prelude::DataType`
+help: change the output type to match the trait
+   |
+38 -     fn output_type(&self) -> PolarsDataType {
+38 +     fn output_type(&self) -> types::DataType {
+   |
+
+error[E0053]: method `output_type` has an incompatible type for trait
+   --> src/functions/indicators/momentum.rs:122:30
+    |
+122 |     fn output_type(&self) -> PolarsDataType {
+    |                              ^^^^^^^^^^^^^^ expected `types::DataType`, found `polars::prelude::DataType`
+    |
+note: type in trait
+   --> src/functions/traits.rs:36:30
+    |
+ 36 |     fn output_type(&self) -> DataType;
+    |                              ^^^^^^^^
+    = note: expected signature `fn(&Stochastic) -> types::DataType`
+               found signature `fn(&Stochastic) -> polars::prelude::DataType`
+help: change the output type to match the trait
+    |
+122 -     fn output_type(&self) -> PolarsDataType {
+122 +     fn output_type(&self) -> types::DataType {
+    |
+
+error[E0053]: method `output_type` has an incompatible type for trait
+   --> src/functions/indicators/momentum.rs:210:30
+    |
+210 |     fn output_type(&self) -> PolarsDataType {
+    |                              ^^^^^^^^^^^^^^ expected `types::DataType`, found `polars::prelude::DataType`
+    |
+note: type in trait
+   --> src/functions/traits.rs:36:30
+    |
+ 36 |     fn output_type(&self) -> DataType;
+    |                              ^^^^^^^^
+    = note: expected signature `fn(&CCI) -> types::DataType`
+               found signature `fn(&CCI) -> polars::prelude::DataType`
+help: change the output type to match the trait
+    |
+210 -     fn output_type(&self) -> PolarsDataType {
+210 +     fn output_type(&self) -> types::DataType {
+    |
+
+error[E0053]: method `output_type` has an incompatible type for trait
+   --> src/functions/indicators/momentum.rs:289:30
+    |
+289 |     fn output_type(&self) -> PolarsDataType {
+    |                              ^^^^^^^^^^^^^^ expected `types::DataType`, found `polars::prelude::DataType`
+    |
+note: type in trait
+   --> src/functions/traits.rs:36:30
+    |
+ 36 |     fn output_type(&self) -> DataType;
+    |                              ^^^^^^^^
+    = note: expected signature `fn(&WilliamsR) -> types::DataType`
+               found signature `fn(&WilliamsR) -> polars::prelude::DataType`
+help: change the output type to match the trait
+    |
+289 -     fn output_type(&self) -> PolarsDataType {
+289 +     fn output_type(&self) -> types::DataType {
+    |
+
+error[E0053]: method `output_type` has an incompatible type for trait
+   --> src/functions/indicators/momentum.rs:363:30
+    |
+363 |     fn output_type(&self) -> PolarsDataType {
+    |                              ^^^^^^^^^^^^^^ expected `types::DataType`, found `polars::prelude::DataType`
+    |
+note: type in trait
+   --> src/functions/traits.rs:36:30
+    |
+ 36 |     fn output_type(&self) -> DataType;
+    |                              ^^^^^^^^
+    = note: expected signature `fn(&ROC) -> types::DataType`
+               found signature `fn(&ROC) -> polars::prelude::DataType`
+help: change the output type to match the trait
+    |
+363 -     fn output_type(&self) -> PolarsDataType {
+363 +     fn output_type(&self) -> types::DataType {
+    |
+
+error[E0053]: method `output_type` has an incompatible type for trait
+   --> src/functions/indicators/momentum.rs:422:30
+    |
+422 |     fn output_type(&self) -> PolarsDataType {
+    |                              ^^^^^^^^^^^^^^ expected `types::DataType`, found `polars::prelude::DataType`
+    |
+note: type in trait
+   --> src/functions/traits.rs:36:30
+    |
+ 36 |     fn output_type(&self) -> DataType;
+    |                              ^^^^^^^^
+    = note: expected signature `fn(&AC) -> types::DataType`
+               found signature `fn(&AC) -> polars::prelude::DataType`
+help: change the output type to match the trait
+    |
+422 -     fn output_type(&self) -> PolarsDataType {
+422 +     fn output_type(&self) -> types::DataType {
+    |
+
+error[E0053]: method `output_type` has an incompatible type for trait
+   --> src/functions/indicators/momentum.rs:497:30
+    |
+497 |     fn output_type(&self) -> PolarsDataType {
+    |                              ^^^^^^^^^^^^^^ expected `types::DataType`, found `polars::prelude::DataType`
+    |
+note: type in trait
+   --> src/functions/traits.rs:36:30
+    |
+ 36 |     fn output_type(&self) -> DataType;
+    |                              ^^^^^^^^
+    = note: expected signature `fn(&AO) -> types::DataType`
+               found signature `fn(&AO) -> polars::prelude::DataType`
+help: change the output type to match the trait
+    |
+497 -     fn output_type(&self) -> PolarsDataType {
+497 +     fn output_type(&self) -> types::DataType {
+    |
+
+error[E0053]: method `output_type` has an incompatible type for trait
+   --> src/functions/indicators/momentum.rs:571:30
+    |
+571 |     fn output_type(&self) -> PolarsDataType {
+    |                              ^^^^^^^^^^^^^^ expected `types::DataType`, found `polars::prelude::DataType`
+    |
+note: type in trait
+   --> src/functions/traits.rs:36:30
+    |
+ 36 |     fn output_type(&self) -> DataType;
+    |                              ^^^^^^^^
+    = note: expected signature `fn(&RVI) -> types::DataType`
+               found signature `fn(&RVI) -> polars::prelude::DataType`
+help: change the output type to match the trait
+    |
+571 -     fn output_type(&self) -> PolarsDataType {
+571 +     fn output_type(&self) -> types::DataType {
+    |
+
+error[E0053]: method `output_type` has an incompatible type for trait
+   --> src/functions/indicators/momentum.rs:659:30
+    |
+659 |     fn output_type(&self) -> PolarsDataType {
+    |                              ^^^^^^^^^^^^^^ expected `types::DataType`, found `polars::prelude::DataType`
+    |
+note: type in trait
+   --> src/functions/traits.rs:36:30
+    |
+ 36 |     fn output_type(&self) -> DataType;
+    |                              ^^^^^^^^
+    = note: expected signature `fn(&DeMarker) -> types::DataType`
+               found signature `fn(&DeMarker) -> polars::prelude::DataType`
+help: change the output type to match the trait
+    |
+659 -     fn output_type(&self) -> PolarsDataType {
+659 +     fn output_type(&self) -> types::DataType {
+    |
+
+error[E0053]: method `output_type` has an incompatible type for trait
+   --> src/functions/indicators/momentum.rs:737:30
+    |
+737 |     fn output_type(&self) -> PolarsDataType {
+    |                              ^^^^^^^^^^^^^^ expected `types::DataType`, found `polars::prelude::DataType`
+    |
+note: type in trait
+   --> src/functions/traits.rs:36:30
+    |
+ 36 |     fn output_type(&self) -> DataType;
+    |                              ^^^^^^^^
+    = note: expected signature `fn(&Momentum) -> types::DataType`
+               found signature `fn(&Momentum) -> polars::prelude::DataType`
+help: change the output type to match the trait
+    |
+737 -     fn output_type(&self) -> PolarsDataType {
+737 +     fn output_type(&self) -> types::DataType {
+    |
+
+error[E0053]: method `output_type` has an incompatible type for trait
+  --> src/functions/indicators/trend.rs:28:30
+   |
+28 |     fn output_type(&self) -> PolarsDataType {
+   |                              ^^^^^^^^^^^^^^ expected `types::DataType`, found `polars::prelude::DataType`
+   |
+note: type in trait
+  --> src/functions/traits.rs:36:30
+   |
+36 |     fn output_type(&self) -> DataType;
+   |                              ^^^^^^^^
+   = note: expected signature `fn(&SMA) -> types::DataType`
+              found signature `fn(&SMA) -> polars::prelude::DataType`
+help: change the output type to match the trait
+   |
+28 -     fn output_type(&self) -> PolarsDataType {
+28 +     fn output_type(&self) -> types::DataType {
+   |
+
+error[E0053]: method `output_type` has an incompatible type for trait
+  --> src/functions/indicators/trend.rs:90:30
+   |
+90 |     fn output_type(&self) -> PolarsDataType {
+   |                              ^^^^^^^^^^^^^^ expected `types::DataType`, found `polars::prelude::DataType`
+   |
+note: type in trait
+  --> src/functions/traits.rs:36:30
+   |
+36 |     fn output_type(&self) -> DataType;
+   |                              ^^^^^^^^
+   = note: expected signature `fn(&EMA) -> types::DataType`
+              found signature `fn(&EMA) -> polars::prelude::DataType`
+help: change the output type to match the trait
+   |
+90 -     fn output_type(&self) -> PolarsDataType {
+90 +     fn output_type(&self) -> types::DataType {
+   |
+
+error[E0053]: method `output_type` has an incompatible type for trait
+   --> src/functions/indicators/trend.rs:158:30
+    |
+158 |     fn output_type(&self) -> PolarsDataType {
+    |                              ^^^^^^^^^^^^^^ expected `types::DataType`, found `polars::prelude::DataType`
+    |
+note: type in trait
+   --> src/functions/traits.rs:36:30
+    |
+ 36 |     fn output_type(&self) -> DataType;
+    |                              ^^^^^^^^
+    = note: expected signature `fn(&MACD) -> types::DataType`
+               found signature `fn(&MACD) -> polars::prelude::DataType`
+help: change the output type to match the trait
+    |
+158 -     fn output_type(&self) -> PolarsDataType {
+158 +     fn output_type(&self) -> types::DataType {
+    |
+
+error[E0053]: method `output_type` has an incompatible type for trait
+   --> src/functions/indicators/trend.rs:240:30
+    |
+240 |     fn output_type(&self) -> PolarsDataType {
+    |                              ^^^^^^^^^^^^^^ expected `types::DataType`, found `polars::prelude::DataType`
+    |
+note: type in trait
+   --> src/functions/traits.rs:36:30
+    |
+ 36 |     fn output_type(&self) -> DataType;
+    |                              ^^^^^^^^
+    = note: expected signature `fn(&BollingerBands) -> types::DataType`
+               found signature `fn(&BollingerBands) -> polars::prelude::DataType`
+help: change the output type to match the trait
+    |
+240 -     fn output_type(&self) -> PolarsDataType {
+240 +     fn output_type(&self) -> types::DataType {
+    |
+
+error[E0053]: method `output_type` has an incompatible type for trait
+   --> src/functions/indicators/trend.rs:314:30
+    |
+314 |     fn output_type(&self) -> PolarsDataType {
+    |                              ^^^^^^^^^^^^^^ expected `types::DataType`, found `polars::prelude::DataType`
+    |
+note: type in trait
+   --> src/functions/traits.rs:36:30
+    |
+ 36 |     fn output_type(&self) -> DataType;
+    |                              ^^^^^^^^
+    = note: expected signature `fn(&Envelopes) -> types::DataType`
+               found signature `fn(&Envelopes) -> polars::prelude::DataType`
+help: change the output type to match the trait
+    |
+314 -     fn output_type(&self) -> PolarsDataType {
+314 +     fn output_type(&self) -> types::DataType {
+    |
+
+error[E0053]: method `output_type` has an incompatible type for trait
+   --> src/functions/indicators/trend.rs:392:30
+    |
+392 |     fn output_type(&self) -> PolarsDataType {
+    |                              ^^^^^^^^^^^^^^ expected `types::DataType`, found `polars::prelude::DataType`
+    |
+note: type in trait
+   --> src/functions/traits.rs:36:30
+    |
+ 36 |     fn output_type(&self) -> DataType;
+    |                              ^^^^^^^^
+    = note: expected signature `fn(&SAR) -> types::DataType`
+               found signature `fn(&SAR) -> polars::prelude::DataType`
+help: change the output type to match the trait
+    |
+392 -     fn output_type(&self) -> PolarsDataType {
+392 +     fn output_type(&self) -> types::DataType {
+    |
+
+error[E0053]: method `output_type` has an incompatible type for trait
+   --> src/functions/indicators/trend.rs:487:30
+    |
+487 |     fn output_type(&self) -> PolarsDataType {
+    |                              ^^^^^^^^^^^^^^ expected `types::DataType`, found `polars::prelude::DataType`
+    |
+note: type in trait
+   --> src/functions/traits.rs:36:30
+    |
+ 36 |     fn output_type(&self) -> DataType;
+    |                              ^^^^^^^^
+    = note: expected signature `fn(&Bears) -> types::DataType`
+               found signature `fn(&Bears) -> polars::prelude::DataType`
+help: change the output type to match the trait
+    |
+487 -     fn output_type(&self) -> PolarsDataType {
+487 +     fn output_type(&self) -> types::DataType {
+    |
+
+error[E0053]: method `output_type` has an incompatible type for trait
+   --> src/functions/indicators/trend.rs:560:30
+    |
+560 |     fn output_type(&self) -> PolarsDataType {
+    |                              ^^^^^^^^^^^^^^ expected `types::DataType`, found `polars::prelude::DataType`
+    |
+note: type in trait
+   --> src/functions/traits.rs:36:30
+    |
+ 36 |     fn output_type(&self) -> DataType;
+    |                              ^^^^^^^^
+    = note: expected signature `fn(&Bulls) -> types::DataType`
+               found signature `fn(&Bulls) -> polars::prelude::DataType`
+help: change the output type to match the trait
+    |
+560 -     fn output_type(&self) -> PolarsDataType {
+560 +     fn output_type(&self) -> types::DataType {
+    |
+
+error[E0053]: method `output_type` has an incompatible type for trait
+   --> src/functions/indicators/trend.rs:632:30
+    |
+632 |     fn output_type(&self) -> PolarsDataType {
+    |                              ^^^^^^^^^^^^^^ expected `types::DataType`, found `polars::prelude::DataType`
+    |
+note: type in trait
+   --> src/functions/traits.rs:36:30
+    |
+ 36 |     fn output_type(&self) -> DataType;
+    |                              ^^^^^^^^
+    = note: expected signature `fn(&DEMA) -> types::DataType`
+               found signature `fn(&DEMA) -> polars::prelude::DataType`
+help: change the output type to match the trait
+    |
+632 -     fn output_type(&self) -> PolarsDataType {
+632 +     fn output_type(&self) -> types::DataType {
+    |
+
+error[E0053]: method `output_type` has an incompatible type for trait
+   --> src/functions/indicators/trend.rs:701:30
+    |
+701 |     fn output_type(&self) -> PolarsDataType {
+    |                              ^^^^^^^^^^^^^^ expected `types::DataType`, found `polars::prelude::DataType`
+    |
+note: type in trait
+   --> src/functions/traits.rs:36:30
+    |
+ 36 |     fn output_type(&self) -> DataType;
+    |                              ^^^^^^^^
+    = note: expected signature `fn(&TEMA) -> types::DataType`
+               found signature `fn(&TEMA) -> polars::prelude::DataType`
+help: change the output type to match the trait
+    |
+701 -     fn output_type(&self) -> PolarsDataType {
+701 +     fn output_type(&self) -> types::DataType {
+    |
+
+error[E0053]: method `output_type` has an incompatible type for trait
+   --> src/functions/indicators/trend.rs:774:30
+    |
+774 |     fn output_type(&self) -> PolarsDataType {
+    |                              ^^^^^^^^^^^^^^ expected `types::DataType`, found `polars::prelude::DataType`
+    |
+note: type in trait
+   --> src/functions/traits.rs:36:30
+    |
+ 36 |     fn output_type(&self) -> DataType;
+    |                              ^^^^^^^^
+    = note: expected signature `fn(&TriX) -> types::DataType`
+               found signature `fn(&TriX) -> polars::prelude::DataType`
+help: change the output type to match the trait
+    |
+774 -     fn output_type(&self) -> PolarsDataType {
+774 +     fn output_type(&self) -> types::DataType {
+    |
+
+error[E0053]: method `output_type` has an incompatible type for trait
+  --> src/functions/indicators/volatility.rs:29:30
+   |
+29 |     fn output_type(&self) -> PolarsDataType {
+   |                              ^^^^^^^^^^^^^^ expected `types::DataType`, found `polars::prelude::DataType`
+   |
+note: type in trait
+  --> src/functions/traits.rs:36:30
+   |
+36 |     fn output_type(&self) -> DataType;
+   |                              ^^^^^^^^
+   = note: expected signature `fn(&ATR) -> types::DataType`
+              found signature `fn(&ATR) -> polars::prelude::DataType`
+help: change the output type to match the trait
+   |
+29 -     fn output_type(&self) -> PolarsDataType {
+29 +     fn output_type(&self) -> types::DataType {
+   |
+
+error[E0053]: method `output_type` has an incompatible type for trait
+   --> src/functions/indicators/volatility.rs:123:30
+    |
+123 |     fn output_type(&self) -> PolarsDataType {
+    |                              ^^^^^^^^^^^^^^ expected `types::DataType`, found `polars::prelude::DataType`
+    |
+note: type in trait
+   --> src/functions/traits.rs:36:30
+    |
+ 36 |     fn output_type(&self) -> DataType;
+    |                              ^^^^^^^^
+    = note: expected signature `fn(&ADX) -> types::DataType`
+               found signature `fn(&ADX) -> polars::prelude::DataType`
+help: change the output type to match the trait
+    |
+123 -     fn output_type(&self) -> PolarsDataType {
+123 +     fn output_type(&self) -> types::DataType {
+    |
+
+error[E0053]: method `output_type` has an incompatible type for trait
+   --> src/functions/indicators/volatility.rs:258:30
+    |
+258 |     fn output_type(&self) -> PolarsDataType {
+    |                              ^^^^^^^^^^^^^^ expected `types::DataType`, found `polars::prelude::DataType`
+    |
+note: type in trait
+   --> src/functions/traits.rs:36:30
+    |
+ 36 |     fn output_type(&self) -> DataType;
+    |                              ^^^^^^^^
+    = note: expected signature `fn(&volatility::StdDev) -> types::DataType`
+               found signature `fn(&volatility::StdDev) -> polars::prelude::DataType`
+help: change the output type to match the trait
+    |
+258 -     fn output_type(&self) -> PolarsDataType {
+258 +     fn output_type(&self) -> types::DataType {
+    |
+
+error[E0053]: method `output_type` has an incompatible type for trait
+  --> src/functions/indicators/volume.rs:25:30
+   |
+25 |     fn output_type(&self) -> PolarsDataType {
+   |                              ^^^^^^^^^^^^^^ expected `types::DataType`, found `polars::prelude::DataType`
+   |
+note: type in trait
+  --> src/functions/traits.rs:36:30
+   |
+36 |     fn output_type(&self) -> DataType;
+   |                              ^^^^^^^^
+   = note: expected signature `fn(&OBV) -> types::DataType`
+              found signature `fn(&OBV) -> polars::prelude::DataType`
+help: change the output type to match the trait
+   |
+25 -     fn output_type(&self) -> PolarsDataType {
+25 +     fn output_type(&self) -> types::DataType {
+   |
+
+error[E0053]: method `output_type` has an incompatible type for trait
+  --> src/functions/indicators/volume.rs:92:30
+   |
+92 |     fn output_type(&self) -> PolarsDataType {
+   |                              ^^^^^^^^^^^^^^ expected `types::DataType`, found `polars::prelude::DataType`
+   |
+note: type in trait
+  --> src/functions/traits.rs:36:30
+   |
+36 |     fn output_type(&self) -> DataType;
+   |                              ^^^^^^^^
+   = note: expected signature `fn(&MFI) -> types::DataType`
+              found signature `fn(&MFI) -> polars::prelude::DataType`
+help: change the output type to match the trait
+   |
+92 -     fn output_type(&self) -> PolarsDataType {
+92 +     fn output_type(&self) -> types::DataType {
+   |
+
+error[E0053]: method `output_type` has an incompatible type for trait
+   --> src/functions/indicators/volume.rs:188:30
+    |
+188 |     fn output_type(&self) -> PolarsDataType {
+    |                              ^^^^^^^^^^^^^^ expected `types::DataType`, found `polars::prelude::DataType`
+    |
+note: type in trait
+   --> src/functions/traits.rs:36:30
+    |
+ 36 |     fn output_type(&self) -> DataType;
+    |                              ^^^^^^^^
+    = note: expected signature `fn(&Force) -> types::DataType`
+               found signature `fn(&Force) -> polars::prelude::DataType`
+help: change the output type to match the trait
+    |
+188 -     fn output_type(&self) -> PolarsDataType {
+188 +     fn output_type(&self) -> types::DataType {
+    |
+
+error[E0053]: method `output_type` has an incompatible type for trait
+   --> src/functions/indicators/volume.rs:256:30
+    |
+256 |     fn output_type(&self) -> PolarsDataType {
+    |                              ^^^^^^^^^^^^^^ expected `types::DataType`, found `polars::prelude::DataType`
+    |
+note: type in trait
+   --> src/functions/traits.rs:36:30
+    |
+ 36 |     fn output_type(&self) -> DataType;
+    |                              ^^^^^^^^
+    = note: expected signature `fn(&Volumes) -> types::DataType`
+               found signature `fn(&Volumes) -> polars::prelude::DataType`
+help: change the output type to match the trait
+    |
+256 -     fn output_type(&self) -> PolarsDataType {
+256 +     fn output_type(&self) -> types::DataType {
+    |
+
+error[E0053]: method `output_type` has an incompatible type for trait
+   --> src/functions/indicators/volume.rs:311:30
+    |
+311 |     fn output_type(&self) -> PolarsDataType {
+    |                              ^^^^^^^^^^^^^^ expected `types::DataType`, found `polars::prelude::DataType`
+    |
+note: type in trait
+   --> src/functions/traits.rs:36:30
+    |
+ 36 |     fn output_type(&self) -> DataType;
+    |                              ^^^^^^^^
+    = note: expected signature `fn(&Chaikin) -> types::DataType`
+               found signature `fn(&Chaikin) -> polars::prelude::DataType`
+help: change the output type to match the trait
+    |
+311 -     fn output_type(&self) -> PolarsDataType {
+311 +     fn output_type(&self) -> types::DataType {
+    |
+
+error[E0053]: method `output_type` has an incompatible type for trait
+   --> src/functions/indicators/volume.rs:398:30
+    |
+398 |     fn output_type(&self) -> PolarsDataType {
+    |                              ^^^^^^^^^^^^^^ expected `types::DataType`, found `polars::prelude::DataType`
+    |
+note: type in trait
+   --> src/functions/traits.rs:36:30
+    |
+ 36 |     fn output_type(&self) -> DataType;
+    |                              ^^^^^^^^
+    = note: expected signature `fn(&BWMFI) -> types::DataType`
+               found signature `fn(&BWMFI) -> polars::prelude::DataType`
+help: change the output type to match the trait
+    |
+398 -     fn output_type(&self) -> PolarsDataType {
+398 +     fn output_type(&self) -> types::DataType {
+    |
+
+error[E0277]: the trait bound `&&PlSmallStr: Into<PlSmallStr>` is not satisfied
+  --> src/engines/evaluation/expression.rs:41:27
+   |
+41 |             return Ok(col(&cached.name()));
+   |                       --- ^^^^^^^^^^^^^^ the trait `From<&&PlSmallStr>` is not implemented for `PlSmallStr`
+   |                       |
+   |                       required by a bound introduced by this call
+   |
+   = note: required for `&&PlSmallStr` to implement `Into<PlSmallStr>`
+note: required by a bound in `polars::prelude::col`
+  --> /home/jules/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/polars-plan-0.51.0/src/dsl/functions/selectors.rs:29:8
+   |
+27 | pub fn col<S>(name: S) -> Expr
+   |        --- required by a bound in this function
+28 | where
+29 |     S: Into<PlSmallStr>,
+   |        ^^^^^^^^^^^^^^^^ required by this bound in `col`
+help: consider dereferencing here
+   |
+41 |             return Ok(col(&**cached.name()));
+   |                            ++
+
+error[E0599]: the method `call` exists for reference `&dyn Indicator`, but its trait bounds were not satisfied
+  --> src/engines/evaluation/expression.rs:69:37
+   |
+69 |         let result_expr = indicator.call(df, &arg_exprs?)?;
+   |                                     ^^^^ method cannot be called on `&dyn Indicator` due to unsatisfied trait bounds
+   |
+  ::: src/functions/traits.rs:16:1
+   |
+16 | pub trait Indicator: Send + Sync {
+   | -------------------------------- doesn't satisfy `dyn Indicator: Fn<_>`
+   |
+   = note: the following trait bounds were not satisfied:
+           `dyn Indicator: Fn<_>`
+           which is required by `&dyn Indicator: Fn<_>`
+   = help: items from traits can only be used if the trait is implemented and in scope
+   = note: the following traits define an item `call`, perhaps you need to implement one of them:
+           candidate #1: `Fn`
+           candidate #2: `futures_util::fns::Fn1`
+           candidate #3: `hyper::service::http::HttpService`
+           candidate #4: `hyper::service::service::Service`
+           candidate #5: `itertools::adaptors::map::MapSpecialCaseFn`
+           candidate #6: `object_store::client::http::connection::HttpService`
+           candidate #7: `tower_service::Service`
+
+error[E0599]: no method named `name` found for reference `&dyn Indicator` in the current scope
+  --> src/engines/evaluation/expression.rs:74:57
+   |
+74 |         let cache_key = self.create_cache_key(indicator.name(), args, df)?;
+   |                                                         ^^^^
+   |
+   = help: items from traits can only be used if the trait is implemented and in scope
+   = note: the following traits define an item `name`, perhaps you need to implement one of them:
+           candidate #1: `methods::base::ValidationMethod`
+           candidate #2: `primitives::Primitive`
+           candidate #3: `polars::prelude::SeriesTrait`
+           candidate #4: `polars_stream::nodes::ComputeNode`
+           candidate #5: `polars_stream::nodes::io_sinks::SinkNode`
+           candidate #6: `rustls::crypto::SupportedKxGroup`
+help: there is a method `ui_name` with a similar name
+   |
+74 |         let cache_key = self.create_cache_key(indicator.ui_name(), args, df)?;
+   |                                                         +++
+
+error[E0308]: mismatched types
+  --> src/engines/evaluation/expression.rs:75:35
+   |
+75 |         self.cache.set(cache_key, series.clone());
+   |                    ---            ^^^^^^^^^^^^^^ expected `Series`, found `Column`
+   |                    |
+   |                    arguments to this method are incorrect
+   |
+note: method defined here
+  --> src/data/cache.rs:23:12
+   |
+23 |     pub fn set(&self, key: String, value: Series) {
+   |            ^^^                     -------------
+
+error[E0277]: the trait bound `polars::prelude::Column: polars::prelude::Literal` is not satisfied
+   --> src/engines/evaluation/expression.rs:77:16
+    |
+ 77 |         Ok(lit(series))
+    |            --- ^^^^^^ the trait `polars::prelude::Literal` is not implemented for `polars::prelude::Column`
+    |            |
+    |            required by a bound introduced by this call
+    |
+    = help: the following other types implement trait `polars::prelude::Literal`:
+              &[u8]
+              &str
+              LiteralValue
+              NaiveDate
+              NaiveDateTime
+              PlSmallStr
+              TimeDelta
+              Vec<u8>
+            and 17 others
+note: required by a bound in `polars::prelude::lit`
+   --> /home/jules/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/polars-plan-0.51.0/src/plans/lit.rs:617:15
+    |
+617 | pub fn lit<L: Literal>(t: L) -> Expr {
+    |               ^^^^^^^ required by this bound in `lit`
+
+error[E0599]: the method `call` exists for reference `&dyn functions::traits::Primitive`, but its trait bounds were not satisfied
+  --> src/engines/evaluation/expression.rs:87:19
+   |
+87 |         primitive.call(&arg_exprs?)
+   |                   ^^^^ method cannot be called on `&dyn functions::traits::Primitive` due to unsatisfied trait bounds
+   |
+  ::: src/functions/traits.rs:68:1
+   |
+68 | pub trait Primitive: Send + Sync {
+   | -------------------------------- doesn't satisfy `dyn functions::traits::Primitive: Fn<_>`
+   |
+   = note: the following trait bounds were not satisfied:
+           `dyn functions::traits::Primitive: Fn<_>`
+           which is required by `&dyn functions::traits::Primitive: Fn<_>`
+   = help: items from traits can only be used if the trait is implemented and in scope
+   = note: the following traits define an item `call`, perhaps you need to implement one of them:
+           candidate #1: `Fn`
+           candidate #2: `futures_util::fns::Fn1`
+           candidate #3: `hyper::service::http::HttpService`
+           candidate #4: `hyper::service::service::Service`
+           candidate #5: `itertools::adaptors::map::MapSpecialCaseFn`
+           candidate #6: `object_store::client::http::connection::HttpService`
+           candidate #7: `tower_service::Service`
+
+error[E0609]: no field `try_` on type `HallOfFame`
+  --> src/engines/generation/evolution_engine.rs:94:35
+   |
+94 |                 self.hall_of_fame.try_.add(elite);
+   |                                   ^^^^ unknown field
+
+error[E0308]: mismatched types
+  --> src/engines/generation/diversity_validator.rs:43:33
+   |
+43 |                     if let Some(AstNode::Const(ConstValue::Integer(period))) = args.get(1) {
+   |                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^    ----------- this expression has type `std::option::Option<&Box<AstNode>>`
+   |                                 |
+   |                                 expected `Box<AstNode>`, found `AstNode`
+   |
+   = note: expected struct `Box<AstNode>`
+                found enum `AstNode`
+
+error[E0063]: missing field `window_type` in initializer of `splitters::types::SplitConfig`
+  --> src/engines/generation/optimisation/splitters/simple.rs:14:21
+   |
+14 |             config: SplitConfig {
+   |                     ^^^^^^^^^^^ missing `window_type`
+
+error[E0599]: no method named `get` found for reference `&Logical<DatetimeType, Int64Type>` in the current scope
+  --> src/engines/generation/optimisation/splitters/simple.rs:62:31
+   |
+62 |     let timestamp_ms = series.get(idx).ok_or_else(|| {
+   |                               ^^^ method not found in `&Logical<DatetimeType, Int64Type>`
+   |
+help: one of the expressions' fields has a method of the same name
+   |
+62 |     let timestamp_ms = series.phys.get(idx).ok_or_else(|| {
+   |                               +++++
+
+error[E0063]: missing field `window_type` in initializer of `splitters::types::SplitConfig`
+  --> src/engines/generation/optimisation/splitters/wfo.rs:20:21
+   |
+20 |             config: SplitConfig {
+   |                     ^^^^^^^^^^^ missing `window_type`
+
+error[E0599]: no method named `get` found for reference `&Logical<DatetimeType, Int64Type>` in the current scope
+   --> src/engines/generation/optimisation/splitters/wfo.rs:126:31
+    |
+126 |     let timestamp_ms = series.get(idx).ok_or_else(|| {
+    |                               ^^^ method not found in `&Logical<DatetimeType, Int64Type>`
+    |
+help: one of the expressions' fields has a method of the same name
+    |
+126 |     let timestamp_ms = series.phys.get(idx).ok_or_else(|| {
+    |                               +++++
+
+error[E0308]: mismatched types
+  --> src/engines/generation/optimisation/methods/wfo.rs:31:17
+   |
+27 |             splitter: WalkForwardSplitter::new(
+   |                       ------------------------ arguments to this function are incorrect
+...
+31 |                 window_type,
+   |                 ^^^^^^^^^^^ expected `bool`, found `WindowType`
+   |
+note: associated function defined here
+  --> src/engines/generation/optimisation/splitters/wfo.rs:13:12
+   |
+13 |     pub fn new(
+   |            ^^^
+...
+17 |         anchored: bool,
+   |         --------------
+
+error[E0277]: the trait bound `std::io::Error: Clone` is not satisfied
+  --> src/error.rs:30:16
+   |
+ 3 | #[derive(Error, Debug, Clone)]
+   |                        ----- in this derive macro expansion
+...
+30 |     Io(#[from] std::io::Error),
+   |                ^^^^^^^^^^^^^^ the trait `Clone` is not implemented for `std::io::Error`
+
+error[E0277]: the trait bound `serde_json::Error: Clone` is not satisfied
+  --> src/error.rs:36:19
+   |
+ 3 | #[derive(Error, Debug, Clone)]
+   |                        ----- in this derive macro expansion
+...
+36 |     Serde(#[from] serde_json::Error),
+   |                   ^^^^^^^^^^^^^^^^^ the trait `Clone` is not implemented for `serde_json::Error`
+
+error[E0599]: no variant or associated item named `Int64` found for enum `LiteralValue` in the current scope
+  --> src/functions/primitives.rs:28:46
+   |
+28 |             dsl::Expr::Literal(LiteralValue::Int64(p)) => *p as usize,
+   |                                              ^^^^^ variant or associated item not found in `LiteralValue`
+
+error[E0599]: no variant or associated item named `Int64` found for enum `LiteralValue` in the current scope
+  --> src/functions/primitives.rs:63:46
+   |
+63 |             dsl::Expr::Literal(LiteralValue::Int64(p)) => *p as usize,
+   |                                              ^^^^^ variant or associated item not found in `LiteralValue`
+
+error[E0599]: no method named `diff` found for enum `polars::prelude::Expr` in the current scope
+  --> src/functions/indicators/momentum.rs:81:28
+   |
+81 |         let delta = series.diff(1, NullBehavior::Drop);
+   |                            ^^^^ method not found in `polars::prelude::Expr`
+
+error[E0599]: no method named `abs` found for enum `polars::prelude::Expr` in the current scope
+   --> src/functions/indicators/momentum.rs:266:14
+    |
+265 |           let mean_deviation = (typical_price.clone() - sma_tp.clone())
+    |  ______________________________-
+266 | |             .abs()
+    | |             -^^^ method not found in `polars::prelude::Expr`
+    | |_____________|
+    |
+
+error[E0599]: no method named `abs` found for enum `polars::prelude::Expr` in the current scope
+  --> src/functions/indicators/volatility.rs:78:47
+   |
+78 |         let tr2 = (high - prev_close.clone()).abs();
+   |                                               ^^^ method not found in `polars::prelude::Expr`
+
+error[E0599]: no method named `abs` found for enum `polars::prelude::Expr` in the current scope
+  --> src/functions/indicators/volatility.rs:79:38
+   |
+79 |         let tr3 = (low - prev_close).abs();
+   |                                      ^^^ method not found in `polars::prelude::Expr`
+
+error[E0599]: no method named `cum_sum` found for enum `polars::prelude::Expr` in the current scope
+  --> src/functions/indicators/volume.rs:72:26
+   |
+72 |         Ok(signed_volume.cum_sum(false))
+   |                          ^^^^^^^ method not found in `polars::prelude::Expr`
+
+error[E0599]: no method named `cum_sum` found for enum `polars::prelude::Expr` in the current scope
+   --> src/functions/indicators/volume.rs:365:37
+    |
+365 |         let adl = money_flow_volume.cum_sum(false);
+    |                                     ^^^^^^^ method not found in `polars::prelude::Expr`
+
+error[E0308]: mismatched types
+  --> src/functions/registry.rs:43:9
+   |
+42 |       pub fn get_indicator(&self, name: &str) -> Option<Arc<dyn Indicator>> {
+   |                                                  -------------------------- expected `std::option::Option<Arc<(dyn Indicator + 'static)>>` because of return type
+43 | /         self.get_function(name)
+44 | |             .and_then(|f| f.as_indicator().map(|i| Arc::from(i)))
+   | |_________________________________________________________________^ expected `Option<Arc<dyn Indicator>>`, found `Option<Arc<&dyn Indicator>>`
+   |
+   = note: expected enum `std::option::Option<Arc<(dyn Indicator + 'static)>>`
+              found enum `std::option::Option<Arc<&dyn Indicator>>`
+
+error[E0308]: mismatched types
+  --> src/functions/registry.rs:48:9
+   |
+47 |       pub fn get_primitive(&self, name: &str) -> Option<Arc<dyn Primitive>> {
+   |                                                  -------------------------- expected `std::option::Option<Arc<(dyn functions::traits::Primitive + 'static)>>` because of return type
+48 | /         self.get_function(name)
+49 | |             .and_then(|f| f.as_primitive().map(|p| Arc::from(p)))
+   | |_________________________________________________________________^ expected `Option<Arc<dyn Primitive>>`, found `Option<Arc<&dyn Primitive>>`
+   |
+   = note: expected enum `std::option::Option<Arc<(dyn functions::traits::Primitive + 'static)>>`
+              found enum `std::option::Option<Arc<&dyn functions::traits::Primitive>>`
+
+error[E0277]: a value of type `Vec<Arc<dyn Indicator>>` cannot be built from an iterator over elements of type `Arc<&dyn Indicator>`
+  --> src/functions/registry.rs:64:14
+   |
+64 |             .collect()
+   |              ^^^^^^^ value of type `Vec<Arc<dyn Indicator>>` cannot be built from `std::iter::Iterator<Item=Arc<&dyn Indicator>>`
+   |
+   = help: the trait `FromIterator<Arc<&dyn Indicator>>` is not implemented for `Vec<Arc<dyn Indicator>>`
+           but trait `FromIterator<Arc<dyn Indicator>>` is implemented for it
+   = help: for that trait implementation, expected `dyn Indicator`, found `&dyn Indicator`
+note: the method call chain might not have had the expected associated types
+  --> src/functions/registry.rs:63:14
+   |
+61 |         self.functions
+   |         -------------- this expression has type `HashMap<String, StrategyFunction>`
+62 |             .values()
+   |              -------- `Iterator::Item` is `&StrategyFunction` here
+63 |             .filter_map(|f| f.as_indicator().map(|i| Arc::from(i)))
+   |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `Iterator::Item` changed to `Arc<&dyn Indicator>` here
+note: required by a bound in `collect`
+  --> /rustc/1159e78c4747b02ef996e55082b704c09b970588/library/core/src/iter/traits/iterator.rs:2014:5
+
+error[E0277]: the trait bound `primitives::And: functions::traits::Primitive` is not satisfied
+   --> src/functions/registry.rs:107:56
+    |
+107 |         let primitives: Vec<Arc<dyn Primitive>> = vec![Arc::new(And {}), Arc::new(Or {}), Arc::new(Abs {})];
+    |                                                        ^^^^^^^^^^^^^^^^ the trait `functions::traits::Primitive` is not implemented for `primitives::And`
+    |
+help: this trait has no implementations, consider adding one
+   --> src/functions/traits.rs:68:1
+    |
+ 68 | pub trait Primitive: Send + Sync {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = note: required for the cast from `Arc<primitives::And>` to `Arc<dyn functions::traits::Primitive>`
+
+error[E0277]: the trait bound `primitives::Or: functions::traits::Primitive` is not satisfied
+   --> src/functions/registry.rs:107:74
+    |
+107 |         let primitives: Vec<Arc<dyn Primitive>> = vec![Arc::new(And {}), Arc::new(Or {}), Arc::new(Abs {})];
+    |                                                                          ^^^^^^^^^^^^^^^ the trait `functions::traits::Primitive` is not implemented for `primitives::Or`
+    |
+help: this trait has no implementations, consider adding one
+   --> src/functions/traits.rs:68:1
+    |
+ 68 | pub trait Primitive: Send + Sync {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = note: required for the cast from `Arc<primitives::Or>` to `Arc<dyn functions::traits::Primitive>`
+
+error[E0277]: the trait bound `Abs: functions::traits::Primitive` is not satisfied
+   --> src/functions/registry.rs:107:91
+    |
+107 |         let primitives: Vec<Arc<dyn Primitive>> = vec![Arc::new(And {}), Arc::new(Or {}), Arc::new(Abs {})];
+    |                                                                                           ^^^^^^^^^^^^^^^^ the trait `functions::traits::Primitive` is not implemented for `Abs`
+    |
+help: this trait has no implementations, consider adding one
+   --> src/functions/traits.rs:68:1
+    |
+ 68 | pub trait Primitive: Send + Sync {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = note: required for the cast from `Arc<Abs>` to `Arc<dyn functions::traits::Primitive>`
+
+error[E0308]: mismatched types
+   --> src/ml/features/engineer.rs:77:24
+    |
+ 77 |         DataFrame::new(feature_series).map_err(|e| TradebiasError::Computation(e.to_string()))
+    |         -------------- ^^^^^^^^^^^^^^ expected `Vec<Column>`, found `Vec<Series>`
+    |         |
+    |         arguments to this function are incorrect
+    |
+    = note: expected struct `Vec<polars::prelude::Column>`
+               found struct `Vec<polars::prelude::Series>`
+note: associated function defined here
+   --> /home/jules/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/polars-core-0.51.0/src/frame/mod.rs:284:12
+    |
+284 |     pub fn new(columns: Vec<Column>) -> PolarsResult<Self> {
+    |            ^^^
+
+error[E0308]: mismatched types
+   --> src/ml/features/engineer.rs:107:38
+    |
+107 |             let series = Series::new(&format!("return_{}", window), returns);
+    |                          ----------- ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `PlSmallStr`, found `&String`
+    |                          |
+    |                          arguments to this function are incorrect
+    |
+note: associated function defined here
+   --> /home/jules/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/polars-core-0.51.0/src/named_from.rs:17:8
+    |
+ 17 |     fn new(name: PlSmallStr, _: T) -> Self;
+    |        ^^^
+help: call `Into::into` on this expression to convert `&std::string::String` into `PlSmallStr`
+    |
+107 |             let series = Series::new((&format!("return_{}", window)).into(), returns);
+    |                                      +                             ++++++++
+
+error[E0308]: mismatched types
+   --> src/ml/features/engineer.rs:130:38
+    |
+130 |             let series = Series::new(&format!("distance_sma_{}", window), distances);
+    |                          ----------- ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `PlSmallStr`, found `&String`
+    |                          |
+    |                          arguments to this function are incorrect
+    |
+note: associated function defined here
+   --> /home/jules/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/polars-core-0.51.0/src/named_from.rs:17:8
+    |
+ 17 |     fn new(name: PlSmallStr, _: T) -> Self;
+    |        ^^^
+help: call `Into::into` on this expression to convert `&std::string::String` into `PlSmallStr`
+    |
+130 |             let series = Series::new((&format!("distance_sma_{}", window)).into(), distances);
+    |                                      +                                   ++++++++
+
+error[E0308]: mismatched types
+   --> src/ml/features/engineer.rs:158:35
+    |
+158 |         features.push(Series::new("rsi_14", rsi_values));
+    |                       ----------- ^^^^^^^^ expected `PlSmallStr`, found `&str`
+    |                       |
+    |                       arguments to this function are incorrect
+    |
+note: associated function defined here
+   --> /home/jules/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/polars-core-0.51.0/src/named_from.rs:17:8
+    |
+ 17 |     fn new(name: PlSmallStr, _: T) -> Self;
+    |        ^^^
+help: call `Into::into` on this expression to convert `&'static str` into `PlSmallStr`
+    |
+158 |         features.push(Series::new("rsi_14".into(), rsi_values));
+    |                                           +++++++
+
+error[E0308]: mismatched types
+   --> src/ml/features/engineer.rs:179:39
+    |
+179 |             features.push(Series::new(&format!("roc_{}", window), roc_values));
+    |                           ----------- ^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `PlSmallStr`, found `&String`
+    |                           |
+    |                           arguments to this function are incorrect
+    |
+note: associated function defined here
+   --> /home/jules/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/polars-core-0.51.0/src/named_from.rs:17:8
+    |
+ 17 |     fn new(name: PlSmallStr, _: T) -> Self;
+    |        ^^^
+help: call `Into::into` on this expression to convert `&std::string::String` into `PlSmallStr`
+    |
+179 |             features.push(Series::new((&format!("roc_{}", window)).into(), roc_values));
+    |                                       +                          ++++++++
+
+error[E0308]: mismatched types
+   --> src/ml/features/engineer.rs:208:39
+    |
+208 |             features.push(Series::new(&format!("volatility_{}", window), vol_values));
+    |                           ----------- ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `PlSmallStr`, found `&String`
+    |                           |
+    |                           arguments to this function are incorrect
+    |
+note: associated function defined here
+   --> /home/jules/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/polars-core-0.51.0/src/named_from.rs:17:8
+    |
+ 17 |     fn new(name: PlSmallStr, _: T) -> Self;
+    |        ^^^
+help: call `Into::into` on this expression to convert `&std::string::String` into `PlSmallStr`
+    |
+208 |             features.push(Series::new((&format!("volatility_{}", window)).into(), vol_values));
+    |                                       +                                 ++++++++
+
+error[E0308]: mismatched types
+   --> src/ml/features/engineer.rs:224:35
+    |
+224 |         features.push(Series::new("atr_14", atr_values));
+    |                       ----------- ^^^^^^^^ expected `PlSmallStr`, found `&str`
+    |                       |
+    |                       arguments to this function are incorrect
+    |
+note: associated function defined here
+   --> /home/jules/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/polars-core-0.51.0/src/named_from.rs:17:8
+    |
+ 17 |     fn new(name: PlSmallStr, _: T) -> Self;
+    |        ^^^
+help: call `Into::into` on this expression to convert `&'static str` into `PlSmallStr`
+    |
+224 |         features.push(Series::new("atr_14".into(), atr_values));
+    |                                           +++++++
+
+error[E0308]: mismatched types
+   --> src/ml/features/engineer.rs:256:39
+    |
+256 |             features.push(Series::new(&format!("volume_ratio_{}", window), ratios));
+    |                           ----------- ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `PlSmallStr`, found `&String`
+    |                           |
+    |                           arguments to this function are incorrect
+    |
+note: associated function defined here
+   --> /home/jules/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/polars-core-0.51.0/src/named_from.rs:17:8
+    |
+ 17 |     fn new(name: PlSmallStr, _: T) -> Self;
+    |        ^^^
+help: call `Into::into` on this expression to convert `&std::string::String` into `PlSmallStr`
+    |
+256 |             features.push(Series::new((&format!("volume_ratio_{}", window)).into(), ratios));
+    |                                       +                                   ++++++++
+
+error[E0599]: no method named `get` found for reference `&Logical<DatetimeType, Int64Type>` in the current scope
+   --> src/ml/features/engineer.rs:274:45
+    |
+274 |             if let Some(ts_ms) = timestamps.get(idx) {
+    |                                             ^^^ method not found in `&Logical<DatetimeType, Int64Type>`
+    |
+help: one of the expressions' fields has a method of the same name
+    |
+274 |             if let Some(ts_ms) = timestamps.phys.get(idx) {
+    |                                             +++++
+
+error[E0308]: mismatched types
+   --> src/ml/features/engineer.rs:289:35
+    |
+289 |         features.push(Series::new("hour_of_day", hours));
+    |                       ----------- ^^^^^^^^^^^^^ expected `PlSmallStr`, found `&str`
+    |                       |
+    |                       arguments to this function are incorrect
+    |
+note: associated function defined here
+   --> /home/jules/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/polars-core-0.51.0/src/named_from.rs:17:8
+    |
+ 17 |     fn new(name: PlSmallStr, _: T) -> Self;
+    |        ^^^
+help: call `Into::into` on this expression to convert `&'static str` into `PlSmallStr`
+    |
+289 |         features.push(Series::new("hour_of_day".into(), hours));
+    |                                                +++++++
+
+error[E0308]: mismatched types
+   --> src/ml/features/engineer.rs:290:35
+    |
+290 |         features.push(Series::new("day_of_week", days_of_week));
+    |                       ----------- ^^^^^^^^^^^^^ expected `PlSmallStr`, found `&str`
+    |                       |
+    |                       arguments to this function are incorrect
+    |
+note: associated function defined here
+   --> /home/jules/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/polars-core-0.51.0/src/named_from.rs:17:8
+    |
+ 17 |     fn new(name: PlSmallStr, _: T) -> Self;
+    |        ^^^
+help: call `Into::into` on this expression to convert `&'static str` into `PlSmallStr`
+    |
+290 |         features.push(Series::new("day_of_week".into(), days_of_week));
+    |                                                +++++++
+
+error[E0223]: ambiguous associated type
+  --> src/ml/signals/extractor.rs:26:13
+   |
+26 |             StrategyAST::Rule { condition, .. } => condition,
+   |             ^^^^^^^^^^^^^^^^^
+   |
+help: if there were a trait named `Example` with associated type `Rule` implemented for `ast::StrategyAST`, you could use the fully-qualified path
+   |
+26 -             StrategyAST::Rule { condition, .. } => condition,
+26 +             <ast::StrategyAST as Example>::Rule { condition, .. } => condition,
+   |
+
+error[E0599]: no method named `get` found for reference `&Logical<DatetimeType, Int64Type>` in the current scope
+  --> src/ml/signals/extractor.rs:70:14
+   |
+67 |           let timestamp_ms = data
+   |  ____________________________-
+68 | |             .column("timestamp")?
+69 | |             .datetime()?
+70 | |             .get(idx)
+   | |             -^^^ method not found in `&Logical<DatetimeType, Int64Type>`
+   | |_____________|
+   |
+   |
+help: one of the expressions' fields has a method of the same name
+   |
+70 |             .phys.get(idx)
+   |              +++++
+
+error[E0223]: ambiguous associated type
+  --> src/ml/signals/extractor.rs:81:13
+   |
+81 |             StrategyAST::Rule { action, .. } => {
+   |             ^^^^^^^^^^^^^^^^^
+   |
+help: if there were a trait named `Example` with associated type `Rule` implemented for `ast::StrategyAST`, you could use the fully-qualified path
+   |
+81 -             StrategyAST::Rule { action, .. } => {
+81 +             <ast::StrategyAST as Example>::Rule { action, .. } => {
+   |
+
+error[E0382]: borrow of partially moved value: `func`
+  --> src/engines/generation/lightweight_validator.rs:57:35
+   |
+45 |                     crate::functions::strategy::StrategyFunction::Primitive(p) => p.arity(),
+   |                                                                             - value partially moved here
+...
+57 |                 let input_types = func.input_types();
+   |                                   ^^^^ value borrowed here after partial move
+   |
+   = note: partial move occurs because value has type `Arc<dyn functions::traits::Primitive>`, which does not implement the `Copy` trait
+help: borrow this binding in the pattern to avoid moving the value
+   |
+45 |                     crate::functions::strategy::StrategyFunction::Primitive(ref p) => p.arity(),
+   |                                                                             +++
+
+Some errors have detailed explanations: E0053, E0063, E0223, E0277, E0308, E0382, E0412, E0425, E0432...
+For more information about an error, try `rustc --explain E0053`.
+warning: `tradebias` (lib) generated 12 warnings
+error: could not compile `tradebias` (lib) due to 86 previous errors; 12 warnings emitted
+warning: build failed, waiting for other jobs to finish...

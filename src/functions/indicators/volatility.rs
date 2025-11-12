@@ -5,7 +5,7 @@ use crate::{
 use anyhow::{bail, Result};
 use polars::{
     lazy::dsl,
-    prelude::{lit, Duration, EWMOptions, RollingOptions},
+    prelude::{lit, Duration, EWMOptions, RollingOptions, DataType as PolarsDataType},
 };
 use std::any::Any;
 use std::collections::VecDeque;
@@ -24,6 +24,10 @@ impl ATR {
 impl Indicator for ATR {
     fn alias(&self) -> &'static str {
         "ATR"
+    }
+
+    fn output_type(&self) -> PolarsDataType {
+        PolarsDataType::Float64
     }
     fn ui_name(&self) -> &'static str {
         "Average True Range"
@@ -114,6 +118,10 @@ pub struct ADXState {
 impl Indicator for ADX {
     fn alias(&self) -> &'static str {
         "ADX"
+    }
+
+    fn output_type(&self) -> PolarsDataType {
+        PolarsDataType::Float64
     }
     fn ui_name(&self) -> &'static str {
         "Average Directional Index"
@@ -245,6 +253,10 @@ impl StdDev {
 impl Indicator for StdDev {
     fn alias(&self) -> &'static str {
         "StdDev"
+    }
+
+    fn output_type(&self) -> PolarsDataType {
+        PolarsDataType::Float64
     }
     fn ui_name(&self) -> &'static str {
         "Standard Deviation"

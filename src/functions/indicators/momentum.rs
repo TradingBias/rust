@@ -5,7 +5,7 @@ use crate::{
 use anyhow::{bail, Result};
 use polars::{
     lazy::dsl,
-    prelude::{lit, when, Duration, EWMOptions, RollingOptions},
+    prelude::{lit, when, Duration, EWMOptions, RollingOptions, DataType as PolarsDataType},
     series::ops::NullBehavior,
 };
 
@@ -33,6 +33,10 @@ impl RSI {
 impl Indicator for RSI {
     fn alias(&self) -> &'static str {
         "RSI"
+    }
+
+    fn output_type(&self) -> PolarsDataType {
+        PolarsDataType::Float64
     }
     fn ui_name(&self) -> &'static str {
         "Relative Strength Index"
@@ -113,6 +117,10 @@ impl Stochastic {
 impl Indicator for Stochastic {
     fn alias(&self) -> &'static str {
         "Stochastic"
+    }
+
+    fn output_type(&self) -> PolarsDataType {
+        PolarsDataType::Float64
     }
     fn ui_name(&self) -> &'static str {
         "Stochastic Oscillator"
@@ -198,6 +206,10 @@ impl Indicator for CCI {
     fn alias(&self) -> &'static str {
         "CCI"
     }
+
+    fn output_type(&self) -> PolarsDataType {
+        PolarsDataType::Float64
+    }
     fn ui_name(&self) -> &'static str {
         "Commodity Channel Index"
     }
@@ -273,6 +285,10 @@ impl Indicator for WilliamsR {
     fn alias(&self) -> &'static str {
         "WilliamsR"
     }
+
+    fn output_type(&self) -> PolarsDataType {
+        PolarsDataType::Float64
+    }
     fn ui_name(&self) -> &'static str {
         "Williams' %R"
     }
@@ -343,6 +359,10 @@ impl Indicator for ROC {
     fn alias(&self) -> &'static str {
         "ROC"
     }
+
+    fn output_type(&self) -> PolarsDataType {
+        PolarsDataType::Float64
+    }
     fn ui_name(&self) -> &'static str {
         "Rate of Change"
     }
@@ -397,6 +417,10 @@ impl AC {
 impl Indicator for AC {
     fn alias(&self) -> &'static str {
         "AC"
+    }
+
+    fn output_type(&self) -> PolarsDataType {
+        PolarsDataType::Float64
     }
     fn ui_name(&self) -> &'static str {
         "Accelerator Oscillator"
@@ -469,6 +493,10 @@ impl Indicator for AO {
     fn alias(&self) -> &'static str {
         "AO"
     }
+
+    fn output_type(&self) -> PolarsDataType {
+        PolarsDataType::Float64
+    }
     fn ui_name(&self) -> &'static str {
         "Awesome Oscillator"
     }
@@ -538,6 +566,10 @@ impl RVI {
 impl Indicator for RVI {
     fn alias(&self) -> &'static str {
         "RVI"
+    }
+
+    fn output_type(&self) -> PolarsDataType {
+        PolarsDataType::Float64
     }
     fn ui_name(&self) -> &'static str {
         "Relative Vigor Index"
@@ -623,6 +655,10 @@ impl Indicator for DeMarker {
     fn alias(&self) -> &'static str {
         "DeMarker"
     }
+
+    fn output_type(&self) -> PolarsDataType {
+        PolarsDataType::Float64
+    }
     fn ui_name(&self) -> &'static str {
         "DeMarker Indicator"
     }
@@ -696,6 +732,10 @@ impl Momentum {
 impl Indicator for Momentum {
     fn alias(&self) -> &'static str {
         "Momentum"
+    }
+
+    fn output_type(&self) -> PolarsDataType {
+        PolarsDataType::Float64
     }
     fn ui_name(&self) -> &'static str {
         "Momentum Indicator"
