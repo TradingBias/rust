@@ -11,7 +11,9 @@
       "WebFetch(domain:docs.rs)",
       "WebFetch(domain:github.com)",
       "Bash(cargo fix:*)",
-      "Bash(cargo test:*)"
+      "Bash(cargo test:*)",
+      "Bash(set RUST_BACKTRACE=1)",
+      "Bash(if not exist \"docs\\project-plan\" mkdir \"docs\\project-plan\")"
     ],
     "deny": [],
     "ask": []
