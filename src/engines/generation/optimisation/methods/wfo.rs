@@ -23,12 +23,13 @@ impl WalkForwardMethod {
         window_type: WindowType,
         backtester: Backtester,
     ) -> Self {
+        let anchored = window_type == WindowType::Anchored;
         Self {
             splitter: WalkForwardSplitter::new(
                 in_sample_pct,
                 out_of_sample_pct,
                 n_folds,
-                window_type,
+                anchored,
             ),
             backtester,
         }

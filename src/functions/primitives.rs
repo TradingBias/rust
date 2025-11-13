@@ -1,6 +1,6 @@
 use anyhow::{bail, Result};
-use polars::prelude::{Duration, EWMOptions, LiteralValue, RollingOptionsFixedWindow};
-use polars::lazy::dsl::{self, Expr};
+use polars::prelude::{EWMOptions, LiteralValue, RollingOptionsFixedWindow};
+use polars::lazy::dsl::{self};
 use crate::functions::traits::Primitive;
 use polars::datatypes::AnyValue;
 
@@ -150,7 +150,7 @@ impl Primitive for Abs {
     }
     fn output_type(&self) -> crate::types::DataType { crate::types::DataType::NumericSeries }
     fn execute(&self, args: &[dsl::Expr]) -> Result<dsl::Expr> {
-        Ok(dsl::abs(args[0].clone()))
+        Ok(args[0].clone().abs())
     }
     fn generate_mql5(&self, args: &[String]) -> String {
         format!("MathAbs({})", args[0])

@@ -7,7 +7,10 @@
       "Bash(find:*)",
       "WebFetch(domain:docs.pola.rs)",
       "Bash(tee:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "WebFetch(domain:docs.rs)",
+      "WebFetch(domain:github.com)",
+      "Bash(cargo fix:*)"
     ],
     "deny": [],
     "ask": []

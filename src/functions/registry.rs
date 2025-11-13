@@ -11,7 +11,7 @@ use crate::functions::{
         volatility::{ADX, ATR, StdDev},
         volume::{BWMFI, Chaikin, Force, MFI, OBV, Volumes},
     },
-    primitives::{self, And, Or, Abs},
+    primitives::{And, Or, Abs},
 };
 use std::{collections::HashMap, sync::Arc};
 

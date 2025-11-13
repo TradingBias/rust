@@ -1,13 +1,10 @@
-   Compiling polars-ops v0.51.0
-   Compiling polars-plan v0.51.0
-   Compiling polars-lazy v0.51.0
-   Compiling polars v0.51.0
-    Checking polars-time v0.51.0
-    Checking polars-io v0.51.0
-    Checking polars-expr v0.51.0
-    Checking polars-mem-engine v0.51.0
-    Checking polars-stream v0.51.0
     Checking tradebias v0.1.0 (C:\Project\rust)
+error[E0425]: cannot find function `abs` in module `dsl`
+   --> src\functions\primitives.rs:153:17
+    |
+153 |         Ok(dsl::abs(args[0].clone()))
+    |                 ^^^ not found in `dsl`
+
 warning: unused import: `crate::types::*`
  --> src\engines\metrics\risk.rs:2:5
   |
@@ -145,7 +142,29 @@ error[E0599]: no method named `clip` found for enum `polars::prelude::Expr` in t
 88 |         let losses = (delta.clip(dsl::lit(f64::NEG_INFINITY), dsl::lit(0.0))).abs();
    |                             ^^^^ method not found in `polars::prelude::Expr`
 
-Some errors have detailed explanations: E0308, E0433, E0599, E0609.
+error[E0599]: no method named `abs` found for enum `polars::prelude::Expr` in the current scope
+   --> src\functions\indicators\momentum.rs:267:14
+    |
+266 |           let mean_deviation = (typical_price.clone() - sma_tp.clone())
+    |  ______________________________-
+267 | |             .abs()
+    | |             -^^^ method not found in `polars::prelude::Expr`
+    | |_____________|
+    |
+
+error[E0599]: no method named `abs` found for enum `polars::prelude::Expr` in the current scope
+  --> src\functions\indicators\volatility.rs:78:47
+   |
+78 |         let tr2 = (high - prev_close.clone()).abs();
+   |                                               ^^^ method not found in `polars::prelude::Expr`
+
+error[E0599]: no method named `abs` found for enum `polars::prelude::Expr` in the current scope
+  --> src\functions\indicators\volatility.rs:79:38
+   |
+79 |         let tr3 = (low - prev_close).abs();
+   |                                      ^^^ method not found in `polars::prelude::Expr`
+
+Some errors have detailed explanations: E0308, E0425, E0433, E0599, E0609.
 For more information about an error, try `rustc --explain E0308`.
 warning: `tradebias` (lib) generated 12 warnings
-error: could not compile `tradebias` (lib) due to 6 previous errors; 12 warnings emitted
+error: could not compile `tradebias` (lib) due to 10 previous errors; 12 warnings emitted

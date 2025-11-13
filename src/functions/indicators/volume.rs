@@ -5,7 +5,7 @@ use crate::types::{DataType, ScaleType};
 use anyhow::{bail, Result};
 use polars::{
     lazy::dsl::{self, when},
-    prelude::{lit, Duration, EWMOptions, RollingOptionsFixedWindow},
+    prelude::{lit, EWMOptions, RollingOptionsFixedWindow},
 };
 
 // --- OBV (On-Balance Volume) ---

@@ -1,6 +1,6 @@
 use crate::engines::generation::ast::*;
 use crate::types::{AstNode, Value as ConstValue};
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 /// Validates that indicator parameters are diverse
 pub struct DiversityValidator {

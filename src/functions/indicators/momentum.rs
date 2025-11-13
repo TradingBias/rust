@@ -5,7 +5,7 @@ use crate::{
 use anyhow::{bail, Result};
 use polars::{
     lazy::dsl,
-    prelude::{lit, when, Duration, EWMOptions, RollingOptionsFixedWindow},
+    prelude::{lit, when, EWMOptions, RollingOptionsFixedWindow},
 };
 use crate::types::DataType;
 
@@ -82,10 +82,13 @@ impl VectorizedIndicator for RSI {
         let delta = series.clone() - series.clone().shift(lit(1));
 
         // Step 2: Separate gains and losses
-        let gains = delta
-            .clone()
-            .clip(dsl::lit(0.0), dsl::lit(f64::INFINITY));
-        let losses = (delta.clip(dsl::lit(f64::NEG_INFINITY), dsl::lit(0.0))).abs();
+        // Replace clip() with when().then().otherwise() pattern
+        let gains = when(delta.clone().gt_eq(lit(0.0)))
+            .then(delta.clone())
+            .otherwise(lit(0.0));
+        let losses = when(delta.clone().lt_eq(lit(0.0)))
+            .then(delta.clone().abs())
+            .otherwise(lit(0.0));
 
         // Step 3: Calculate average gains and losses using SMMA
         let avg_gains = self.smoothed_ma(&gains, period)?;

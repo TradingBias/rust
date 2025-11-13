@@ -3,7 +3,7 @@ use crate::{
     error::{Result, TradebiasError},
     engines::evaluation::{ExpressionBuilder, Portfolio},
     functions::registry::FunctionRegistry,
-    types::{AstNode, StrategyResult, Value},
+    types::{AstNode, StrategyResult},
     engines::generation::ast::StrategyAST,
 };
 use polars::prelude::*;

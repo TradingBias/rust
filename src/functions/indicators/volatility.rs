@@ -5,7 +5,7 @@ use crate::types::{DataType, ScaleType};
 use anyhow::{bail, Result};
 use polars::{
     lazy::dsl,
-    prelude::{lit, Duration, EWMOptions, RollingOptionsFixedWindow},
+    prelude::{lit, EWMOptions, RollingOptionsFixedWindow},
 };
 use std::any::Any;
 use std::collections::VecDeque;

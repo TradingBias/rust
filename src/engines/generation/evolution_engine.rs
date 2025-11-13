@@ -91,7 +91,7 @@ impl EvolutionEngine {
                     metrics: metrics.clone(),
                     canonical_string,
                 };
-                self.hall_of_fame.try_.add(elite);
+                self.hall_of_fame.try_add(elite);
             }
 
             // Get best fitness for progress tracking
@@ -142,7 +142,7 @@ impl EvolutionEngine {
             let ast = self.semantic_mapper.create_strategy_ast(genome)?;
 
             // Run backtest
-            let backtest_result = self.backtester.run(ast.as_node(), data)?;
+            let backtest_result = self.backtester.run(&ast, data)?;
 
             // Calculate fitness
             let fitness = self.calculate_fitness(&backtest_result.metrics);

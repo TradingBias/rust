@@ -82,5 +82,5 @@ impl HallOfFame {
 
 /// Generate canonical string for deduplication
 pub fn get_canonical_ast_string(ast: &StrategyAST) -> String {
-    AstConverter::ast_to_canonical_json(ast)
+    serde_json::to_string(ast).unwrap_or_else(|_| String::new())
 }

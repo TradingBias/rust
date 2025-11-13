@@ -1270,7 +1270,7 @@ After completing each stage:
     - HallOfFame.try_ field (evolution_engine.rs:94)
     - Type mismatch AstNode vs StrategyAST (evolution_engine.rs:145)
     - WindowType vs bool (wfo.rs:31)
-  - [ ] Task 3.7 - StrategyAST imports (2 errors) ⚠️ **After 3.6**
+  - [ ] Task 3.7 - StrategyAST imports (2 errors) ⚠️ **After 3.6** 
 
 - [ ] **Stage 4: Cleanup** ⚠️ **JULES TO IMPLEMENT** (~14 errors)
   - [ ] Task 3.4 - PlSmallStr reference (1 error)

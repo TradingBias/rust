@@ -8,7 +8,7 @@ use crate::{
 };
 use anyhow::{bail, Result};
 use polars::{lazy::dsl, prelude::{lit}};
-use std::{any::Any, collections::VecDeque};
+use std::any::Any;
 
 // --- SMA ---
 pub struct SMA {
