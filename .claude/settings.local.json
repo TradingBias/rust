@@ -3,7 +3,9 @@
     "allow": [
       "Bash(cargo build:*)",
       "WebSearch",
-      "Bash(cargo check:*)"
+      "Bash(cargo check:*)",
+      "Bash(find:*)",
+      "WebFetch(domain:docs.pola.rs)"
     ],
     "deny": [],
     "ask": []

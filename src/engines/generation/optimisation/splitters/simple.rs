@@ -15,6 +15,7 @@ impl SimpleSplitter {
                 in_sample_pct,
                 out_of_sample_pct: 1.0 - in_sample_pct,
                 n_folds: 1,
+                window_type: WindowType::Sliding,
             },
         }
     }

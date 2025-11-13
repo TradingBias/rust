@@ -21,6 +21,7 @@ impl WalkForwardSplitter {
                 in_sample_pct,
                 out_of_sample_pct,
                 n_folds,
+                window_type: if anchored { WindowType::Anchored } else { WindowType::Sliding },
             },
             anchored,
         }

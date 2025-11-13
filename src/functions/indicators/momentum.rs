@@ -6,7 +6,6 @@ use anyhow::{bail, Result};
 use polars::{
     lazy::dsl,
     prelude::{lit, when, Duration, EWMOptions, RollingOptionsFixedWindow},
-    series::ops::NullBehavior,
 };
 
 pub struct RSI {
@@ -78,7 +77,8 @@ impl VectorizedIndicator for RSI {
         };
 
         // Step 1: Calculate price changes
-        let delta = series.diff(1, NullBehavior::Drop);
+        // In Polars 0.51, diff() was removed from Expr. Use shift() instead.
+        let delta = series.clone() - series.clone().shift(lit(1));
 
         // Step 2: Separate gains and losses
         let gains = delta
