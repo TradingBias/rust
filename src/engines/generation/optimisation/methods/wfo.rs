@@ -44,7 +44,7 @@ impl ValidationMethod for WalkForwardMethod {
         &self,
         ast: &StrategyAST,
         data: &DataFrame,
-    ) -> Result<AggregatedResult, TradeBiasError> {
+    ) -> Result<AggregatedResult, TradebiasError> {
         // Split data into folds
         let splits = self.splitter.split(data)?;
 

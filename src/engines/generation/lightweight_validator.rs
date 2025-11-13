@@ -41,8 +41,8 @@ impl LightweightValidator {
 
                 // Arity matches?
                 let arity = match func {
-                    crate::functions::strategy::StrategyFunction::Indicator(i) => i.arity(),
-                    crate::functions::strategy::StrategyFunction::Primitive(p) => p.arity(),
+                    crate::functions::strategy::StrategyFunction::Indicator(ref i) => i.arity(),
+                    crate::functions::strategy::StrategyFunction::Primitive(ref p) => p.arity(),
                 };
                 if args.len() != arity {
                     return Err(TradebiasError::Validation(format!(

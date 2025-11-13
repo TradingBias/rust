@@ -1,12 +1,10 @@
 use anyhow::{bail, Result};
 use polars::prelude::{Duration, EWMOptions, LiteralValue, RollingOptionsFixedWindow};
 use polars::lazy::dsl::{self, Expr};
+use crate::functions::traits::Primitive;
+use polars::datatypes::AnyValue;
 
-pub trait Primitive {
-    fn name(&self) -> &'static str;
-    fn arity(&self) -> usize;
-    fn execute(&self, args: &[dsl::Expr]) -> Result<dsl::Expr>;
-}
+
 
 // --- Moving Average ---
 pub enum MAMethod {
@@ -30,14 +28,20 @@ impl Primitive for MovingAverage {
     fn execute(&self, args: &[dsl::Expr]) -> Result<dsl::Expr> {
         let series = args[0].clone();
         let period = match &args[1] {
-            dsl::Expr::Literal(LiteralValue::Int64(p)) => *p as usize,
+            dsl::Expr::Literal(LiteralValue::Scalar(p)) => {
+                if let AnyValue::Int64(val) = p.to_owned().value() {
+                    *val as usize
+                } else {
+                    bail!("MA period must be an integer literal")
+                }
+            },
             _ => bail!("MA period must be an integer literal"),
         };
 
         match self.method {
             MAMethod::Simple => {
                 let options = RollingOptionsFixedWindow {
-                    window_size: period as u32,
+                    window_size: period as usize,
                     min_periods: period,
                     ..Default::default()
                 };
@@ -77,11 +81,17 @@ impl Primitive for StdDev {
     fn execute(&self, args: &[dsl::Expr]) -> Result<dsl::Expr> {
         let series = args[0].clone();
         let period = match &args[1] {
-            dsl::Expr::Literal(LiteralValue::Int64(p)) => *p as usize,
+            dsl::Expr::Literal(LiteralValue::Scalar(p)) => {
+                if let AnyValue::Int64(val) = p.to_owned().value() {
+                    *val as usize
+                } else {
+                    bail!("StdDev period must be an integer literal")
+                }
+            },
             _ => bail!("StdDev period must be an integer literal"),
         };
         let options = RollingOptionsFixedWindow {
-            window_size: period as u32,
+            window_size: period as usize,
             min_periods: period,
             ..Default::default()
         };

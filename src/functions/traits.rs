@@ -13,7 +13,7 @@ pub enum CalculationMode {
 }
 
 /// Base trait for all indicators
-pub trait Indicator: Send + Sync {
+pub trait Indicator: Send + Sync + Any {
     /// Display name
     fn ui_name(&self) -> &'static str;
 

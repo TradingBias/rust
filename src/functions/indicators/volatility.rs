@@ -1,7 +1,7 @@
 use crate::{
     functions::traits::{Indicator, IndicatorArg, VectorizedIndicator},
-    types::{DataType, ScaleType},
 };
+use crate::types::{DataType, ScaleType};
 use anyhow::{bail, Result};
 use polars::{
     lazy::dsl,
@@ -26,8 +26,8 @@ impl Indicator for ATR {
         "ATR"
     }
 
-    fn output_type(&self) -> types::DataType {
-        types::DataType::Float64
+    fn output_type(&self) -> DataType {
+        DataType::Float
     }
     fn ui_name(&self) -> &'static str {
         "Average True Range"
@@ -120,8 +120,8 @@ impl Indicator for ADX {
         "ADX"
     }
 
-    fn output_type(&self) -> types::DataType {
-        types::DataType::Float64
+    fn output_type(&self) -> DataType {
+        DataType::Float
     }
     fn ui_name(&self) -> &'static str {
         "Average Directional Index"
@@ -255,8 +255,8 @@ impl Indicator for StdDev {
         "StdDev"
     }
 
-    fn output_type(&self) -> types::DataType {
-        types::DataType::Float64
+    fn output_type(&self) -> DataType {
+        DataType::Float
     }
     fn ui_name(&self) -> &'static str {
         "Standard Deviation"
@@ -295,7 +295,7 @@ impl VectorizedIndicator for StdDev {
         };
 
         let options = RollingOptionsFixedWindow {
-            window_size: self.period as u32,
+            window_size: self.period as usize,
             min_periods: self.period,
             ..Default::default()
         };

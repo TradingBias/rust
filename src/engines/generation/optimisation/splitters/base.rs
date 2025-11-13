@@ -4,7 +4,7 @@ use crate::error::TradebiasError;
 
 pub trait DataSplitter: Send + Sync {
     /// Split data into multiple folds
-    fn split(&self, data: &DataFrame) -> Result<Vec<DataSplit>, TradeBiasError>;
+    fn split(&self, data: &DataFrame) -> Result<Vec<DataSplit>, TradebiasError>;
 
     /// Get splitter configuration
     fn config(&self) -> &SplitConfig;

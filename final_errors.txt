@@ -1,4 +1,16 @@
     Checking tradebias v0.1.0 (C:\Project\rust)
+error[E0432]: unresolved import `crate::engines::generation::genome`
+ --> src\engines\generation\operators.rs:2:33
+  |
+2 | use crate::engines::generation::genome::Genome;
+  |                                 ^^^^^^ could not find `genome` in `generation`
+
+error[E0432]: unresolved import `crate::engines::generation::genome`
+ --> src\engines\generation\evolution_engine.rs:6:5
+  |
+6 |     genome::Genome,
+  |     ^^^^^^ could not find `genome` in `generation`
+
 error[E0425]: cannot find function `abs` in module `dsl`
    --> src\functions\primitives.rs:152:17
     |
@@ -270,7 +282,7 @@ help: ensure that all possible cases are being handled by adding a match arm wit
 38 ~             _ => todo!(),
    |
 
-Some errors have detailed explanations: E0004, E0308, E0425, E0433, E0599, E0609.
+Some errors have detailed explanations: E0004, E0308, E0425, E0432, E0433, E0599, E0609.
 For more information about an error, try `rustc --explain E0004`.
 warning: `tradebias` (lib) generated 12 warnings
-error: could not compile `tradebias` (lib) due to 15 previous errors; 12 warnings emitted
+error: could not compile `tradebias` (lib) due to 17 previous errors; 12 warnings emitted

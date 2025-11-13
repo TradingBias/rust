@@ -1,8 +1,8 @@
     Checking tradebias v0.1.0 (C:\Project\rust)
 error[E0425]: cannot find function `abs` in module `dsl`
-   --> src\functions\primitives.rs:152:17
+   --> src\functions\primitives.rs:153:17
     |
-152 |         Ok(dsl::abs(args[0].clone()))
+153 |         Ok(dsl::abs(args[0].clone()))
     |                 ^^^ not found in `dsl`
 
 warning: unused import: `crate::types::*`
@@ -79,71 +79,47 @@ warning: unused import: `self`
 14 |     primitives::{self, And, Or, Abs},
    |                  ^^^^
 
-error[E0599]: the method `call` exists for reference `&dyn Indicator`, but its trait bounds were not satisfied
-  --> src\engines\evaluation\expression.rs:69:37
+error[E0277]: `?` couldn't convert the error to `TradebiasError`
+  --> src\engines\evaluation\expression.rs:81:61
    |
-69 |         let result_expr = indicator.call(df, &arg_exprs?)?;
-   |                                     ^^^^ method cannot be called on `&dyn Indicator` due to unsatisfied trait bounds
+81 |             vectorized.calculate_vectorized(&indicator_args)?
+   |                        -------------------------------------^ the trait `From<anyhow::Error>` is not implemented for `TradebiasError`
+   |                        |
+   |                        this can't be annotated with `?` because it has type `Result<_, anyhow::Error>`
    |
-  ::: src\functions\traits.rs:16:1
+note: `TradebiasError` needs to implement `From<anyhow::Error>`
+  --> src\error.rs:4:1
    |
-16 | pub trait Indicator: Send + Sync {
-   | -------------------------------- doesn't satisfy `dyn Indicator: Fn<_>`
-   |
-   = note: the following trait bounds were not satisfied:
-           `dyn Indicator: Fn<_>`
-           which is required by `&dyn Indicator: Fn<_>`
-   = help: items from traits can only be used if the trait is implemented and in scope
-   = note: the following traits define an item `call`, perhaps you need to implement one of them:
-           candidate #1: `Fn`
-           candidate #2: `futures_util::fns::Fn1`
-           candidate #3: `hyper::service::http::HttpService`
-           candidate #4: `hyper::service::service::Service`
-           candidate #5: `itertools::adaptors::map::MapSpecialCaseFn`
-           candidate #6: `object_store::client::http::connection::HttpService`
-           candidate #7: `tower_service::Service`
+ 4 | pub enum TradebiasError {
+   | ^^^^^^^^^^^^^^^^^^^^^^^
+   = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+   = help: the following other types implement trait `From<T>`:
+             `TradebiasError` implements `From<PolarsError>`
+             `TradebiasError` implements `From<serde_json::Error>`
+             `TradebiasError` implements `From<std::io::Error>`
 
-error[E0599]: no method named `name` found for reference `&dyn Indicator` in the current scope
-  --> src\engines\evaluation\expression.rs:74:57
+error[E0605]: non-primitive cast: `&dyn Indicator` as `&(dyn std::any::Any + 'static)`
+  --> src\engines\evaluation\expression.rs:80:53
    |
-74 |         let cache_key = self.create_cache_key(indicator.name(), args, df)?;
-   |                                                         ^^^^
+80 |         let result_expr = if let Some(vectorized) = (indicator as &dyn Any).downcast_ref::<&dyn VectorizedIndicator>() {
+   |                                                     ^^^^^^^^^^^^^^^^^^^^^^^ invalid cast
    |
-   = help: items from traits can only be used if the trait is implemented and in scope
-   = note: the following traits define an item `name`, perhaps you need to implement one of them:
-           candidate #1: `methods::base::ValidationMethod`
-           candidate #2: `polars::prelude::SeriesTrait`
-           candidate #3: `polars_stream::nodes::ComputeNode`
-           candidate #4: `polars_stream::nodes::io_sinks::SinkNode`
-           candidate #5: `rustls::crypto::SupportedKxGroup`
-help: there is a method `ui_name` with a similar name
+help: consider borrowing the value
    |
-74 |         let cache_key = self.create_cache_key(indicator.ui_name(), args, df)?;
-   |                                                         +++
+80 |         let result_expr = if let Some(vectorized) = (&indicator as &dyn Any).downcast_ref::<&dyn VectorizedIndicator>() {
+   |                                                      +
 
-error[E0599]: the method `call` exists for reference `&dyn functions::traits::Primitive`, but its trait bounds were not satisfied
-  --> src\engines\evaluation\expression.rs:87:19
-   |
-87 |         primitive.call(&arg_exprs?)
-   |                   ^^^^ method cannot be called on `&dyn functions::traits::Primitive` due to unsatisfied trait bounds
-   |
-  ::: src\functions\traits.rs:68:1
-   |
-68 | pub trait Primitive: Send + Sync {
-   | -------------------------------- doesn't satisfy `dyn functions::traits::Primitive: Fn<_>`
-   |
-   = note: the following trait bounds were not satisfied:
-           `dyn functions::traits::Primitive: Fn<_>`
-           which is required by `&dyn functions::traits::Primitive: Fn<_>`
-   = help: items from traits can only be used if the trait is implemented and in scope
-   = note: the following traits define an item `call`, perhaps you need to implement one of them:
-           candidate #1: `Fn`
-           candidate #2: `futures_util::fns::Fn1`
-           candidate #3: `hyper::service::http::HttpService`
-           candidate #4: `hyper::service::service::Service`
-           candidate #5: `itertools::adaptors::map::MapSpecialCaseFn`
-           candidate #6: `object_store::client::http::connection::HttpService`
-           candidate #7: `tower_service::Service`
+error[E0308]: mismatched types
+   --> src\engines\evaluation\expression.rs:104:9
+    |
+102 |     ) -> Result<Expr> {
+    |          ------------ expected `std::result::Result<polars::prelude::Expr, TradebiasError>` because of return type
+103 |         let arg_exprs: Result<Vec<Expr>> = args.iter().map(|arg| self.build(arg, df)).collect();
+104 |         primitive.execute(&arg_exprs?)
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `Result<Expr, TradebiasError>`, found `Result<Expr, Error>`
+    |
+    = note: expected enum `std::result::Result<_, TradebiasError>`
+               found enum `std::result::Result<_, anyhow::Error>`
 
 error[E0433]: failed to resolve: use of undeclared type `AstConverter`
   --> src\engines\generation\hall_of_fame.rs:85:5
@@ -172,17 +148,6 @@ note: method defined here
     |
  29 |     pub fn run(&self, ast: &StrategyAST, data: &DataFrame) -> Result<StrategyResult> {
     |            ^^^        -----------------
-
-error[E0308]: mismatched types
-  --> src\engines\generation\diversity_validator.rs:43:33
-   |
-43 |                     if let Some(AstNode::Const(ConstValue::Integer(period))) = args.get(1) {
-   |                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^    ----------- this expression has type `std::option::Option<&Box<AstNode>>`
-   |                                 |
-   |                                 expected `Box<AstNode>`, found `AstNode`
-   |
-   = note: expected struct `Box<AstNode>`
-                found enum `AstNode`
 
 error[E0308]: mismatched types
   --> src\engines\generation\optimisation\methods\wfo.rs:31:17
@@ -241,36 +206,7 @@ error[E0599]: no method named `abs` found for enum `polars::prelude::Expr` in th
 79 |         let tr3 = (low - prev_close).abs();
    |                                      ^^^ method not found in `polars::prelude::Expr`
 
-error[E0004]: non-exhaustive patterns: `&polars::prelude::Expr::Alias(_, _)`, `&polars::prelude::Expr::Column(_)`, `&polars::prelude::Expr::Selector(_)` and 20 more not covered
-  --> src\functions\primitives.rs:30:28
-   |
-30 |         let period = match &args[1] {
-   |                            ^^^^^^^^ patterns `&polars::prelude::Expr::Alias(_, _)`, `&polars::prelude::Expr::Column(_)`, `&polars::prelude::Expr::Selector(_)` and 20 more not covered
-   |
-note: `polars::prelude::Expr` defined here
-  --> C:\Users\nashj\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\polars-plan-0.51.0\src\dsl\expr\mod.rs:88:1
-   |
-88 | pub enum Expr {
-   | ^^^^^^^^^^^^^
-89 |     Alias(Arc<Expr>, PlSmallStr),
-   |     ----- not covered
-90 |     Column(PlSmallStr),
-   |     ------ not covered
-91 |     Selector(Selector),
-   |     -------- not covered
-92 |     Literal(LiteralValue),
-93 |     DataTypeFunction(DataTypeFunction),
-   |     ---------------- not covered
-94 |     BinaryExpr {
-   |     ---------- not covered
-   = note: the matched value is of type `&polars::prelude::Expr`
-help: ensure that all possible cases are being handled by adding a match arm with a wildcard pattern as shown, or multiple match arms
-   |
-37 ~             },
-38 ~             _ => todo!(),
-   |
-
-Some errors have detailed explanations: E0004, E0308, E0425, E0433, E0599, E0609.
-For more information about an error, try `rustc --explain E0004`.
+Some errors have detailed explanations: E0277, E0308, E0425, E0433, E0599, E0605, E0609.
+For more information about an error, try `rustc --explain E0277`.
 warning: `tradebias` (lib) generated 12 warnings
-error: could not compile `tradebias` (lib) due to 15 previous errors; 12 warnings emitted
+error: could not compile `tradebias` (lib) due to 13 previous errors; 12 warnings emitted

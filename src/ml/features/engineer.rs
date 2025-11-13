@@ -74,7 +74,8 @@ impl FeatureEngineer {
         }
 
         // Combine into DataFrame
-        DataFrame::new(feature_series).map_err(|e| TradebiasError::Computation(e.to_string()))
+        let columns: Vec<Column> = feature_series.into_iter().map(Column::from).collect();
+        DataFrame::new(columns).map_err(|e| TradebiasError::Computation(e.to_string()))
     }
 
     fn create_price_features(
@@ -271,7 +272,7 @@ impl FeatureEngineer {
         let mut days_of_week = Vec::new();
 
         for &idx in signal_indices {
-            if let Some(ts_ms) = timestamps.get(idx) {
+            if let Some(ts_ms) = timestamps.phys.get(idx) {
                 let ts_s = ts_ms / 1000;
                 if let Some(dt) = chrono::DateTime::<chrono::Utc>::from_timestamp(ts_s, 0) {
                     hours.push(dt.hour() as f64);

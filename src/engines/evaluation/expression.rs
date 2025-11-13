@@ -1,12 +1,13 @@
 use crate::{
     data::IndicatorCache,
     error::{Result, TradebiasError},
-    functions::traits::{Indicator, Primitive},
+    functions::traits::{Indicator, Primitive, VectorizedIndicator, IndicatorArg},
     functions::registry::FunctionRegistry,
     types::{AstNode, Value},
 };
 use polars::prelude::*;
 use std::sync::Arc;
+use std::any::Any;
 
 pub struct ExpressionBuilder {
     registry: Arc<FunctionRegistry>,
@@ -38,7 +39,7 @@ impl ExpressionBuilder {
     fn build_call(&self, function: &str, args: &[Box<AstNode>], df: &DataFrame) -> Result<Expr> {
         let cache_key = self.create_cache_key(function, args, df)?;
         if let Some(cached) = self.cache.get(&cache_key) {
-            return Ok(col(&cached.name()));
+            return Ok(col(&**cached.name()));
         }
 
         if let Some(indicator) = self.registry.get_indicator(function) {
@@ -66,12 +67,29 @@ impl ExpressionBuilder {
         df: &DataFrame,
     ) -> Result<Expr> {
         let arg_exprs: Result<Vec<Expr>> = args.iter().map(|arg| self.build(arg, df)).collect();
-        let result_expr = indicator.call(df, &arg_exprs?)?;
+        let arg_exprs = arg_exprs?;
+
+        // Convert Vec<Expr> to Vec<IndicatorArg>
+        // For now, wrap all expressions as Series - this may need refinement
+        let indicator_args: Vec<IndicatorArg> = arg_exprs.iter()
+            .map(|expr| IndicatorArg::Series(expr.clone()))
+            .collect();
+
+        // Try to downcast to VectorizedIndicator
+        // Note: This requires Indicator trait to implement Any
+        let result_expr = if let Some(vectorized) = (indicator as &dyn Any).downcast_ref::<&dyn VectorizedIndicator>() {
+            vectorized.calculate_vectorized(&indicator_args)
+                .map_err(|e| TradebiasError::IndicatorError(format!("Indicator calculation failed: {}", e)))?
+        } else {
+            return Err(TradebiasError::IndicatorError(
+                format!("Indicator {} does not implement VectorizedIndicator", indicator.ui_name())
+            ));
+        };
 
         let evaluated = df.clone().lazy().with_column(result_expr.alias("result")).collect()?;
-        let series = evaluated.column("result")?.clone();
+        let series = evaluated.column("result")?.as_materialized_series().clone();
 
-        let cache_key = self.create_cache_key(indicator.name(), args, df)?;
+        let cache_key = self.create_cache_key(indicator.ui_name(), args, df)?;
         self.cache.set(cache_key, series.clone());
 
         Ok(lit(series))
@@ -84,7 +102,8 @@ impl ExpressionBuilder {
         df: &DataFrame,
     ) -> Result<Expr> {
         let arg_exprs: Result<Vec<Expr>> = args.iter().map(|arg| self.build(arg, df)).collect();
-        primitive.call(&arg_exprs?)
+        primitive.execute(&arg_exprs?)
+            .map_err(|e| TradebiasError::IndicatorError(format!("Primitive execution failed: {}", e)))
     }
 
     fn create_cache_key(

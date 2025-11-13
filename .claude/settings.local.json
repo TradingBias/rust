@@ -5,7 +5,9 @@
       "WebSearch",
       "Bash(cargo check:*)",
       "Bash(find:*)",
-      "WebFetch(domain:docs.pola.rs)"
+      "WebFetch(domain:docs.pola.rs)",
+      "Bash(tee:*)",
+      "Bash(grep:*)"
     ],
     "deny": [],
     "ask": []

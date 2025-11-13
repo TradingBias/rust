@@ -1,7 +1,7 @@
 use crate::{
     functions::traits::{Indicator, IndicatorArg, VectorizedIndicator},
-    types::{DataType, ScaleType},
 };
+use crate::types::{DataType, ScaleType};
 use anyhow::{bail, Result};
 use polars::{
     lazy::dsl::{self, when},
@@ -22,8 +22,8 @@ impl Indicator for OBV {
         "OBV"
     }
 
-    fn output_type(&self) -> types::DataType {
-        types::DataType::Float64
+    fn output_type(&self) -> DataType {
+        DataType::Float
     }
     fn ui_name(&self) -> &'static str {
         "On-Balance Volume"
@@ -89,8 +89,8 @@ impl Indicator for MFI {
         "MFI"
     }
 
-    fn output_type(&self) -> types::DataType {
-        types::DataType::Float64
+    fn output_type(&self) -> DataType {
+        DataType::Float
     }
     fn ui_name(&self) -> &'static str {
         "Money Flow Index"
@@ -154,7 +154,7 @@ impl VectorizedIndicator for MFI {
             .otherwise(dsl::lit(0.0));
 
         let options = RollingOptionsFixedWindow {
-            window_size: self.period as u32,
+            window_size: self.period as usize,
             min_periods: self.period,
             ..Default::default()
         };
@@ -185,8 +185,8 @@ impl Indicator for Force {
         "Force"
     }
 
-    fn output_type(&self) -> types::DataType {
-        types::DataType::Float64
+    fn output_type(&self) -> DataType {
+        DataType::Float
     }
     fn ui_name(&self) -> &'static str {
         "Force Index"
@@ -253,8 +253,8 @@ impl Indicator for Volumes {
         "Volumes"
     }
 
-    fn output_type(&self) -> types::DataType {
-        types::DataType::Integer
+    fn output_type(&self) -> DataType {
+        DataType::Integer
     }
     fn ui_name(&self) -> &'static str {
         "Volumes"
@@ -308,8 +308,8 @@ impl Indicator for Chaikin {
         "Chaikin"
     }
 
-    fn output_type(&self) -> types::DataType {
-        types::DataType::Float64
+    fn output_type(&self) -> DataType {
+        DataType::Float
     }
     fn ui_name(&self) -> &'static str {
         "Chaikin Oscillator"
@@ -395,8 +395,8 @@ impl Indicator for BWMFI {
         "BWMFI"
     }
 
-    fn output_type(&self) -> types::DataType {
-        types::DataType::Float64
+    fn output_type(&self) -> DataType {
+        DataType::Float
     }
     fn ui_name(&self) -> &'static str {
         "Market Facilitation Index"

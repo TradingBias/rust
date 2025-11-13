@@ -1,12 +1,13 @@
 use crate::{
     functions::traits::{Indicator, IndicatorArg, VectorizedIndicator},
-    types::{DataType, ScaleType},
+    types::ScaleType,
 };
 use anyhow::{bail, Result};
 use polars::{
     lazy::dsl,
     prelude::{lit, when, Duration, EWMOptions, RollingOptionsFixedWindow},
 };
+use crate::types::DataType;
 
 pub struct RSI {
     pub period: usize,
@@ -34,8 +35,8 @@ impl Indicator for RSI {
         "RSI"
     }
 
-    fn output_type(&self) -> types::DataType {
-        types::DataType::Float64
+    fn output_type(&self) -> DataType {
+        DataType::Float
     }
     fn ui_name(&self) -> &'static str {
         "Relative Strength Index"
@@ -119,8 +120,8 @@ impl Indicator for Stochastic {
         "Stochastic"
     }
 
-    fn output_type(&self) -> types::DataType {
-        types::DataType::Float64
+    fn output_type(&self) -> DataType {
+        DataType::Float
     }
     fn ui_name(&self) -> &'static str {
         "Stochastic Oscillator"
@@ -171,8 +172,8 @@ impl VectorizedIndicator for Stochastic {
         };
 
         let options = RollingOptionsFixedWindow {
-            window_size: self.k_period as u32,
-            min_periods: self.k_period as u32,
+            window_size: self.k_period as usize,
+            min_periods: self.k_period as usize,
             ..Default::default()
         };
 
@@ -182,7 +183,7 @@ impl VectorizedIndicator for Stochastic {
         let percent_k = (close - lowest_low.clone()) / (highest_high - lowest_low) * dsl::lit(100.0);
 
         let d_options = RollingOptionsFixedWindow {
-            window_size: self.d_period as u32,
+            window_size: self.d_period as usize,
             min_periods: self.d_period,
             ..Default::default()
         };
@@ -207,8 +208,8 @@ impl Indicator for CCI {
         "CCI"
     }
 
-    fn output_type(&self) -> types::DataType {
-        types::DataType::Float64
+    fn output_type(&self) -> DataType {
+        DataType::Float
     }
     fn ui_name(&self) -> &'static str {
         "Commodity Channel Index"
@@ -254,7 +255,7 @@ impl VectorizedIndicator for CCI {
         };
 
         let options = RollingOptionsFixedWindow {
-            window_size: self.period as u32,
+            window_size: self.period as usize,
             min_periods: self.period,
             ..Default::default()
         };
@@ -286,8 +287,8 @@ impl Indicator for WilliamsR {
         "WilliamsR"
     }
 
-    fn output_type(&self) -> types::DataType {
-        types::DataType::Float64
+    fn output_type(&self) -> DataType {
+        DataType::Float
     }
     fn ui_name(&self) -> &'static str {
         "Williams' %R"
@@ -332,7 +333,7 @@ impl VectorizedIndicator for WilliamsR {
             _ => bail!("WilliamsR: third arg must be close series"),
         };
         let options = RollingOptionsFixedWindow {
-            window_size: self.period as u32,
+            window_size: self.period as usize,
             min_periods: self.period,
             ..Default::default()
         };
@@ -355,15 +356,14 @@ impl ROC {
 }
 
 impl Indicator for ROC {
-    fn alias(&self) -> &'static str {
-        "ROC"
-    }
-
-    fn output_type(&self) -> types::DataType {
-        types::DataType::Float64
+    fn output_type(&self) -> DataType {
+        DataType::Float
     }
     fn ui_name(&self) -> &'static str {
         "Rate of Change"
+    }
+    fn alias(&self) -> &'static str {
+        "ROC"
     }
     fn scale_type(&self) -> ScaleType {
         ScaleType::OscillatorCentered
@@ -418,8 +418,8 @@ impl Indicator for AC {
         "AC"
     }
 
-    fn output_type(&self) -> types::DataType {
-        types::DataType::Float64
+    fn output_type(&self) -> DataType {
+        DataType::Float
     }
     fn ui_name(&self) -> &'static str {
         "Accelerator Oscillator"
@@ -458,6 +458,8 @@ impl VectorizedIndicator for AC {
             _ => bail!("AC: second arg must be low series"),
         };
 
+        let median_price = (high + low) / dsl::lit(2.0);
+
         let options5 = RollingOptionsFixedWindow {
             window_size: 5,
             min_periods: 5,
@@ -491,8 +493,8 @@ impl Indicator for AO {
         "AO"
     }
 
-    fn output_type(&self) -> types::DataType {
-        types::DataType::Float64
+    fn output_type(&self) -> DataType {
+        DataType::Float
     }
     fn ui_name(&self) -> &'static str {
         "Awesome Oscillator"
@@ -565,8 +567,8 @@ impl Indicator for RVI {
         "RVI"
     }
 
-    fn output_type(&self) -> types::DataType {
-        types::DataType::Float64
+    fn output_type(&self) -> DataType {
+        DataType::Float
     }
     fn ui_name(&self) -> &'static str {
         "Relative Vigor Index"
@@ -625,7 +627,7 @@ impl VectorizedIndicator for RVI {
             + lit(2.0) * (high.clone().shift(lit(2)) - low.clone().shift(lit(2)))
             + (high.shift(lit(3)) - low.shift(lit(3)));
         let options = RollingOptionsFixedWindow {
-            window_size: self.period as u32,
+            window_size: self.period as usize,
             min_periods: self.period,
             ..Default::default()
         };
@@ -652,8 +654,8 @@ impl Indicator for DeMarker {
         "DeMarker"
     }
 
-    fn output_type(&self) -> types::DataType {
-        types::DataType::Float64
+    fn output_type(&self) -> DataType {
+        DataType::Float
     }
     fn ui_name(&self) -> &'static str {
         "DeMarker Indicator"
@@ -702,7 +704,7 @@ impl VectorizedIndicator for DeMarker {
             .otherwise(dsl::lit(0.0));
 
         let options = RollingOptionsFixedWindow {
-            window_size: self.period as u32,
+            window_size: self.period as usize,
             min_periods: self.period,
             ..Default::default()
         };
@@ -730,8 +732,8 @@ impl Indicator for Momentum {
         "Momentum"
     }
 
-    fn output_type(&self) -> types::DataType {
-        types::DataType::Float64
+    fn output_type(&self) -> DataType {
+        DataType::Float
     }
     fn ui_name(&self) -> &'static str {
         "Momentum Indicator"
