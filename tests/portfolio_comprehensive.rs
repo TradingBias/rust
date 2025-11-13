@@ -169,10 +169,16 @@ fn test_portfolio_constant_signal_no_exit() {
     let trades = portfolio.get_trades();
     assert_eq!(trades.len(), 0, "No completed trades with constant signal");
 
-    // Note: This reveals a limitation - open position P&L is not reflected
-    // Portfolio balance doesn't change until position is closed
-    assert_eq!(portfolio.final_balance(), 10000.0,
-        "Balance unchanged until position closes (unrealized P&L not tracked)");
+    // With unrealized P&L, the equity should reflect the open position's value.
+    // The final price is 109.0. Initial cash was 10000. Position opened at 100.
+    // Position size = (10000 * 0.1) / 100 = 10 shares.
+    // Cost = 10 * 100 = 1000. Cash = 9000.
+    // Unrealized P&L = (109 - 100) * 10 = 90.
+    // Equity = 10000 (initial) + 90 (total P&L) = 10090.
+    assert!(portfolio.equity() > 10000.0,
+        "Equity should be greater than initial capital due to unrealized gains");
+    assert_eq!(portfolio.final_balance(), 9000.0,
+        "Cash balance should be reduced by the cost of the position");
 }
 
 #[test]
