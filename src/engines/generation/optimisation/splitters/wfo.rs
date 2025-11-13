@@ -21,6 +21,7 @@ impl WalkForwardSplitter {
                 in_sample_pct,
                 out_of_sample_pct,
                 n_folds,
+                window_type: if anchored { super::types::WindowType::Anchored } else { super::types::WindowType::Sliding },
             },
             anchored,
         }
@@ -123,7 +124,7 @@ impl WalkForwardSplitter {
 }
 
 pub fn get_datetime_at_index(series: &DatetimeChunked, idx: usize) -> Result<DateTime<Utc>, TradebiasError> {
-    let timestamp_ms = series.get(idx).ok_or_else(|| {
+    let timestamp_ms = series.phys.get(idx).ok_or_else(|| {
         TradebiasError::Validation(format!("Cannot get timestamp at index {}", idx))
     })?;
 

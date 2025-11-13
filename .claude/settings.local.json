@@ -1,7 +1,16 @@
 {
   "permissions": {
     "allow": [
-      "Bash(cargo build:*)"
+      "Bash(cargo build:*)",
+      "WebSearch",
+      "Bash(cargo check:*)",
+      "Bash(find:*)",
+      "WebFetch(domain:docs.pola.rs)",
+      "Bash(tee:*)",
+      "Bash(grep:*)",
+      "WebFetch(domain:docs.rs)",
+      "WebFetch(domain:github.com)",
+      "Bash(cargo fix:*)"
     ],
     "deny": [],
     "ask": []

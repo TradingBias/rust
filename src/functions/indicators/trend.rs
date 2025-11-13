@@ -1,13 +1,14 @@
 use crate::{
     functions::{
-        primitives::{MAMethod, MovingAverage, Primitive, StdDev},
-        traits::{Indicator, IndicatorArg},
+        primitives::{MAMethod, MovingAverage, StdDev},
+        traits::{Indicator, IndicatorArg, Primitive},
     },
     types::{DataType, ScaleType},
+    types, // Add this line
 };
 use anyhow::{bail, Result};
-use polars::{lazy::dsl, prelude::lit};
-use std::{any::Any, collections::VecDeque};
+use polars::{lazy::dsl, prelude::{lit}};
+use std::any::Any;
 
 // --- SMA ---
 pub struct SMA {
@@ -23,6 +24,10 @@ impl SMA {
 impl Indicator for SMA {
     fn alias(&self) -> &'static str {
         "SMA"
+    }
+
+    fn output_type(&self) -> types::DataType {
+        types::DataType::Float
     }
     fn ui_name(&self) -> &'static str {
         "Simple Moving Average"
@@ -81,6 +86,10 @@ impl EMA {
 impl Indicator for EMA {
     fn alias(&self) -> &'static str {
         "EMA"
+    }
+
+    fn output_type(&self) -> types::DataType {
+        types::DataType::Float
     }
     fn ui_name(&self) -> &'static str {
         "Exponential Moving Average"
@@ -145,6 +154,10 @@ impl MACD {
 impl Indicator for MACD {
     fn alias(&self) -> &'static str {
         "MACD"
+    }
+
+    fn output_type(&self) -> types::DataType {
+        types::DataType::Float
     }
     fn ui_name(&self) -> &'static str {
         "Moving Average Convergence/Divergence"
@@ -224,6 +237,10 @@ impl Indicator for BollingerBands {
     fn alias(&self) -> &'static str {
         "BB"
     }
+
+    fn output_type(&self) -> types::DataType {
+        types::DataType::Float
+    }
     fn ui_name(&self) -> &'static str {
         "Bollinger Bands"
     }
@@ -293,6 +310,10 @@ impl Envelopes {
 impl Indicator for Envelopes {
     fn alias(&self) -> &'static str {
         "Envelopes"
+    }
+
+    fn output_type(&self) -> types::DataType {
+        types::DataType::Float
     }
     fn ui_name(&self) -> &'static str {
         "Envelopes"
@@ -367,6 +388,10 @@ pub struct SARState {
 impl Indicator for SAR {
     fn alias(&self) -> &'static str {
         "SAR"
+    }
+
+    fn output_type(&self) -> types::DataType {
+        types::DataType::Float
     }
     fn ui_name(&self) -> &'static str {
         "Parabolic SAR"
@@ -459,6 +484,10 @@ impl Indicator for Bears {
     fn alias(&self) -> &'static str {
         "Bears"
     }
+
+    fn output_type(&self) -> types::DataType {
+        types::DataType::Float
+    }
     fn ui_name(&self) -> &'static str {
         "Bears Power"
     }
@@ -528,6 +557,10 @@ impl Indicator for Bulls {
     fn alias(&self) -> &'static str {
         "Bulls"
     }
+
+    fn output_type(&self) -> types::DataType {
+        types::DataType::Float
+    }
     fn ui_name(&self) -> &'static str {
         "Bulls Power"
     }
@@ -596,6 +629,10 @@ impl Indicator for DEMA {
     fn alias(&self) -> &'static str {
         "DEMA"
     }
+
+    fn output_type(&self) -> types::DataType {
+        types::DataType::Float
+    }
     fn ui_name(&self) -> &'static str {
         "Double Exponential Moving Average"
     }
@@ -660,6 +697,10 @@ impl TEMA {
 impl Indicator for TEMA {
     fn alias(&self) -> &'static str {
         "TEMA"
+    }
+
+    fn output_type(&self) -> types::DataType {
+        types::DataType::Float
     }
     fn ui_name(&self) -> &'static str {
         "Triple Exponential Moving Average"
@@ -729,6 +770,10 @@ impl TriX {
 impl Indicator for TriX {
     fn alias(&self) -> &'static str {
         "TriX"
+    }
+
+    fn output_type(&self) -> types::DataType {
+        types::DataType::Float
     }
     fn ui_name(&self) -> &'static str {
         "Triple Exponential Average"

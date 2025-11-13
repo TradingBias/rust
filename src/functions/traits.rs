@@ -13,7 +13,7 @@ pub enum CalculationMode {
 }
 
 /// Base trait for all indicators
-pub trait Indicator: Send + Sync {
+pub trait Indicator: Send + Sync + Any {
     /// Display name
     fn ui_name(&self) -> &'static str;
 
@@ -71,7 +71,7 @@ pub trait Primitive: Send + Sync {
     fn arity(&self) -> usize;
     fn input_types(&self) -> Vec<DataType>;
     fn output_type(&self) -> DataType;
-    
+
     /// Execute primitive (always vectorized)
     fn execute(&self, args: &[Expr]) -> Result<Expr>;
     

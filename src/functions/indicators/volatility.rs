@@ -1,11 +1,11 @@
 use crate::{
     functions::traits::{Indicator, IndicatorArg, VectorizedIndicator},
-    types::{DataType, ScaleType},
 };
+use crate::types::{DataType, ScaleType};
 use anyhow::{bail, Result};
 use polars::{
     lazy::dsl,
-    prelude::{lit, Duration, EWMOptions, RollingOptions},
+    prelude::{lit, EWMOptions, RollingOptionsFixedWindow},
 };
 use std::any::Any;
 use std::collections::VecDeque;
@@ -24,6 +24,10 @@ impl ATR {
 impl Indicator for ATR {
     fn alias(&self) -> &'static str {
         "ATR"
+    }
+
+    fn output_type(&self) -> DataType {
+        DataType::Float
     }
     fn ui_name(&self) -> &'static str {
         "Average True Range"
@@ -114,6 +118,10 @@ pub struct ADXState {
 impl Indicator for ADX {
     fn alias(&self) -> &'static str {
         "ADX"
+    }
+
+    fn output_type(&self) -> DataType {
+        DataType::Float
     }
     fn ui_name(&self) -> &'static str {
         "Average Directional Index"
@@ -246,6 +254,10 @@ impl Indicator for StdDev {
     fn alias(&self) -> &'static str {
         "StdDev"
     }
+
+    fn output_type(&self) -> DataType {
+        DataType::Float
+    }
     fn ui_name(&self) -> &'static str {
         "Standard Deviation"
     }
@@ -282,8 +294,8 @@ impl VectorizedIndicator for StdDev {
             _ => bail!("StdDev: first arg must be a series"),
         };
 
-        let options = RollingOptions {
-            window_size: Duration::parse(&format!("{}i", self.period)),
+        let options = RollingOptionsFixedWindow {
+            window_size: self.period as usize,
             min_periods: self.period,
             ..Default::default()
         };

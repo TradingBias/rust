@@ -22,8 +22,9 @@ impl SignalExtractor {
         ast: &StrategyAST,
         data: &DataFrame,
     ) -> Result<SignalDataset> {
-        let condition = match ast {
-            StrategyAST::Rule { condition, .. } => condition,
+        let condition = match ast.root.as_ref() {
+            AstNode::Rule { condition, .. } => condition,
+            _ => return Err(TradebiasError::Validation("StrategyAST root is not a Rule node".to_string())),
         };
 
         // Build condition expression
@@ -67,7 +68,7 @@ impl SignalExtractor {
         let timestamp_ms = data
             .column("timestamp")?
             .datetime()?
-            .get(idx)
+            .phys.get(idx)
             .ok_or_else(|| TradebiasError::Validation("Invalid timestamp at index".to_string()))?;
 
         let timestamp_s = timestamp_ms / 1000;
@@ -77,14 +78,15 @@ impl SignalExtractor {
 
     fn get_signal_direction(&self, ast: &StrategyAST) -> Result<SignalDirection> {
         // Extract action from AST
-        match ast {
-            StrategyAST::Rule { action, .. } => {
+        match ast.root.as_ref() {
+            AstNode::Rule { action, .. } => {
                 match action.as_ref() {
                     AstNode::Call { function, .. } if function == "OpenLong" => Ok(SignalDirection::Long),
                     AstNode::Call { function, .. } if function == "OpenShort" => Ok(SignalDirection::Short),
                     _ => Err(TradebiasError::Validation("Unknown or unsupported action in AST".to_string())),
                 }
-            }
+            },
+            _ => Err(TradebiasError::Validation("StrategyAST root is not a Rule node for signal direction".to_string())),
         }
     }
 

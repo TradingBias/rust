@@ -27,5 +27,5 @@ pub trait ValidationMethod: Send + Sync {
         &self,
         ast: &StrategyAST,
         data: &DataFrame,
-    ) -> Result<AggregatedResult, TradeBiasError>;
+    ) -> Result<AggregatedResult, TradebiasError>;
 }

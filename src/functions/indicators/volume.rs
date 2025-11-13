@@ -1,11 +1,11 @@
 use crate::{
     functions::traits::{Indicator, IndicatorArg, VectorizedIndicator},
-    types::{DataType, ScaleType},
 };
+use crate::types::{DataType, ScaleType};
 use anyhow::{bail, Result};
 use polars::{
     lazy::dsl::{self, when},
-    prelude::{lit, Duration, EWMOptions, RollingOptions},
+    prelude::{lit, EWMOptions, RollingOptionsFixedWindow},
 };
 
 // --- OBV (On-Balance Volume) ---
@@ -20,6 +20,10 @@ impl OBV {
 impl Indicator for OBV {
     fn alias(&self) -> &'static str {
         "OBV"
+    }
+
+    fn output_type(&self) -> DataType {
+        DataType::Float
     }
     fn ui_name(&self) -> &'static str {
         "On-Balance Volume"
@@ -84,6 +88,10 @@ impl Indicator for MFI {
     fn alias(&self) -> &'static str {
         "MFI"
     }
+
+    fn output_type(&self) -> DataType {
+        DataType::Float
+    }
     fn ui_name(&self) -> &'static str {
         "Money Flow Index"
     }
@@ -145,8 +153,8 @@ impl VectorizedIndicator for MFI {
             .then(raw_money_flow)
             .otherwise(dsl::lit(0.0));
 
-        let options = RollingOptions {
-            window_size: Duration::parse(&format!("{}i", self.period)),
+        let options = RollingOptionsFixedWindow {
+            window_size: self.period as usize,
             min_periods: self.period,
             ..Default::default()
         };
@@ -175,6 +183,10 @@ impl Force {
 impl Indicator for Force {
     fn alias(&self) -> &'static str {
         "Force"
+    }
+
+    fn output_type(&self) -> DataType {
+        DataType::Float
     }
     fn ui_name(&self) -> &'static str {
         "Force Index"
@@ -240,6 +252,10 @@ impl Indicator for Volumes {
     fn alias(&self) -> &'static str {
         "Volumes"
     }
+
+    fn output_type(&self) -> DataType {
+        DataType::Integer
+    }
     fn ui_name(&self) -> &'static str {
         "Volumes"
     }
@@ -290,6 +306,10 @@ impl Chaikin {
 impl Indicator for Chaikin {
     fn alias(&self) -> &'static str {
         "Chaikin"
+    }
+
+    fn output_type(&self) -> DataType {
+        DataType::Float
     }
     fn ui_name(&self) -> &'static str {
         "Chaikin Oscillator"
@@ -373,6 +393,10 @@ impl BWMFI {
 impl Indicator for BWMFI {
     fn alias(&self) -> &'static str {
         "BWMFI"
+    }
+
+    fn output_type(&self) -> DataType {
+        DataType::Float
     }
     fn ui_name(&self) -> &'static str {
         "Market Facilitation Index"

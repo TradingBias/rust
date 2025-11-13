@@ -43,4 +43,18 @@ impl StrategyFunction {
             _ => None,
         }
     }
+
+    pub fn get_indicator_arc(&self) -> Option<Arc<dyn Indicator>> {
+        match self {
+            StrategyFunction::Indicator(i) => Some(Arc::clone(i)),
+            _ => None,
+        }
+    }
+
+    pub fn get_primitive_arc(&self) -> Option<Arc<dyn Primitive>> {
+        match self {
+            StrategyFunction::Primitive(p) => Some(Arc::clone(p)),
+            _ => None,
+        }
+    }
 }

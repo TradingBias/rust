@@ -1,6 +1,6 @@
 use crate::engines::generation::ast::*;
 use crate::types::{AstNode, Value as ConstValue};
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 /// Validates that indicator parameters are diverse
 pub struct DiversityValidator {
@@ -40,11 +40,13 @@ impl DiversityValidator {
             AstNode::Call { function, args } => {
                 // If this is an indicator call with integer params
                 if args.len() > 0 {
-                    if let Some(AstNode::Const(ConstValue::Integer(period))) = args.get(1) {
-                        collector
-                            .entry(function.clone())
-                            .or_insert_with(Vec::new)
-                            .push(*period as i32);
+                    if let Some(boxed_node) = args.get(1) {
+                        if let AstNode::Const(ConstValue::Integer(period)) = boxed_node.as_ref() {
+                            collector
+                                .entry(function.clone())
+                                .or_insert_with(Vec::new)
+                                .push(*period as i32);
+                        }
                     }
                 }
 

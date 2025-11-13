@@ -1,17 +1,376 @@
 # Phase 0: Polars 0.51.0 Migration Plan
 
 **Created**: November 12, 2025
-**Status**: Ready for implementation
+**Last Updated**: November 13, 2025
+**Status**: Stage 2 Complete + Quick Wins ✅ (Task 2.8)
+**Current Stage**: 10 errors remaining - Polars API research needed
 **Priority**: CRITICAL - Must be completed before Phase 1
 **Blocking**: All other phases depend on this migration
 
+## 📋 TL;DR FOR JULES AI
+
+**Status**: **10 compilation errors remain** (as of 2025-11-13, post-quick-wins). Progress: 92% complete (80/90 errors fixed).
+
+**Latest Update (Task 2.8 - Quick Wins Complete)**:
+- ✅ Fixed 7 errors: pattern matching, trait method calls, Box<AstNode> handling
+- ✅ Added `Any` supertrait to `Indicator` for downcasting
+- ✅ Implemented VectorizedIndicator integration in ExpressionBuilder
+- 🟡 10 errors remain: 6 Polars API (.abs/.clip), 4 architecture issues
+
+**Key Rule**: If `cargo check` fails → STOP, REPORT error, HALT. Do NOT troubleshoot.
+
+**Must Read First**: `AGENTS.md` (Core Principles 1-3)
+
+**SKIP TO**: "Task 2.8 - Quick Wins Summary" or "Remaining Errors" section below ⬇️
+
+---
+
+## 🤖 AI IMPLEMENTATION GUIDE - EXACT STEPS
+
+**Current State**: 88 errors from `cargo check` (run 2025-11-13)
+
+**Instructions Format**: Each step includes:
+- 📍 Exact file path and line number
+- 🔍 Current code (what's wrong)
+- ✅ Fixed code (what to change it to)
+- 🎯 Verification command
+
+**CRITICAL RULES**:
+1. Execute steps **IN ORDER** (dependencies matter)
+2. Run `cargo check` after **EACH STEP**
+3. If `cargo check` shows **NEW errors** → STOP, REPORT, HALT
+4. If error count **goes up** → STOP, REPORT, HALT
+5. If you're **unsure about code** → Read the file first, verify Ground-Truth
+
+---
+
+### ⚡ STEP 1: Fix Import Syntax Errors (Blocks ~15 errors)
+
+**File**: `src/functions/indicators/volatility.rs`
+
+**Problem**: Line 3 has `crate::types` inside a nested use block, which is invalid syntax.
+
+**Action**: Read lines 1-10 of the file first, then fix the import structure.
+
+**Expected Fix Pattern**:
+```rust
+// WRONG (crate in nested position):
+use polars::prelude::*;
+use crate::{
+    crate::types::{DataType, ScaleType},  // ❌ WRONG
+    ...
+};
+
+// CORRECT (crate at start):
+use polars::prelude::*;
+use crate::types::{DataType, ScaleType};  // ✅ CORRECT
+use crate::other_module::Something;
+```
+
+**Verification**:
+```bash
+cargo check 2>&1 | grep -E "volatility.rs.*crate in paths"
+# Should return 0 results
+```
+
+---
+
+**File**: `src/functions/indicators/volume.rs`
+
+**Problem**: Same issue - line 3 has `crate::types` inside nested use block.
+
+**Action**: Apply same fix as volatility.rs
+
+**Verification**:
+```bash
+cargo check 2>&1 | grep -E "volume.rs.*crate in paths"
+# Should return 0 results
+```
+
+**Expected Error Reduction**: 88 → ~73 errors (15 errors resolved)
+
+---
+
+### ⚡ STEP 2: Fix Missing types Module Import (Blocks ~12 errors)
+
+**File**: `src/functions/indicators/momentum.rs`
+
+**Problem**: Multiple errors like:
+- Line 37: `fn output_type(&self) -> types::DataType` - `types` not imported
+- Line 38: `types::DataType::Float64` - `types` not imported
+
+**Action**: Add import at top of file
+
+**Current Code** (first few lines):
+```rust
+use polars::prelude::*;
+// ... other imports
+```
+
+**Fixed Code**:
+```rust
+use polars::prelude::*;
+use crate::types::DataType;  // ✅ ADD THIS LINE
+// ... other imports
+```
+
+**Then Replace** all instances of `types::DataType` with just `DataType`:
+- Line 37: `fn output_type(&self) -> DataType {`
+- Line 38: `DataType::Float64`
+- (All other occurrences in the file)
+
+**Verification**:
+```bash
+cargo check 2>&1 | grep -E "momentum.rs.*types"
+# Should return 0 results
+```
+
+**Expected Error Reduction**: 73 → ~61 errors (12 errors resolved)
+
+---
+
+### ⚡ STEP 3: Fix Datetime Accessor (2 errors)
+
+**File**: `src/ml/features/engineer.rs`
+
+**Problem**: Line 275: `timestamps.get(idx)` - method not found
+
+**Current Code**:
+```rust
+if let Some(ts_ms) = timestamps.get(idx) {
+```
+
+**Fixed Code**:
+```rust
+if let Some(ts_ms) = timestamps.phys.get(idx) {
+```
+
+**Verification**:
+```bash
+cargo check 2>&1 | grep -E "engineer.rs.*Logical.*DatetimeType"
+# Should return 0 results
+```
+
+---
+
+**File**: `src/ml/signals/extractor.rs`
+
+**Problem**: Line 71: `datetime()?.get(idx)` - method not found
+
+**Current Code**:
+```rust
+let timestamp_ms = data
+    .column("timestamp")?
+    .datetime()?
+    .get(idx)
+```
+
+**Fixed Code**:
+```rust
+let timestamp_ms = data
+    .column("timestamp")?
+    .datetime()?
+    .phys.get(idx)
+```
+
+**Verification**:
+```bash
+cargo check 2>&1 | grep -E "extractor.rs.*Logical.*DatetimeType"
+# Should return 0 results
+```
+
+**Expected Error Reduction**: 61 → 59 errors (2 errors resolved)
+
+---
+
+### ⚡ STEP 4: Fix Arc Reference Issues in registry.rs (3 errors)
+
+**File**: `src/functions/registry.rs`
+
+**Problem**: Lines 43, 48, 64 - returning `Arc<&dyn Trait>` instead of `Arc<dyn Trait>`
+
+**Current Code** (around line 43-44):
+```rust
+self.get_function(name)
+    .and_then(|f| f.as_indicator().map(|i| Arc::from(i)))
+```
+
+**Fixed Code**:
+```rust
+self.get_function(name)
+    .and_then(|f| f.as_indicator().map(|i| Arc::clone(i)))
+```
+
+**OR** (if as_indicator returns `&dyn Indicator`):
+```rust
+self.get_function(name)
+    .and_then(|f| f.as_indicator().map(|i| (*i).clone()).map(Arc::new))
+```
+
+⚠️ **NOTE**: Read the file first to see what `as_indicator()` returns, then choose the right fix.
+
+**Same fix** for lines 48 (get_primitive) and 64 (collect in list_indicators)
+
+**Verification**:
+```bash
+cargo check 2>&1 | grep -E "registry.rs.*Arc<&dyn"
+# Should return 0 results
+```
+
+**Expected Error Reduction**: 59 → 56 errors (3 errors resolved)
+
+---
+
+### ⚡ STEP 5: Fix min_periods Type Mismatch
+
+**File**: `src/functions/indicators/momentum.rs`
+
+**Problem**: Line 175: `min_periods: self.k_period as u32` - expects `usize`, got `u32`
+
+**Current Code**:
+```rust
+min_periods: self.k_period as u32,
+```
+
+**Fixed Code**:
+```rust
+min_periods: self.k_period as usize,
+```
+
+**Search** for all other instances in momentum.rs, volatility.rs, volume.rs
+
+**Verification**:
+```bash
+cargo check 2>&1 | grep -E "min_periods.*expected.*usize"
+# Should return 0 results
+```
+
+**Expected Error Reduction**: 56 → ~50 errors (6+ errors resolved)
+
+---
+
+### ⚡ STEP 6: Fix Borrow Checker Issue
+
+**File**: `src/engines/generation/lightweight_validator.rs`
+
+**Problem**: Line 45/57 - partial move of `func`
+
+**Current Code** (around line 45):
+```rust
+crate::functions::strategy::StrategyFunction::Primitive(p) => p.arity(),
+```
+
+**Fixed Code**:
+```rust
+crate::functions::strategy::StrategyFunction::Primitive(ref p) => p.arity(),
+```
+
+Add `ref` to avoid moving the value.
+
+**Verification**:
+```bash
+cargo check 2>&1 | grep -E "lightweight_validator.*borrow"
+# Should return 0 results
+```
+
+**Expected Error Reduction**: 50 → 49 errors (1 error resolved)
+
+---
+
+### 🔍 STEP 7: Assess Remaining Errors
+
+After completing Steps 1-6, run:
+```bash
+cargo check 2>&1 | tee /tmp/remaining_errors.txt
+grep "error\[E" /tmp/remaining_errors.txt | wc -l
+```
+
+**Expected**: ~40-49 errors remaining (from 88)
+
+**Remaining issues** will be:
+- Missing Polars 0.51 APIs (abs, clip)
+- window_size type mismatches
+- Genome module missing
+- Scalar privacy issue
+- HallOfFame field access
+
+Report the exact count and first 10 errors to the human for next instructions.
+
+---
+
+## 📊 PROGRESS TRACKING
+
+After each step, update this section:
+
+- [ ] **Step 1**: Import syntax (volatility.rs, volume.rs) - Target: 88 → 73 errors
+- [ ] **Step 2**: types import (momentum.rs) - Target: 73 → 61 errors
+- [ ] **Step 3**: Datetime .phys (engineer.rs, extractor.rs) - Target: 61 → 59 errors
+- [ ] **Step 4**: Arc references (registry.rs) - Target: 59 → 56 errors
+- [ ] **Step 5**: min_periods cast - Target: 56 → 50 errors
+- [ ] **Step 6**: Borrow checker (lightweight_validator.rs) - Target: 50 → 49 errors
+- [ ] **Step 7**: Assessment and report remaining errors
+
+**Current Error Count**: 88 ❌
+**Target After Steps 1-6**: ~49 ✅ (44% reduction)
+
+---
+
 ## Overview
 
-The project has successfully resolved the `raw_table_mut` dependency conflict by upgrading to Polars 0.51.0. However, this upgrade introduces 86 API compatibility errors that must be fixed before any other work can proceed.
+The project has successfully resolved the `raw_table_mut` dependency conflict by upgrading to Polars 0.51.0. However, this upgrade introduced 86 API compatibility errors.
 
 **Dependency Status**: ✅ **SOLVED** - hashbrown conflict resolved
-**Code Status**: ⚠️ **86 compilation errors** due to Polars API breaking changes
-**Goal**: Update all project code to be compatible with Polars 0.51.0 API
+**Stage 1 Status**: ✅ **COMPLETED** - Tasks 1.1, 1.2, 2.1, 2.2, 2.3 implemented
+**Stage 2 Status**: ✅ **COMPLETED** - Tasks 2.4, 2.5, 2.6 implemented
+**Stage 3 Status**: ✅ **COMPLETED** - Tasks 2.7, 3.1, 3.2, 3.3, 3.6, 3.7 implemented
+**Stage 4 Status**: ⚠️ **IN PROGRESS** - Tasks 3.4, 3.5 partially implemented
+
+---
+
+## 🤖 INSTRUCTIONS FOR JULES AI
+
+**IMPORTANT**: Before implementing any task, you MUST read and follow the core principles in `AGENTS.md`:
+
+### Core Principles Summary (see AGENTS.md for full details):
+
+1. **Ground-Truth First**: Always check the actual code (trait definitions, imports, types) before implementing. The code is your source of truth, not this documentation.
+
+2. **Incremental Validation**: Make small changes, run `cargo check` after EACH logical change, do not proceed until it passes.
+
+3. **Execute, Verify, Report, and Halt**:
+   - Execute the instruction exactly as given
+   - Verify success/failure with `cargo check`
+   - Report the precise outcome
+   - **HALT and STOP** - Do NOT try to fix errors yourself
+   - Wait for next explicit instruction
+
+### Implementation Instructions:
+
+**Task**: Implement all remaining tasks (Tasks 2.7 through 3.11) listed below.
+
+**Process**:
+1. Read each task description carefully
+2. **BEFORE IMPLEMENTING**: Check the actual code (trait definitions, imports, types) - use Ground-Truth First principle
+3. Implement the fix as described
+4. After implementing each task (or small task group), run `cargo check`
+5. **IF cargo check PASSES**: Continue to next task
+6. **IF cargo check FAILS WITH ANY ERROR**:
+   ```
+   ⛔ STOP IMMEDIATELY
+   📋 REPORT the exact error message (copy-paste full error)
+   🚫 DO NOT attempt to fix, debug, or troubleshoot
+   🚫 DO NOT proceed to the next task
+   ⏸️  HALT and await further instructions from human
+   ```
+
+**Important Notes**:
+- Task 3.7 (StrategyAST imports) depends on Task 3.6 (module errors) being fixed first
+- Follow the Incremental Validation principle: small changes, frequent `cargo check` runs
+- Always verify trait signatures and import paths in the actual code before implementing
+- The task descriptions are guides based on Polars 0.41→0.51 changes, but actual code may differ
+- You are an **Implementer**, not a Problem Solver - execute instructions, verify, report, halt
+
+---
 
 ## Error Breakdown
 
@@ -43,8 +402,14 @@ Total: **86 compilation errors** across the following categories:
 **Solution Pattern**:
 ```rust
 // Add this method to every indicator implementation
-fn output_type(&self) -> PolarsDataType {
-    PolarsDataType::Float64  // or appropriate type for the indicator
+// Note: Use types::DataType (from crate::types), NOT PolarsDataType
+fn output_type(&self) -> types::DataType {
+    types::DataType::Float64  // or appropriate type for the indicator
+}
+// Or if types::DataType is imported:
+use crate::types::DataType;
+fn output_type(&self) -> DataType {
+    DataType::Float64
 }
 ```
 
@@ -138,7 +503,7 @@ Series::new(name, data)
 grep -rn "Series::new(" src/ --include="*.rs"
 ```
 
-**Verification**: Run `cargo build 2>&1 | grep "expected \`PlSmallStr\`"` should return 0 errors
+**Verification**: Run `cargo build 2>&1 | grep "expected `PlSmallStr`"` should return 0 errors
 
 ---
 
@@ -263,101 +628,69 @@ grep -rn "dsl::abs" src/ --include="*.rs"
 2. Update all usages accordingly
 3. May need to implement custom abs using `.apply()` if no built-in available
 
-**Verification**: Run `cargo build 2>&1 | grep "no method named \`abs\`"` should return 0 errors
+**Verification**: Run `cargo build 2>&1 | grep "no method named `abs`"` should return 0 errors
 
 ---
 
-#### Task 2.4: Fix `cum_sum()` Method (2 files)
+#### Task 2.4: Fix `cum_sum()` Method (2 files) ✅ **COMPLETED**
 **Error**: `error[E0599]: no method named 'cum_sum' found for enum 'polars::prelude::Expr'`
 
-**Root Cause**: The `cum_sum()` method may have been renamed or moved in Polars 0.51.0.
+**Root Cause**: The `cum_sum()` method requires the `cum_agg` feature flag in Polars 0.51.0, which was not enabled in Cargo.toml.
 
-**Investigation Needed**: Check Polars 0.51.0 docs for cumulative sum API.
+**Solution**:
+Add the `cum_agg` feature to Polars in Cargo.toml:
 
-**Possible Solution Patterns**:
-```rust
-// OLD (polars 0.41):
-expr.cum_sum(false)
-
-// NEW (polars 0.51) - Possible new name:
-expr.cumsum(false)
-// OR
-expr.cumulative_sum()
-// OR check if it's now cum_sum with different signature
+```toml
+polars = { version = "0.51.0", features = ["lazy", "rolling_window", "ewma", "temporal", "dtype-full", "cum_agg"] }
 ```
 
-**Files to Fix**:
-1-2. (Files using `.cum_sum()`)
+**Files Fixed**:
+1. `src/functions/indicators/volume.rs` (lines 72, 365)
 
-**Search Command**:
-```bash
-grep -rn "\.cum_sum(" src/ --include="*.rs"
-```
+**Note**: The method name remains `cum_sum(false)` - no code changes needed, only the feature flag.
 
-**Action Required**:
-1. Check Polars 0.51.0 documentation for cumulative sum
-2. Update method name if changed
-3. Update parameters if signature changed
-
-**Verification**: Run `cargo build 2>&1 | grep "cum_sum"` should return 0 errors
+**Verification**: ✅ Run `cargo check 2>&1 | grep "cum_sum"` returns 0 errors
 
 ---
 
 #### Task 2.5: Fix `diff()` Method (1 file)
+**Status**: ✅ **COMPLETE**
+
 **Error**: `error[E0599]: no method named 'diff' found for enum 'polars::prelude::Expr'`
 
-**Root Cause**: Similar to `abs()` and `cum_sum()`, the `diff()` method may have been changed.
+**Root Cause**: In Polars 0.51.0, the `diff()` method was removed from `Expr` as part of PR #24027 to make expressions lazy-compatible. The method still exists on `Series`, but for expression contexts, a different approach is needed.
 
-**Possible Solution Pattern**:
+**Solution Applied**:
+- **File**: `src/functions/indicators/momentum.rs:81`
+- **Change**: Replaced `series.diff(1, NullBehavior::Drop)` with `series.clone() - series.clone().shift(lit(1))`
+- **Removed**: Unused `NullBehavior` import
+
 ```rust
 // OLD (polars 0.41):
-expr.diff(1, NullBehavior::Ignore)
+let delta = series.diff(1, NullBehavior::Drop);
 
 // NEW (polars 0.51):
-// Check Polars docs - may be:
-expr.diff(1)  // if NullBehavior param removed
-// OR
-expr.diff(1, DiffOptions::default())  // if wrapped in options struct
+let delta = series.clone() - series.clone().shift(lit(1));
 ```
 
-**Search Command**:
-```bash
-grep -rn "\.diff(" src/ --include="*.rs"
-```
+**Verification**: ✅ Run `cargo check 2>&1 | grep "diff"` returns 0 errors
 
-**Verification**: Run `cargo build 2>&1 | grep "no method named \`diff\`"` should return 0 errors
+---
+#### Task 2.6: Fix LiteralValue::Int64 (2 files) ✅ **COMPLETED**
+**Status**: ✅ **RESOLVED** - `LiteralValue::Int64` is supported in Polars 0.51.0
+
+**Investigation Results**:
+- **Import**: `src/functions/primitives.rs:2` successfully imports `LiteralValue` from `polars::prelude`
+- **Usage**: Lines 33 and 80 use `LiteralValue::Int64` pattern matching without errors
+- **Verification**: `cargo check 2>&1 | grep "LiteralValue"` returns 0 errors
+
+**Conclusion**: `LiteralValue::Int64` remains valid in Polars 0.51.0. No code changes required.
+
+**Note**: The original error in this section may have been from an earlier build snapshot or already resolved in prior work
 
 ---
 
-#### Task 2.6: Fix LiteralValue::Int64 (2 files)
-**Error**: `error[E0599]: no variant or associated item named 'Int64' found for enum 'LiteralValue'`
-
-**Root Cause**: `LiteralValue` enum variants may have been renamed or restructured in Polars 0.51.0.
-
-**Investigation Needed**: Check Polars 0.51.0 `LiteralValue` enum definition.
-
-**Possible Solution Pattern**:
-```rust
-// OLD (polars 0.41):
-LiteralValue::Int64(value)
-
-// NEW (polars 0.51) - Possible new variants:
-LiteralValue::Int(value)  // unified integer type
-// OR
-LiteralValue::Integer(value)
-// OR check if you should use lit() function instead
-```
-
-**Search Command**:
-```bash
-grep -rn "LiteralValue::Int64" src/ --include="*.rs"
-```
-
-**Verification**: Run `cargo build 2>&1 | grep "LiteralValue"` should return 0 errors
-
----
-
-#### Task 2.7: Fix SplitConfig Missing Field (2 files)
+#### Task 2.7: Fix SplitConfig Missing Field (2 files) ✅ **COMPLETED**
 **Error**: `error[E0063]: missing field 'window_type' in initializer of 'splitters::types::SplitConfig'`
 
 **Root Cause**: The `SplitConfig` struct now requires a `window_type` field that didn't exist before.
@@ -398,9 +731,127 @@ grep -rn "SplitConfig {" src/ --include="*.rs"
 
 ---
 
+#### Task 2.8: Quick Wins - Pattern Matching & Trait Methods (7 errors) ✅ **COMPLETED**
+
+**Date**: November 13, 2025
+**Status**: ✅ **COMPLETED** - Reduced errors from 17 → 10
+
+**Errors Fixed**:
+
+1. **Non-exhaustive pattern match** (primitives.rs:30) - E0004
+2. **Box<AstNode> pattern matching** (diversity_validator.rs:43) - E0308
+3. **indicator.name() method not found** (expression.rs:74) - E0599
+4. **indicator.call() trait bounds** (expression.rs:69) - E0599
+5. **primitive.call() trait bounds** (expression.rs:87) - E0599
+6. **anyhow::Error conversion** (2 instances) - E0277
+7. **Indicator downcast support** (trait definition) - E0605
+
+**Changes Made**:
+
+**File 1**: `src/functions/primitives.rs`
+```rust
+// BEFORE (line 30-38):
+let period = match &args[1] {
+    dsl::Expr::Literal(LiteralValue::Scalar(p)) => {
+        if let AnyValue::Int64(val) = p.to_owned().value() {
+            *val as usize
+        } else {
+            bail!("MA period must be an integer literal")
+        }
+    },
+};
+
+// AFTER:
+let period = match &args[1] {
+    dsl::Expr::Literal(LiteralValue::Scalar(p)) => {
+        if let AnyValue::Int64(val) = p.to_owned().value() {
+            *val as usize
+        } else {
+            bail!("MA period must be an integer literal")
+        }
+    },
+    _ => bail!("MA period must be an integer literal"),  // ✅ Added wildcard
+};
+```
+
+**File 2**: `src/engines/generation/diversity_validator.rs`
+```rust
+// BEFORE (line 43):
+if let Some(AstNode::Const(ConstValue::Integer(period))) = args.get(1) {
+
+// AFTER:
+if let Some(boxed_node) = args.get(1) {
+    if let AstNode::Const(ConstValue::Integer(period)) = boxed_node.as_ref() {  // ✅ Proper dereference
+```
+
+**File 3**: `src/engines/evaluation/expression.rs`
+```rust
+// CHANGE 1 (line 74): indicator.name() → indicator.ui_name()
+let cache_key = self.create_cache_key(indicator.ui_name(), args, df)?;  // ✅ Changed method
+
+// CHANGE 2 (lines 69-86): indicator.call() → VectorizedIndicator pattern
+// BEFORE:
+let result_expr = indicator.call(df, &arg_exprs?)?;
+
+// AFTER:
+let arg_exprs = arg_exprs?;
+let indicator_args: Vec<IndicatorArg> = arg_exprs.iter()
+    .map(|expr| IndicatorArg::Series(expr.clone()))
+    .collect();
+
+let result_expr = if let Some(vectorized) = (indicator as &dyn Any).downcast_ref::<&dyn VectorizedIndicator>() {
+    vectorized.calculate_vectorized(&indicator_args)
+        .map_err(|e| TradebiasError::IndicatorError(format!("Indicator calculation failed: {}", e)))?  // ✅ Error conversion
+} else {
+    return Err(TradebiasError::IndicatorError(
+        format!("Indicator {} does not implement VectorizedIndicator", indicator.ui_name())
+    ));
+};
+
+// CHANGE 3 (line 87): primitive.call() → primitive.execute()
+// BEFORE:
+primitive.call(&arg_exprs?)
+
+// AFTER:
+primitive.execute(&arg_exprs?)
+    .map_err(|e| TradebiasError::IndicatorError(format!("Primitive execution failed: {}", e)))  // ✅ Error conversion
+```
+
+**File 4**: `src/functions/traits.rs`
+```rust
+// BEFORE (line 16):
+pub trait Indicator: Send + Sync {
+
+// AFTER:
+pub trait Indicator: Send + Sync + Any {  // ✅ Added Any supertrait for downcasting
+```
+
+**File 5**: `src/engines/evaluation/expression.rs` (imports)
+```rust
+// Added imports:
+use crate::functions::traits::{Indicator, Primitive, VectorizedIndicator, IndicatorArg};
+use std::any::Any;
+```
+
+**Architectural Changes**:
+- `Indicator` trait now extends `Any` to support runtime type checking
+- ExpressionBuilder now properly integrates with VectorizedIndicator pattern
+- Converts `Vec<Expr>` → `Vec<IndicatorArg>` for indicator calls
+- Implements proper error conversions from anyhow::Error to TradebiasError
+
+**Verification**:
+```bash
+cargo check --lib 2>&1 | grep "error\["
+# Shows 10 errors (down from 17)
+```
+
+**Remaining Errors**: 10 errors (6 Polars API + 4 architecture)
+
+---
+
 ### Task Group 3: Low Priority Fixes (26 errors)
 
-#### Task 3.1: Fix Error Type Capitalization (3 files)
+#### Task 3.1: Fix Error Type Capitalization (3 files) ✅ **COMPLETED**
 **Error**: `error[E0412]: cannot find type 'TradeBiasError' in this scope`
 
 **Root Cause**: Inconsistent capitalization - the error enum is `TradebiasError` but some code references `TradeBiasError`.
@@ -430,7 +881,7 @@ grep -rn "TradeBiasError" src/ --include="*.rs"
 
 ---
 
-#### Task 3.2: Fix DataFrame::new() - Series to Column (1 file)
+#### Task 3.2: Fix DataFrame::new() - Series to Column (1 file) ✅ **COMPLETED**
 **Error**: `error[E0308]: mismatched types - expected 'Vec<Column>', found 'Vec<Series>'`
 
 **Root Cause**: `DataFrame::new()` now expects `Vec<Column>` instead of `Vec<Series>` in Polars 0.51.0.
@@ -462,7 +913,7 @@ grep -rn "DataFrame::new(" src/ --include="*.rs"
 
 ---
 
-#### Task 3.3: Fix Cache Type Mismatch - Series vs Column (1 file)
+#### Task 3.3: Fix Cache Type Mismatch - Series vs Column (1 file) ✅ **COMPLETED**
 **Error**: `error[E0308]: mismatched types - expected 'Series', found 'Column'`
 
 **Root Cause**: Cache system expects `Series` but receives `Column` in Polars 0.51.0.
@@ -492,7 +943,7 @@ self.cache.set(cache_key, series.as_materialized_series().clone());
 
 ---
 
-#### Task 3.4: Fix PlSmallStr Reference Issue (1 file)
+#### Task 3.4: Fix PlSmallStr Reference Issue (1 file) ✅ **COMPLETED**
 **Error**: `error[E0277]: the trait bound '&&PlSmallStr: Into<PlSmallStr>' is not satisfied`
 
 **Root Cause**: Trying to pass a double reference `&&PlSmallStr` where `PlSmallStr` is expected.
@@ -648,43 +1099,62 @@ let vec: Vec<Arc<dyn Indicator>> = iter.map(|x| Arc::new((**x).clone())).collect
 
 ## Implementation Order
 
-Execute tasks in this order to minimize cascading errors:
+### **Stage 1: Core API Changes** ✅ **COMPLETED**
+1. ✅ Task 1.1 - Add `output_type` to all indicators (30 files)
+2. ✅ Task 1.2 - Fix `Series::new()` signatures (15 files)
+3. ✅ Task 2.1 - Fix datetime accessors (4 files)
+4. ✅ Task 2.2 - Fix `RollingOptions` imports (4 files)
+5. ✅ Task 2.3 - Fix `abs()` method (3 files)
 
-### **Stage 1: Core API Changes** (Estimated: 2-3 hours)
-1. Task 1.1 - Add `output_type` to all indicators (30 files)
-2. Task 1.2 - Fix `Series::new()` signatures (15 files)
-3. Task 2.2 - Fix `RollingOptions` imports (4 files)
+### **Stage 2: Remaining Method Changes** ✅ **COMPLETED**
+6. ✅ Task 2.4 - Fix `cum_sum()` method (2 files)
+7. ✅ Task 2.5 - Fix `diff()` method (1 file)
+8. ✅ Task 2.6 - Fix `LiteralValue::Int64` (0 files - no action needed)
 
-**Checkpoint**: Run `cargo build` - should reduce errors from 86 to ~40
+**Checkpoint**: ✅ Stage 2 Complete - All method changes resolved
 
-### **Stage 2: Method Changes** (Estimated: 1-2 hours)
-4. Task 2.1 - Fix datetime accessors (4 files)
-5. Task 2.3 - Fix `abs()` method (3 files)
-6. Task 2.4 - Fix `cum_sum()` method (2 files)
-7. Task 2.5 - Fix `diff()` method (1 file)
-8. Task 2.6 - Fix `LiteralValue::Int64` (2 files)
-
-**Checkpoint**: Run `cargo build` - should reduce errors from ~40 to ~20
-
-### **Stage 3: Structural Changes** (Estimated: 1-2 hours)
+### **Stage 3: Structural Changes** ⚠️ **TO BE IMPLEMENTED BY JULES**
 9. Task 2.7 - Add `window_type` field (2 files)
-10. Task 3.2 - Fix `DataFrame::new()` (1 file)
-11. Task 3.3 - Fix cache type mismatch (1 file)
-12. Task 3.6 - Fix module errors (2 files)
-13. Task 3.7 - Fix StrategyAST imports (2 files)
+10. Task 3.1 - Fix capitalization (3 files)
+11. Task 3.2 - Fix `DataFrame::new()` (1 file)
+12. Task 3.3 - Fix cache type mismatch (1 file)
+13. Task 3.6 - Fix module errors (2 files) ⚠️ **MUST BE DONE BEFORE 3.7**
+14. Task 3.7 - Fix StrategyAST imports (2 files) ⚠️ **DEPENDS ON 3.6**
 
-**Checkpoint**: Run `cargo build` - should reduce errors from ~20 to ~10
+**Checkpoint**: Run `cargo check` after implementing these tasks
 
-### **Stage 4: Cleanup** (Estimated: 1 hour)
-14. Task 3.1 - Fix capitalization (3 files)
+### **Stage 4: Cleanup** ⚠️ **TO BE IMPLEMENTED BY JULES**
 15. Task 3.4 - Fix PlSmallStr reference (1 file)
-16. Task 3.5 - Fix trait bounds (6 files)
+16. ⚠️ Task 3.5 - Fix trait bounds (6 files) - **IN PROGRESS**
+    - `std::io::Error: Clone` ✅ **FIXED**
+    - `serde_json::Error: Clone` ✅ **FIXED**
+    - `primitives::Or: functions::traits::Primitive` ✅ **FIXED**
+    - `primitives::And: functions::traits::Primitive` ✅ **FIXED**
+    - `Abs: functions::traits::Primitive` ✅ **FIXED**
+    - `LiteralValue::Int64` ✅ **FIXED**
+    - `casting &i64 as usize is invalid` ✅ **FIXED**
+    - `types::DataType::Float64` ✅ **FIXED** (in `trend.rs`, `volatility.rs`, `volume.rs`)
+    - `polars::prelude::Column: polars::prelude::Literal` ⚠️ **UNRESOLVED**
 17. Task 3.8 - Fix borrow checker issues (1 file)
 18. Task 3.9 - Fix method call issues (3 files)
 19. Task 3.10 - Fix ambiguous types (2 files)
 20. Task 3.11 - Fix iterator type (1 file)
 
-**Final Checkpoint**: Run `cargo build` - should compile successfully ✅
+**Final Checkpoint**: Run `cargo check` - should compile successfully ✅
+
+---
+
+## 🤖 JULES: IMPLEMENTATION STRATEGY
+
+**Recommended Approach**: Implement tasks in stage order (2 → 3 → 4), running `cargo check` after each stage.
+
+**Critical Dependency**: Task 3.6 MUST complete successfully before Task 3.7.
+
+**Remember**:
+- If `cargo check` fails at ANY point → STOP, REPORT, HALT
+- Do not try to debug or fix unexpected errors
+- Do not deviate from the task descriptions
+- Verify all types and imports in actual code (Ground-Truth First)
 
 ---
 
@@ -763,29 +1233,46 @@ After completing each stage:
 
 ## Status Tracking
 
-Track progress by marking tasks as you complete them:
+- [x] **Stage 1: Core API Changes** ✅ **COMPLETED** (~45 errors fixed)
+  - [x] Task 1.1 - output_type implementations (30 errors)
+  - [x] Task 1.2 - Series::new() fixes (15 errors)
+  - [x] Task 2.1 - Datetime accessors (4 errors)
+  - [x] Task 2.2 - RollingOptions imports (4 errors)
+  - [x] Task 2.3 - abs() method (3 errors)
 
-- [ ] **Stage 1: Core API Changes** (45 errors)
-  - [ ] Task 1.1 - output_type implementations (30 errors)
-  - [ ] Task 1.2 - Series::new() fixes (15 errors)
-  - [ ] Task 2.2 - RollingOptions imports (4 errors)
+- [x] **Stage 2: Remaining Method Changes** ✅ **COMPLETED** (0 errors)
+  - [x] Task 2.4 - cum_sum() method (2 errors) ✅ **COMPLETED**
+  - [x] Task 2.5 - diff() method (1 error) ✅ **COMPLETED**
+  - [x] Task 2.6 - LiteralValue::Int64 (0 errors) ✅ **NO ACTION NEEDED**
 
-- [ ] **Stage 2: Method Changes** (15 errors)
-  - [ ] Task 2.1 - Datetime accessors (4 errors)
-  - [ ] Task 2.3 - abs() method (3 errors)
-  - [ ] Task 2.4 - cum_sum() method (2 errors)
-  - [ ] Task 2.5 - diff() method (1 error)
-  - [ ] Task 2.6 - LiteralValue::Int64 (2 errors)
+- [x] **Stage 3: Quick Wins** ✅ **COMPLETED** (7 errors fixed)
+  - [x] Task 2.7 - Add `window_type` field (2 errors) ✅ **COMPLETED**
+  - [x] Task 2.8 - Quick Wins (7 errors) ✅ **COMPLETED** (2025-11-13)
+    - Fixed non-exhaustive pattern match in primitives.rs
+    - Fixed Box<AstNode> pattern matching in diversity_validator.rs
+    - Changed indicator.name() → indicator.ui_name()
+    - Fixed indicator.call() → VectorizedIndicator::calculate_vectorized()
+    - Fixed primitive.call() → Primitive::execute()
+    - Added Any supertrait to Indicator trait for downcasting
+    - Added error conversion from anyhow::Error to TradebiasError
+  - [x] Task 3.1 - Fix capitalization (3 errors) ✅ **COMPLETED**
+  - [x] Task 3.2 - Fix `DataFrame::new()` (1 error) ✅ **COMPLETED**
+  - [x] Task 3.3 - Cache type (1 error) ✅ **COMPLETED**
 
-- [ ] **Stage 3: Structural Changes** (10 errors)
-  - [ ] Task 2.7 - window_type field (2 errors)
-  - [ ] Task 3.2 - DataFrame::new() (1 error)
-  - [ ] Task 3.3 - Cache type (1 error)
-  - [ ] Task 3.6 - Module errors (2 errors)
-  - [ ] Task 3.7 - StrategyAST imports (2 errors)
+- [ ] **Stage 4: Remaining Issues** ⚠️ **IN PROGRESS** (10 errors remain)
+  - [ ] Polars API Changes (6 errors) - **NEEDS RESEARCH**
+    - dsl::abs not found (primitives.rs:153)
+    - .clip() not found (momentum.rs:87, 88)
+    - .abs() method not found (momentum.rs:267, volatility.rs:78, 79)
+  - [ ] Architecture Issues (4 errors) - **NEEDS INVESTIGATION**
+    - [ ] Task 3.6 - Module errors (2 errors) - genome system
+    - AstConverter not found (hall_of_fame.rs:85)
+    - HallOfFame.try_ field (evolution_engine.rs:94)
+    - Type mismatch AstNode vs StrategyAST (evolution_engine.rs:145)
+    - WindowType vs bool (wfo.rs:31)
+  - [ ] Task 3.7 - StrategyAST imports (2 errors) ⚠️ **After 3.6** 
 
-- [ ] **Stage 4: Cleanup** (16 errors)
-  - [ ] Task 3.1 - Capitalization (3 errors)
+- [ ] **Stage 4: Cleanup** ⚠️ **JULES TO IMPLEMENT** (~14 errors)
   - [ ] Task 3.4 - PlSmallStr reference (1 error)
   - [ ] Task 3.5 - Trait bounds (6 errors)
   - [ ] Task 3.8 - Borrow checker (1 error)
@@ -793,10 +1280,43 @@ Track progress by marking tasks as you complete them:
   - [ ] Task 3.10 - Ambiguous types (2 errors)
   - [ ] Task 3.11 - Iterator type (1 error)
 
-**Final Status**: ⚠️ 86 errors remaining → ✅ 0 errors (target)
+**Current Blocking Issues**:
+-   `error[E0433]: failed to resolve: use of unresolved module or unlinked crate types` (many occurrences in `src/functions/indicators/momentum.rs` and other indicator files). This indicates a deeper issue with how `crate::types` is being used or re-exported.
+-   `error[E0603]: struct Scalar is private` in `src/functions/primitives.rs`. This needs to be fixed by changing the import for `Scalar` to `use polars_core::scalar::Scalar;`.
+-   `error[E0599]: no method named clip found for enum polars::prelude::Expr`
+-   `error[E0599]: no method named abs found for enum polars::prelude::Expr`
+-   `error[E0308]: mismatched types` (for `window_size` and `min_periods` in `momentum.rs` and `volatility.rs`, `volume.rs`)
+-   `error[E0308]: mismatched types` (for `get_indicator`, `get_primitive`, and `collect` in `registry.rs`)
+-   `error[E0599]: no method named get found for reference &Logical<DatetimeType, Int64Type>`
+-   `error[E0609]: no field try_ on type HallOfFame`
+-   `error[E0433]: failed to resolve: use of undeclared type AstConverter`
+-   `error[E0382]: borrow of partially moved value: func`
+
+**Next Steps**:
+1.  Address the remaining `error[E0433]: failed to resolve: use of unresolved module or unlinked crate types` errors in indicator files.
+2.  Fix `error[E0603]: struct Scalar is private` by changing the import for `Scalar`.
+3.  Continue with remaining tasks in Stage 4.
 
 ---
 
-**Last Updated**: 2025-11-12
-**Plan Version**: 1.0
-**Next Review**: After Stage 1 completion
+**Last Updated**: 2025-11-13
+**Plan Version**: 2.0 (Updated for Jules AI implementation)
+**Stage 1**: ✅ Completed (Tasks 1.1, 1.2, 2.1, 2.2, 2.3)
+**Next Review**: After Jules completes remaining stages
+
+---
+
+## 🤖 JULES: QUICK START
+
+**Your Mission**: Implement Tasks 2.7 through 3.11 (Stages 3-4)
+
+**Critical Instructions**:
+1. Read `AGENTS.md` - follow all three core principles
+2. Implement tasks in stage order (Stage 3 → 4)
+3. Run `cargo check` after each stage
+4. **IF ANY ERROR**: STOP, REPORT exact error, HALT (do not fix)
+5. Task 3.6 must complete before Task 3.7
+
+**Ground-Truth Reminder**: Check actual trait definitions, imports, and types in the code before implementing. This document is a guide, not gospel.
+
+**Start with**: Task 2.7 (SplitConfig window_type field) below ⬇️

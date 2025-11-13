@@ -1,0 +1,170 @@
+    Checking tradebias v0.1.0 (C:\Project\rust)
+error[E0425]: cannot find function `abs` in module `dsl`
+   --> src\functions\primitives.rs:153:17
+    |
+153 |         Ok(dsl::abs(args[0].clone()))
+    |                 ^^^ not found in `dsl`
+
+warning: unused import: `crate::types::*`
+ --> src\engines\metrics\risk.rs:2:5
+  |
+2 | use crate::types::*;
+  |     ^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: unused import: `Value`
+ --> src\engines\evaluation\backtester.rs:6:38
+  |
+6 |     types::{AstNode, StrategyResult, Value},
+  |                                      ^^^^^
+
+warning: unused import: `TradebiasError`
+ --> src\engines\evaluation\portfolio.rs:2:21
+  |
+2 |     error::{Result, TradebiasError},
+  |                     ^^^^^^^^^^^^^^
+
+warning: unused import: `crate::engines::generation::ast::StrategyAST`
+ --> src\engines\generation\operators.rs:1:5
+  |
+1 | use crate::engines::generation::ast::StrategyAST;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `HashSet`
+ --> src\engines\generation\diversity_validator.rs:3:33
+  |
+3 | use std::collections::{HashMap, HashSet};
+  |                                 ^^^^^^^
+
+warning: unused import: `Duration`
+ --> src\functions\primitives.rs:2:23
+  |
+2 | use polars::prelude::{Duration, EWMOptions, LiteralValue, RollingOptionsFixedWindow};
+  |                       ^^^^^^^^
+
+warning: unused import: `Expr`
+ --> src\functions\primitives.rs:3:31
+  |
+3 | use polars::lazy::dsl::{self, Expr};
+  |                               ^^^^
+
+warning: unused import: `Duration`
+ --> src\functions\indicators\momentum.rs:8:26
+  |
+8 |     prelude::{lit, when, Duration, EWMOptions, RollingOptionsFixedWindow},
+  |                          ^^^^^^^^
+
+warning: unused import: `collections::VecDeque`
+  --> src\functions\indicators\trend.rs:11:21
+   |
+11 | use std::{any::Any, collections::VecDeque};
+   |                     ^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `Duration`
+ --> src\functions\indicators\volatility.rs:8:20
+  |
+8 |     prelude::{lit, Duration, EWMOptions, RollingOptionsFixedWindow},
+  |                    ^^^^^^^^
+
+warning: unused import: `Duration`
+ --> src\functions\indicators\volume.rs:8:20
+  |
+8 |     prelude::{lit, Duration, EWMOptions, RollingOptionsFixedWindow},
+  |                    ^^^^^^^^
+
+warning: unused import: `self`
+  --> src\functions\registry.rs:14:18
+   |
+14 |     primitives::{self, And, Or, Abs},
+   |                  ^^^^
+
+error[E0433]: failed to resolve: use of undeclared type `AstConverter`
+  --> src\engines\generation\hall_of_fame.rs:85:5
+   |
+85 |     AstConverter::ast_to_canonical_json(ast)
+   |     ^^^^^^^^^^^^ use of undeclared type `AstConverter`
+
+error[E0609]: no field `try_` on type `HallOfFame`
+  --> src\engines\generation\evolution_engine.rs:94:35
+   |
+94 |                 self.hall_of_fame.try_.add(elite);
+   |                                   ^^^^ unknown field
+
+error[E0308]: mismatched types
+   --> src\engines\generation\evolution_engine.rs:145:55
+    |
+145 |             let backtest_result = self.backtester.run(ast.as_node(), data)?;
+    |                                                   --- ^^^^^^^^^^^^^ expected `&StrategyAST`, found `&AstNode`
+    |                                                   |
+    |                                                   arguments to this method are incorrect
+    |
+    = note: expected reference `&ast::StrategyAST`
+               found reference `&AstNode`
+note: method defined here
+   --> src\engines\evaluation\backtester.rs:29:12
+    |
+ 29 |     pub fn run(&self, ast: &StrategyAST, data: &DataFrame) -> Result<StrategyResult> {
+    |            ^^^        -----------------
+
+error[E0308]: mismatched types
+  --> src\engines\generation\optimisation\methods\wfo.rs:31:17
+   |
+27 |             splitter: WalkForwardSplitter::new(
+   |                       ------------------------ arguments to this function are incorrect
+...
+31 |                 window_type,
+   |                 ^^^^^^^^^^^ expected `bool`, found `WindowType`
+   |
+note: associated function defined here
+  --> src\engines\generation\optimisation\splitters\wfo.rs:13:12
+   |
+13 |     pub fn new(
+   |            ^^^
+...
+17 |         anchored: bool,
+   |         --------------
+
+error[E0599]: no method named `clip` found for enum `polars::prelude::Expr` in the current scope
+  --> src\functions\indicators\momentum.rs:87:14
+   |
+85 |           let gains = delta
+   |  _____________________-
+86 | |             .clone()
+87 | |             .clip(dsl::lit(0.0), dsl::lit(f64::INFINITY));
+   | |             -^^^^ method not found in `polars::prelude::Expr`
+   | |_____________|
+   |
+
+error[E0599]: no method named `clip` found for enum `polars::prelude::Expr` in the current scope
+  --> src\functions\indicators\momentum.rs:88:29
+   |
+88 |         let losses = (delta.clip(dsl::lit(f64::NEG_INFINITY), dsl::lit(0.0))).abs();
+   |                             ^^^^ method not found in `polars::prelude::Expr`
+
+error[E0599]: no method named `abs` found for enum `polars::prelude::Expr` in the current scope
+   --> src\functions\indicators\momentum.rs:267:14
+    |
+266 |           let mean_deviation = (typical_price.clone() - sma_tp.clone())
+    |  ______________________________-
+267 | |             .abs()
+    | |             -^^^ method not found in `polars::prelude::Expr`
+    | |_____________|
+    |
+
+error[E0599]: no method named `abs` found for enum `polars::prelude::Expr` in the current scope
+  --> src\functions\indicators\volatility.rs:78:47
+   |
+78 |         let tr2 = (high - prev_close.clone()).abs();
+   |                                               ^^^ method not found in `polars::prelude::Expr`
+
+error[E0599]: no method named `abs` found for enum `polars::prelude::Expr` in the current scope
+  --> src\functions\indicators\volatility.rs:79:38
+   |
+79 |         let tr3 = (low - prev_close).abs();
+   |                                      ^^^ method not found in `polars::prelude::Expr`
+
+Some errors have detailed explanations: E0308, E0425, E0433, E0599, E0609.
+For more information about an error, try `rustc --explain E0308`.
+warning: `tradebias` (lib) generated 12 warnings
+error: could not compile `tradebias` (lib) due to 10 previous errors; 12 warnings emitted

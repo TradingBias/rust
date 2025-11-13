@@ -3,7 +3,8 @@ use crate::{
     error::{Result, TradebiasError},
     engines::evaluation::{ExpressionBuilder, Portfolio},
     functions::registry::FunctionRegistry,
-    types::{AstNode, StrategyResult, Value},
+    types::{AstNode, StrategyResult},
+    engines::generation::ast::StrategyAST,
 };
 use polars::prelude::*;
 use std::{collections::HashMap, sync::Arc};
@@ -26,8 +27,9 @@ impl Backtester {
     }
 
     pub fn run(&self, ast: &StrategyAST, data: &DataFrame) -> Result<StrategyResult> {
-        let condition = match ast {
-            StrategyAST::Rule { condition, .. } => condition,
+        let condition = match ast.root.as_ref() {
+            AstNode::Rule { condition, .. } => condition,
+            _ => return Err(TradebiasError::Validation("StrategyAST root is not a Rule node".to_string())),
         };
         let signal_expr = self.expression_builder.build(condition, data)?;
 
@@ -52,7 +54,7 @@ impl Backtester {
         let metrics = self.calculate_metrics(&portfolio)?;
 
         Ok(StrategyResult {
-            ast: ast.clone(),
+            ast: ast.root.as_ref().clone(),
             metrics,
             trades: portfolio.get_trades().to_vec(),
             equity_curve: portfolio.get_equity_curve().to_vec(),

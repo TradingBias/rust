@@ -23,12 +23,13 @@ impl WalkForwardMethod {
         window_type: WindowType,
         backtester: Backtester,
     ) -> Self {
+        let anchored = window_type == WindowType::Anchored;
         Self {
             splitter: WalkForwardSplitter::new(
                 in_sample_pct,
                 out_of_sample_pct,
                 n_folds,
-                window_type,
+                anchored,
             ),
             backtester,
         }
@@ -44,7 +45,7 @@ impl ValidationMethod for WalkForwardMethod {
         &self,
         ast: &StrategyAST,
         data: &DataFrame,
-    ) -> Result<AggregatedResult, TradeBiasError> {
+    ) -> Result<AggregatedResult, TradebiasError> {
         // Split data into folds
         let splits = self.splitter.split(data)?;
 

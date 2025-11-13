@@ -15,6 +15,7 @@ impl SimpleSplitter {
                 in_sample_pct,
                 out_of_sample_pct: 1.0 - in_sample_pct,
                 n_folds: 1,
+                window_type: super::types::WindowType::Sliding,
             },
         }
     }
@@ -59,7 +60,7 @@ impl DataSplitter for SimpleSplitter {
 }
 
 pub fn get_datetime_at_index(series: &DatetimeChunked, idx: usize) -> Result<DateTime<Utc>, TradebiasError> {
-    let timestamp_ms = series.get(idx).ok_or_else(|| {
+    let timestamp_ms = series.phys.get(idx).ok_or_else(|| {
         TradebiasError::Validation(format!("Cannot get timestamp at index {}", idx))
     })?;
 

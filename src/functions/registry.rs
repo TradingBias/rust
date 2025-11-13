@@ -11,7 +11,7 @@ use crate::functions::{
         volatility::{ADX, ATR, StdDev},
         volume::{BWMFI, Chaikin, Force, MFI, OBV, Volumes},
     },
-    primitives::{self, And, Or, Abs},
+    primitives::{And, Or, Abs},
 };
 use std::{collections::HashMap, sync::Arc};
 
@@ -41,12 +41,12 @@ impl FunctionRegistry {
 
     pub fn get_indicator(&self, name: &str) -> Option<Arc<dyn Indicator>> {
         self.get_function(name)
-            .and_then(|f| f.as_indicator().map(|i| Arc::from(i)))
+            .and_then(|f| f.get_indicator_arc())
     }
 
     pub fn get_primitive(&self, name: &str) -> Option<Arc<dyn Primitive>> {
         self.get_function(name)
-            .and_then(|f| f.as_primitive().map(|p| Arc::from(p)))
+            .and_then(|f| f.get_primitive_arc())
     }
 
     pub fn get_by_output_type(&self, data_type: DataType) -> Vec<StrategyFunction> {
@@ -60,7 +60,7 @@ impl FunctionRegistry {
     pub fn get_indicators(&self) -> Vec<Arc<dyn Indicator>> {
         self.functions
             .values()
-            .filter_map(|f| f.as_indicator().map(|i| Arc::from(i)))
+            .filter_map(|f| f.get_indicator_arc())
             .collect()
     }
 

@@ -1,5 +1,5 @@
 use crate::{
-    error::{Result, TradebiasError},
+    error::Result,
     types::{Direction, ExitReason, Trade},
 };
 
