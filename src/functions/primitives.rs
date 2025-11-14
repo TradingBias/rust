@@ -303,6 +303,74 @@ impl Primitive for LessThanScalar {
     }
 }
 
+pub struct EqualScalar;
+impl Primitive for EqualScalar {
+    fn ui_name(&self) -> &'static str { "Equal Scalar" }
+    fn alias(&self) -> &'static str { "eq_scalar" }
+    fn arity(&self) -> usize { 2 }
+    fn input_types(&self) -> Vec<crate::types::DataType> {
+        vec![crate::types::DataType::NumericSeries, crate::types::DataType::Float]
+    }
+    fn output_type(&self) -> crate::types::DataType { crate::types::DataType::BoolSeries }
+    fn execute(&self, args: &[dsl::Expr]) -> Result<dsl::Expr> {
+        Ok(args[0].clone().eq(args[1].clone()))
+    }
+    fn generate_mql5(&self, args: &[String]) -> String {
+        format!("({} == {})", args[0], args[1])
+    }
+}
+
+pub struct NotEqualScalar;
+impl Primitive for NotEqualScalar {
+    fn ui_name(&self) -> &'static str { "Not Equal Scalar" }
+    fn alias(&self) -> &'static str { "neq_scalar" }
+    fn arity(&self) -> usize { 2 }
+    fn input_types(&self) -> Vec<crate::types::DataType> {
+        vec![crate::types::DataType::NumericSeries, crate::types::DataType::Float]
+    }
+    fn output_type(&self) -> crate::types::DataType { crate::types::DataType::BoolSeries }
+    fn execute(&self, args: &[dsl::Expr]) -> Result<dsl::Expr> {
+        Ok(args[0].clone().neq(args[1].clone()))
+    }
+    fn generate_mql5(&self, args: &[String]) -> String {
+        format!("({} != {})", args[0], args[1])
+    }
+}
+
+pub struct GreaterThanOrEqualScalar;
+impl Primitive for GreaterThanOrEqualScalar {
+    fn ui_name(&self) -> &'static str { "Greater Than or Equal Scalar" }
+    fn alias(&self) -> &'static str { "gte_scalar" }
+    fn arity(&self) -> usize { 2 }
+    fn input_types(&self) -> Vec<crate::types::DataType> {
+        vec![crate::types::DataType::NumericSeries, crate::types::DataType::Float]
+    }
+    fn output_type(&self) -> crate::types::DataType { crate::types::DataType::BoolSeries }
+    fn execute(&self, args: &[dsl::Expr]) -> Result<dsl::Expr> {
+        Ok(args[0].clone().gt_eq(args[1].clone()))
+    }
+    fn generate_mql5(&self, args: &[String]) -> String {
+        format!("({} >= {})", args[0], args[1])
+    }
+}
+
+pub struct LessThanOrEqualScalar;
+impl Primitive for LessThanOrEqualScalar {
+    fn ui_name(&self) -> &'static str { "Less Than or Equal Scalar" }
+    fn alias(&self) -> &'static str { "lte_scalar" }
+    fn arity(&self) -> usize { 2 }
+    fn input_types(&self) -> Vec<crate::types::DataType> {
+        vec![crate::types::DataType::NumericSeries, crate::types::DataType::Float]
+    }
+    fn output_type(&self) -> crate::types::DataType { crate::types::DataType::BoolSeries }
+    fn execute(&self, args: &[dsl::Expr]) -> Result<dsl::Expr> {
+        Ok(args[0].clone().lt_eq(args[1].clone()))
+    }
+    fn generate_mql5(&self, args: &[String]) -> String {
+        format!("({} <= {})", args[0], args[1])
+    }
+}
+
 pub struct CrossAbove;
 impl Primitive for CrossAbove {
     fn ui_name(&self) -> &'static str { "Cross Above" }
