@@ -16,6 +16,24 @@ fn test_unrealized_pnl_long_position() {
 }
 
 #[test]
+fn test_unrealized_pnl_short_position() {
+    let mut portfolio = Portfolio::new(10000.0);
+
+    // With 10% of capital ($1000) at $50/share, we short 20 shares.
+    portfolio.open_position(0, -1.0, 50.0).unwrap();
+
+    // Price decreases to $45 (profitable for short)
+    portfolio.calculate_unrealized_pnl(45.0);
+
+    // Unrealized P&L should be (50-45) * 20 = $100
+    assert_eq!(portfolio.unrealized_pnl, 100.0);
+    assert_eq!(portfolio.total_pnl, 100.0);
+
+    // Position value should be negative (liability)
+    assert_eq!(portfolio.current_position_value, -900.0);
+}
+
+#[test]
 fn test_portfolio_value_with_open_positions() {
     let mut portfolio = Portfolio::new(10000.0);
 
@@ -29,6 +47,25 @@ fn test_portfolio_value_with_open_positions() {
     // Position value: 20 * $60 = $1200
     // Total value: $9000 cash + $1200 position value = $10200
     assert_eq!(portfolio.total_value(), 10200.0);
+}
+
+#[test]
+fn test_portfolio_value_with_short_positions() {
+    let mut portfolio = Portfolio::new(10000.0);
+
+    // Short 20 shares at $50 (receive $1000)
+    portfolio.open_position(0, -1.0, 50.0).unwrap();
+    // Cash after short: $11000
+
+    // Price decreases to $40 (profitable for short)
+    portfolio.calculate_unrealized_pnl(40.0);
+
+    // Position value: -(20 * $40) = -$800 (liability)
+    // Total value: $11000 cash - $800 liability = $10200
+    assert_eq!(portfolio.total_value(), 10200.0);
+
+    // Verify this equals equity
+    assert_eq!(portfolio.total_value(), portfolio.equity());
 }
 
 #[test]
@@ -46,6 +83,27 @@ fn test_drawdown_with_unrealized_losses() {
     // Drawdown: (10000 - 9800) / 10000 = 0.02
     assert_eq!(portfolio.unrealized_pnl, -200.0);
     assert_eq!(portfolio.current_drawdown, 0.02);
+}
+
+#[test]
+fn test_drawdown_with_unrealized_losses_short() {
+    let mut portfolio = Portfolio::new(10000.0);
+
+    // Short 10 shares at $100 (receive $1000)
+    portfolio.open_position(0, -1.0, 100.0).unwrap();
+
+    // Price rises to $120 (losing for short)
+    portfolio.process_bar(1, 0.0, 120.0).unwrap();
+
+    // Unrealized loss: (100-120) * 10 = -$200
+    // Equity: $10000 - $200 = $9800
+    // Drawdown: (10000 - 9800) / 10000 = 0.02
+    assert_eq!(portfolio.unrealized_pnl, -200.0);
+    assert_eq!(portfolio.current_drawdown, 0.02);
+
+    // Verify total_value matches equity
+    assert_eq!(portfolio.total_value(), 9800.0);
+    assert_eq!(portfolio.total_value(), portfolio.equity());
 }
 
 #[test]

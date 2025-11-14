@@ -157,7 +157,13 @@ impl Portfolio {
             };
 
             self.unrealized_pnl = pnl;
-            self.current_position_value = current_value;
+
+            // For long positions, position value is positive (asset)
+            // For short positions, position value is negative (liability)
+            self.current_position_value = match position.direction {
+                Direction::Long => current_value,
+                Direction::Short => -current_value,
+            };
         } else {
             self.unrealized_pnl = 0.0;
             self.current_position_value = 0.0;
