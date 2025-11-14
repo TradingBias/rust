@@ -17,3 +17,7 @@ thiserror = "1.0"
 serde_json = "1.0"
 log = "0.4"
 toml = "0.8"
+
+[[test]]
+name = "portfolio"
+path = "tests/portfolio.rs"
