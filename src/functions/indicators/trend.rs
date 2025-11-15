@@ -53,6 +53,10 @@ impl Indicator for SMA {
             args[0], args[1], self.period, args[2], args[3]
         )
     }
+
+    fn try_calculate_vectorized(&self, args: &[IndicatorArg]) -> Option<Result<dsl::Expr>> {
+        Some(crate::functions::traits::VectorizedIndicator::calculate_vectorized(self, args))
+    }
 }
 
 impl crate::functions::traits::VectorizedIndicator for SMA {
@@ -116,6 +120,10 @@ impl Indicator for EMA {
             "iMA({}, {}, {}, 0, MODE_EMA, {}, {})",
             args[0], args[1], self.period, args[2], args[3]
         )
+    }
+
+    fn try_calculate_vectorized(&self, args: &[IndicatorArg]) -> Option<Result<dsl::Expr>> {
+        Some(crate::functions::traits::VectorizedIndicator::calculate_vectorized(self, args))
     }
 }
 
@@ -200,6 +208,10 @@ impl Indicator for MACD {
             args[3],
             args[4]
         )
+    }
+
+    fn try_calculate_vectorized(&self, args: &[IndicatorArg]) -> Option<Result<dsl::Expr>> {
+        Some(crate::functions::traits::VectorizedIndicator::calculate_vectorized(self, args))
     }
 }
 
@@ -286,6 +298,10 @@ impl Indicator for BollingerBands {
             args[0], args[1], self.period, self.deviation, args[2], args[3], args[4]
         )
     }
+
+    fn try_calculate_vectorized(&self, args: &[IndicatorArg]) -> Option<Result<dsl::Expr>> {
+        Some(crate::functions::traits::VectorizedIndicator::calculate_vectorized(self, args))
+    }
 }
 
 impl crate::functions::traits::VectorizedIndicator for BollingerBands {
@@ -361,6 +377,10 @@ impl Indicator for Envelopes {
             "iEnvelopes(_Symbol, _Period, {}, MODE_SMA, 0, PRICE_CLOSE, {})",
             self.period, self.deviation
         )
+    }
+
+    fn try_calculate_vectorized(&self, args: &[IndicatorArg]) -> Option<Result<dsl::Expr>> {
+        Some(crate::functions::traits::VectorizedIndicator::calculate_vectorized(self, args))
     }
 }
 
@@ -523,17 +543,21 @@ impl Indicator for Bears {
         vec![
             DataType::NumericSeries, // low
             DataType::NumericSeries, // close
-            DataType::Integer,       // period
+            DataType::Integer,       // period (ignored, uses self.period)
         ]
     }
     fn calculation_mode(&self) -> crate::functions::traits::CalculationMode {
         crate::functions::traits::CalculationMode::Vectorized
     }
-    fn generate_mql5(&self, args: &[String]) -> String {
+    fn generate_mql5(&self, _args: &[String]) -> String {
         format!(
             "iBearsPower(_Symbol, _Period, {}, PRICE_CLOSE)",
-            args[2]
+            self.period
         )
+    }
+
+    fn try_calculate_vectorized(&self, args: &[IndicatorArg]) -> Option<Result<dsl::Expr>> {
+        Some(crate::functions::traits::VectorizedIndicator::calculate_vectorized(self, args))
     }
 }
 
@@ -547,15 +571,11 @@ impl crate::functions::traits::VectorizedIndicator for Bears {
             IndicatorArg::Series(expr) => expr.clone(),
             _ => bail!("Bears: second arg must be close series"),
         };
-        let period = match &args[2] {
-            IndicatorArg::Scalar(p) => *p as i64,
-            _ => bail!("Bears: third arg must be scalar period"),
-        };
 
         let ema = MovingAverage {
             method: MAMethod::Exponential,
         };
-        let ema_val = ema.execute(&[close, dsl::lit(period)])?;
+        let ema_val = ema.execute(&[close, dsl::lit(self.period as i64)])?;
 
         Ok(low - ema_val)
     }
@@ -596,17 +616,21 @@ impl Indicator for Bulls {
         vec![
             DataType::NumericSeries, // high
             DataType::NumericSeries, // close
-            DataType::Integer,       // period
+            DataType::Integer,       // period (ignored, uses self.period)
         ]
     }
     fn calculation_mode(&self) -> crate::functions::traits::CalculationMode {
         crate::functions::traits::CalculationMode::Vectorized
     }
-    fn generate_mql5(&self, args: &[String]) -> String {
+    fn generate_mql5(&self, _args: &[String]) -> String {
         format!(
             "iBullsPower(_Symbol, _Period, {}, PRICE_CLOSE)",
-            args[2]
+            self.period
         )
+    }
+
+    fn try_calculate_vectorized(&self, args: &[IndicatorArg]) -> Option<Result<dsl::Expr>> {
+        Some(crate::functions::traits::VectorizedIndicator::calculate_vectorized(self, args))
     }
 }
 
@@ -620,15 +644,11 @@ impl crate::functions::traits::VectorizedIndicator for Bulls {
             IndicatorArg::Series(expr) => expr.clone(),
             _ => bail!("Bulls: second arg must be close series"),
         };
-        let period = match &args[2] {
-            IndicatorArg::Scalar(p) => *p as i64,
-            _ => bail!("Bulls: third arg must be scalar period"),
-        };
 
         let ema = MovingAverage {
             method: MAMethod::Exponential,
         };
-        let ema_val = ema.execute(&[close, dsl::lit(period)])?;
+        let ema_val = ema.execute(&[close, dsl::lit(self.period as i64)])?;
 
         Ok(high - ema_val)
     }
@@ -678,6 +698,10 @@ impl Indicator for DEMA {
             "iMAOnArray(DEMA_buffer, 0, {}, 0, MODE_EMA, 0)",
             self.period
         )
+    }
+
+    fn try_calculate_vectorized(&self, args: &[IndicatorArg]) -> Option<Result<dsl::Expr>> {
+        Some(crate::functions::traits::VectorizedIndicator::calculate_vectorized(self, args))
     }
 }
 
@@ -748,6 +772,10 @@ impl Indicator for TEMA {
             self.period
         )
     }
+
+    fn try_calculate_vectorized(&self, args: &[IndicatorArg]) -> Option<Result<dsl::Expr>> {
+        Some(crate::functions::traits::VectorizedIndicator::calculate_vectorized(self, args))
+    }
 }
 
 impl crate::functions::traits::VectorizedIndicator for TEMA {
@@ -817,6 +845,10 @@ impl Indicator for TriX {
     }
     fn generate_mql5(&self, _args: &[String]) -> String {
         format!("iTriX(_Symbol, _Period, {})", self.period)
+    }
+
+    fn try_calculate_vectorized(&self, args: &[IndicatorArg]) -> Option<Result<dsl::Expr>> {
+        Some(crate::functions::traits::VectorizedIndicator::calculate_vectorized(self, args))
     }
 }
 

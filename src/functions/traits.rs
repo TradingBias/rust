@@ -40,12 +40,23 @@ pub trait Indicator: Send + Sync + Any {
 
     /// Generate MQL5 code for this indicator (always stateful for live trading)
     fn generate_mql5(&self, args: &[String]) -> String;
+
+    /// Call vectorized calculation if this indicator supports it
+    /// Returns None if the indicator doesn't implement VectorizedIndicator
+    fn try_calculate_vectorized(&self, args: &[IndicatorArg]) -> Option<Result<Expr>> {
+        None
+    }
 }
 
 /// Trait for vectorized indicators (used in backtesting)
 pub trait VectorizedIndicator: Indicator {
     /// Calculate over entire series using Polars expressions
     fn calculate_vectorized(&self, args: &[IndicatorArg]) -> Result<Expr>;
+
+    /// Provide try_calculate_vectorized implementation for Indicator trait
+    fn provide_try_calculate_vectorized(&self, args: &[IndicatorArg]) -> Option<Result<Expr>> {
+        Some(self.calculate_vectorized(args))
+    }
 }
 
 /// Trait for stateful indicators (used when vectorization isn't practical)
@@ -62,6 +73,22 @@ pub trait StatefulIndicator: Indicator {
 pub enum IndicatorArg {
     Series(Expr),   // Polars expression
     Scalar(f64),    // Period, threshold, etc.
+}
+
+/// Macro to automatically implement try_calculate_vectorized for indicators
+/// that implement VectorizedIndicator
+#[macro_export]
+macro_rules! impl_vectorized_indicator_bridge {
+    ($type:ty) => {
+        impl $type {
+            /// Bridge method that connects Indicator::try_calculate_vectorized
+            /// to VectorizedIndicator::calculate_vectorized
+            #[inline]
+            fn bridge_try_calculate_vectorized(&self, args: &[$crate::functions::traits::IndicatorArg]) -> Option<Result<polars::prelude::Expr>> {
+                Some(self.calculate_vectorized(args))
+            }
+        }
+    };
 }
 
 /// Primitive function trait

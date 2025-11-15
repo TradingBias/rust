@@ -10,21 +10,21 @@ pub struct TradeManagementConfig {
     pub max_positions: usize,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum StopLossConfig {
-    Fixed { percent: f64 },
+    FixedPercent { percent: f64 },
     ATR { multiplier: f64, period: usize },
     None,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum TakeProfitConfig {
-    Fixed { percent: f64 },
+    FixedPercent { percent: f64 },
     RiskReward { ratio: f64 },
     None,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum PositionSizing {
     Fixed { size: f64 },
     Percent { percent: f64 },

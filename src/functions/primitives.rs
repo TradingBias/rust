@@ -35,15 +35,43 @@ impl Primitive for MovingAverage {
     fn output_type(&self) -> crate::types::DataType { crate::types::DataType::NumericSeries }
     fn execute(&self, args: &[dsl::Expr]) -> Result<dsl::Expr> {
         let series = args[0].clone();
-        let period = match &args[1] {
-            dsl::Expr::Literal(LiteralValue::Scalar(p)) => {
-                if let AnyValue::Int64(val) = p.to_owned().value() {
-                    *val as usize
-                } else {
-                    bail!("MA period must be an integer literal")
+        // Try to extract the period value from the expression
+        let period: usize = match &args[1] {
+            dsl::Expr::Literal(lit_val) => {
+                // Handle LiteralValue by extracting scalar value
+                match lit_val {
+                    LiteralValue::Scalar(p) => {
+                        // Extract numeric value from AnyValue
+                        let owned_p = p.to_owned();
+                        let scalar_val = owned_p.value();
+                        match scalar_val {
+                            AnyValue::Int64(val) => *val as usize,
+                            AnyValue::Int32(val) => *val as usize,
+                            AnyValue::UInt32(val) => *val as usize,
+                            AnyValue::UInt64(val) => *val as usize,
+                            AnyValue::Float64(val) => *val as usize,
+                            AnyValue::Float32(val) => *val as usize,
+                            _ => bail!("MA period must be a numeric literal, got {:?}", scalar_val),
+                        }
+                    },
+                    // For other literal types, try to convert to string and parse
+                    other_lit => {
+                        // Try to get the debug representation and parse it
+                        let debug_str = format!("{:?}", other_lit);
+                        // Extract number from patterns like "dyn int: 14"
+                        if let Some(num_str) = debug_str.split(": ").nth(1) {
+                            if let Ok(val) = num_str.parse::<i64>() {
+                                val as usize
+                            } else {
+                                bail!("MA period must be a numeric literal, got {:?}", other_lit)
+                            }
+                        } else {
+                            bail!("MA period must be a numeric literal, got {:?}", other_lit)
+                        }
+                    }
                 }
             },
-            _ => bail!("MA period must be an integer literal"),
+            other => bail!("MA period must be an integer literal, got expression type: {:?}", other),
         };
 
         match self.method {
@@ -162,6 +190,76 @@ impl Primitive for Abs {
     }
     fn generate_mql5(&self, args: &[String]) -> String {
         format!("MathAbs({})", args[0])
+    }
+}
+
+// --- Math operators ---
+
+pub struct Add;
+impl Primitive for Add {
+    fn ui_name(&self) -> &'static str { "Add" }
+    fn alias(&self) -> &'static str { "Add" }
+    fn arity(&self) -> usize { 2 }
+    fn input_types(&self) -> Vec<crate::types::DataType> {
+        vec![crate::types::DataType::NumericSeries, crate::types::DataType::NumericSeries]
+    }
+    fn output_type(&self) -> crate::types::DataType { crate::types::DataType::NumericSeries }
+    fn execute(&self, args: &[dsl::Expr]) -> Result<dsl::Expr> {
+        Ok(args[0].clone() + args[1].clone())
+    }
+    fn generate_mql5(&self, args: &[String]) -> String {
+        format!("({} + {})", args[0], args[1])
+    }
+}
+
+pub struct Subtract;
+impl Primitive for Subtract {
+    fn ui_name(&self) -> &'static str { "Subtract" }
+    fn alias(&self) -> &'static str { "Subtract" }
+    fn arity(&self) -> usize { 2 }
+    fn input_types(&self) -> Vec<crate::types::DataType> {
+        vec![crate::types::DataType::NumericSeries, crate::types::DataType::NumericSeries]
+    }
+    fn output_type(&self) -> crate::types::DataType { crate::types::DataType::NumericSeries }
+    fn execute(&self, args: &[dsl::Expr]) -> Result<dsl::Expr> {
+        Ok(args[0].clone() - args[1].clone())
+    }
+    fn generate_mql5(&self, args: &[String]) -> String {
+        format!("({} - {})", args[0], args[1])
+    }
+}
+
+pub struct Multiply;
+impl Primitive for Multiply {
+    fn ui_name(&self) -> &'static str { "Multiply" }
+    fn alias(&self) -> &'static str { "Multiply" }
+    fn arity(&self) -> usize { 2 }
+    fn input_types(&self) -> Vec<crate::types::DataType> {
+        vec![crate::types::DataType::NumericSeries, crate::types::DataType::NumericSeries]
+    }
+    fn output_type(&self) -> crate::types::DataType { crate::types::DataType::NumericSeries }
+    fn execute(&self, args: &[dsl::Expr]) -> Result<dsl::Expr> {
+        Ok(args[0].clone() * args[1].clone())
+    }
+    fn generate_mql5(&self, args: &[String]) -> String {
+        format!("({} * {})", args[0], args[1])
+    }
+}
+
+pub struct Divide;
+impl Primitive for Divide {
+    fn ui_name(&self) -> &'static str { "Divide" }
+    fn alias(&self) -> &'static str { "Divide" }
+    fn arity(&self) -> usize { 2 }
+    fn input_types(&self) -> Vec<crate::types::DataType> {
+        vec![crate::types::DataType::NumericSeries, crate::types::DataType::NumericSeries]
+    }
+    fn output_type(&self) -> crate::types::DataType { crate::types::DataType::NumericSeries }
+    fn execute(&self, args: &[dsl::Expr]) -> Result<dsl::Expr> {
+        Ok(args[0].clone() / args[1].clone())
+    }
+    fn generate_mql5(&self, args: &[String]) -> String {
+        format!("({} / {})", args[0], args[1])
     }
 }
 

@@ -1,13 +1,12 @@
 use crate::{
     data::IndicatorCache,
     error::{Result, TradebiasError},
-    functions::traits::{Indicator, Primitive, VectorizedIndicator, IndicatorArg},
+    functions::traits::{Indicator, Primitive, IndicatorArg},
     functions::registry::FunctionRegistry,
     types::{AstNode, Value},
 };
 use polars::prelude::*;
 use std::sync::Arc;
-use std::any::Any;
 
 pub struct ExpressionBuilder {
     registry: Arc<FunctionRegistry>,
@@ -37,10 +36,21 @@ impl ExpressionBuilder {
     }
 
     fn build_call(&self, function: &str, args: &[Box<AstNode>], df: &DataFrame) -> Result<Expr> {
-        let cache_key = self.create_cache_key(function, args, df)?;
-        if let Some(cached) = self.cache.get(&cache_key) {
-            return Ok(col(&**cached.name()));
+        // Handle data accessors (OHLCV columns) as special case
+        match function {
+            "Open" => return Ok(col("open")),
+            "High" => return Ok(col("high")),
+            "Low" => return Ok(col("low")),
+            "Close" => return Ok(col("close")),
+            "Volume" => return Ok(col("volume")),
+            _ => {}
         }
+
+        // Note: Caching is disabled because we return expressions directly rather than
+        // evaluating them. Caching Series and then converting to lit() causes stack
+        // overflow with deeply nested expressions. Expression-level caching would
+        // require caching Expr objects, which is not straightforward.
+        // Performance impact is minimal for max_depth <= 3.
 
         if let Some(indicator) = self.registry.get_indicator(function) {
             self.build_indicator_call(indicator.as_ref(), args, df)
@@ -66,33 +76,53 @@ impl ExpressionBuilder {
         args: &[Box<AstNode>],
         df: &DataFrame,
     ) -> Result<Expr> {
-        let arg_exprs: Result<Vec<Expr>> = args.iter().map(|arg| self.build(arg, df)).collect();
-        let arg_exprs = arg_exprs?;
+        // Build args and convert to IndicatorArg based on input types
+        let input_types = indicator.input_types();
+        let mut indicator_args = Vec::new();
 
-        // Convert Vec<Expr> to Vec<IndicatorArg>
-        // For now, wrap all expressions as Series - this may need refinement
-        let indicator_args: Vec<IndicatorArg> = arg_exprs.iter()
-            .map(|expr| IndicatorArg::Series(expr.clone()))
-            .collect();
+        for (i, arg) in args.iter().enumerate() {
+            // Determine if this should be a scalar or series based on input type
+            let indicator_arg = if i < input_types.len() {
+                match input_types[i] {
+                    crate::types::DataType::Integer | crate::types::DataType::Float => {
+                        // Check if the AST node is a constant - if so, extract as scalar
+                        if let AstNode::Const(value) = arg.as_ref() {
+                            match value {
+                                Value::Integer(v) => IndicatorArg::Scalar(*v as f64),
+                                Value::Float(v) => IndicatorArg::Scalar(*v),
+                                _ => {
+                                    let arg_expr = self.build(arg, df)?;
+                                    IndicatorArg::Series(arg_expr)
+                                }
+                            }
+                        } else {
+                            let arg_expr = self.build(arg, df)?;
+                            IndicatorArg::Series(arg_expr)
+                        }
+                    }
+                    _ => {
+                        let arg_expr = self.build(arg, df)?;
+                        IndicatorArg::Series(arg_expr)
+                    }
+                }
+            } else {
+                let arg_expr = self.build(arg, df)?;
+                IndicatorArg::Series(arg_expr)
+            };
 
-        // Try to downcast to VectorizedIndicator
-        // Note: This requires Indicator trait to implement Any
-        let result_expr = if let Some(vectorized) = (indicator as &dyn Any).downcast_ref::<&dyn VectorizedIndicator>() {
-            vectorized.calculate_vectorized(&indicator_args)
-                .map_err(|e| TradebiasError::IndicatorError(format!("Indicator calculation failed: {}", e)))?
-        } else {
-            return Err(TradebiasError::IndicatorError(
+            indicator_args.push(indicator_arg);
+        }
+
+        // Call try_calculate_vectorized method on Indicator trait
+        let result_expr = indicator.try_calculate_vectorized(&indicator_args)
+            .ok_or_else(|| TradebiasError::IndicatorError(
                 format!("Indicator {} does not implement VectorizedIndicator", indicator.ui_name())
-            ));
-        };
+            ))?
+            .map_err(|e| TradebiasError::IndicatorError(format!("Indicator calculation failed: {}", e)))?;
 
-        let evaluated = df.clone().lazy().with_column(result_expr.alias("result")).collect()?;
-        let series = evaluated.column("result")?.as_materialized_series().clone();
-
-        let cache_key = self.create_cache_key(indicator.ui_name(), args, df)?;
-        self.cache.set(cache_key, series.clone());
-
-        Ok(lit(series))
+        // Return the expression directly instead of evaluating it to a series
+        // This avoids stack overflow issues with lit(series) in nested expressions
+        Ok(result_expr)
     }
 
     fn build_primitive_call(

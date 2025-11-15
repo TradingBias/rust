@@ -256,10 +256,10 @@ mod tests {
 
         let df = normalized.unwrap();
         let cols = df.get_column_names();
-        assert!(cols.contains(&"open"));
-        assert!(cols.contains(&"high"));
-        assert!(cols.contains(&"low"));
-        assert!(cols.contains(&"close"));
-        assert!(cols.contains(&"volume"));
+        assert!(cols.iter().any(|c| c.as_str() == "open"));
+        assert!(cols.iter().any(|c| c.as_str() == "high"));
+        assert!(cols.iter().any(|c| c.as_str() == "low"));
+        assert!(cols.iter().any(|c| c.as_str() == "close"));
+        assert!(cols.iter().any(|c| c.as_str() == "volume"));
     }
 }

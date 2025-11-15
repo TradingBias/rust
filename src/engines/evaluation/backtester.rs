@@ -27,11 +27,9 @@ impl Backtester {
     }
 
     pub fn run(&self, ast: &StrategyAST, data: &DataFrame) -> Result<StrategyResult> {
-        let condition = match ast.root.as_ref() {
-            AstNode::Rule { condition, .. } => condition,
-            _ => return Err(TradebiasError::Validation("StrategyAST root is not a Rule node".to_string())),
-        };
-        let signal_expr = self.expression_builder.build(condition, data)?;
+        // Build the entire rule (not just the condition)
+        // The rule will return numeric signals: 1.0 for long, -1.0 for short, 0.0 for no action
+        let signal_expr = self.expression_builder.build(ast.root.as_ref(), data)?;
 
         let signals = data
             .clone()
@@ -67,12 +65,83 @@ impl Backtester {
 
         let final_balance = portfolio.final_balance();
         let return_pct = (final_balance - self.initial_balance) / self.initial_balance * 100.0;
+        let trades = portfolio.get_trades();
 
+        // Basic metrics
         metrics.insert("return_pct".to_string(), return_pct);
-        metrics.insert("num_trades".to_string(), portfolio.get_trades().len() as f64);
+        metrics.insert("num_trades".to_string(), trades.len() as f64);
         metrics.insert("final_balance".to_string(), final_balance);
 
+        // Drawdown (as percentage)
+        metrics.insert("max_drawdown".to_string(), portfolio.max_drawdown * 100.0);
+
+        // Win rate
+        if !trades.is_empty() {
+            let winning_trades = trades.iter().filter(|t| t.profit > 0.0).count();
+            let win_rate = (winning_trades as f64 / trades.len() as f64) * 100.0;
+            metrics.insert("win_rate".to_string(), win_rate);
+        } else {
+            metrics.insert("win_rate".to_string(), 0.0);
+        }
+
+        // Profit factor (gross profit / gross loss)
+        let gross_profit: f64 = trades.iter().filter(|t| t.profit > 0.0).map(|t| t.profit).sum();
+        let gross_loss: f64 = trades.iter().filter(|t| t.profit < 0.0).map(|t| t.profit.abs()).sum();
+
+        let profit_factor = if gross_loss > 0.0 {
+            gross_profit / gross_loss
+        } else if gross_profit > 0.0 {
+            f64::INFINITY
+        } else {
+            0.0
+        };
+        metrics.insert("profit_factor".to_string(), profit_factor);
+
+        // Sharpe ratio (simplified version using equity curve)
+        let sharpe_ratio = self.calculate_sharpe_ratio(portfolio);
+        metrics.insert("sharpe_ratio".to_string(), sharpe_ratio);
+
         Ok(metrics)
+    }
+
+    /// Calculate Sharpe ratio from equity curve
+    /// Assumes daily returns, annualization factor = sqrt(252)
+    fn calculate_sharpe_ratio(&self, portfolio: &Portfolio) -> f64 {
+        let equity_curve = portfolio.get_equity_curve();
+
+        if equity_curve.len() < 2 {
+            return 0.0;
+        }
+
+        // Calculate returns
+        let mut returns = Vec::new();
+        for i in 1..equity_curve.len() {
+            let ret = (equity_curve[i] - equity_curve[i - 1]) / equity_curve[i - 1];
+            returns.push(ret);
+        }
+
+        if returns.is_empty() {
+            return 0.0;
+        }
+
+        // Calculate mean and std dev
+        let mean_return = returns.iter().sum::<f64>() / returns.len() as f64;
+
+        let variance = returns
+            .iter()
+            .map(|r| (r - mean_return).powi(2))
+            .sum::<f64>() / returns.len() as f64;
+
+        let std_dev = variance.sqrt();
+
+        if std_dev < 1e-10 {
+            return 0.0;
+        }
+
+        // Annualized Sharpe ratio (assuming daily data, 252 trading days)
+        let sharpe = (mean_return / std_dev) * (252.0_f64).sqrt();
+
+        sharpe
     }
 }
 
@@ -94,10 +163,10 @@ mod tests {
         }
         .unwrap();
 
-        // Use a simple constant float as condition (signal strength)
-        // The backtester uses the condition value directly as the signal
-        let condition = AstNode::Const(Value::Float(1.0)); // Signal: 1.0 = long
-        let action = AstNode::Const(Value::Float(1.0)); // Not used by backtester currently
+        // Use a simple boolean condition (always true) with a long signal action
+        // Rule structure: IF condition THEN action ELSE 0.0
+        let condition = AstNode::Const(Value::Bool(true)); // Always true
+        let action = AstNode::Const(Value::Float(1.0)); // Signal: 1.0 = long
 
         let ast_node = AstNode::Rule {
             condition: Box::new(condition),
@@ -116,12 +185,12 @@ mod tests {
         let result = backtester.run(&ast, &df).unwrap();
 
         // Verify backtester ran successfully and produced metrics
-        // Note: With constant 1.0 signal, a position opens but never closes,
+        // Note: With constant signal (always true -> 1.0 long), a position opens but never closes,
         // so trades will be empty. This is expected behavior.
         assert!(result.metrics.contains_key("return_pct"), "Should have return_pct metric");
         assert!(result.equity_curve.len() > 0, "Should have equity curve");
 
         // The constant signal should have opened a position but not closed it
-        assert_eq!(result.trades.len(), 0, "No completed trades with constant signal");
+        assert_eq!(result.trades.len(), 0, "No completed trades with constant 1.0 signal");
     }
 }

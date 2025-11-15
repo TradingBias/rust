@@ -1,8 +1,9 @@
 use crate::config::backtesting::ValidationMethod;
 use crate::config::trade_management::{StopLossConfig, TakeProfitConfig, PositionSizing};
 use crate::data::DataPreview;
+use crate::engines::generation::pareto::OptimizationDirection;
 use polars::prelude::*;
-use std::collections::HashSet;
+use std::collections::{HashSet, HashMap};
 use std::path::PathBuf;
 
 /// Central application state for the UI
@@ -15,6 +16,10 @@ pub struct AppState {
     // Indicator Selection
     pub available_indicators: Vec<IndicatorInfo>,
     pub selected_indicators: HashSet<String>,
+
+    // Optimization Metrics Configuration
+    pub available_metrics: Vec<MetricInfo>,
+    pub selected_metrics: HashMap<String, OptimizationDirection>, // metric_name -> direction
 
     // Trade Management Configuration
     pub initial_capital: f64,
@@ -57,6 +62,52 @@ pub struct AppState {
 
 impl Default for AppState {
     fn default() -> Self {
+        // Define available optimization metrics
+        let available_metrics = vec![
+            MetricInfo {
+                name: "return_pct".to_string(),
+                display_name: "Return %".to_string(),
+                description: "Total return percentage".to_string(),
+                default_direction: OptimizationDirection::Maximize,
+            },
+            MetricInfo {
+                name: "sharpe_ratio".to_string(),
+                display_name: "Sharpe Ratio".to_string(),
+                description: "Risk-adjusted return metric".to_string(),
+                default_direction: OptimizationDirection::Maximize,
+            },
+            MetricInfo {
+                name: "max_drawdown".to_string(),
+                display_name: "Max Drawdown %".to_string(),
+                description: "Maximum peak-to-trough decline".to_string(),
+                default_direction: OptimizationDirection::Minimize,
+            },
+            MetricInfo {
+                name: "win_rate".to_string(),
+                display_name: "Win Rate %".to_string(),
+                description: "Percentage of winning trades".to_string(),
+                default_direction: OptimizationDirection::Maximize,
+            },
+            MetricInfo {
+                name: "profit_factor".to_string(),
+                display_name: "Profit Factor".to_string(),
+                description: "Gross profit / gross loss".to_string(),
+                default_direction: OptimizationDirection::Maximize,
+            },
+            MetricInfo {
+                name: "num_trades".to_string(),
+                display_name: "Number of Trades".to_string(),
+                description: "Total number of completed trades".to_string(),
+                default_direction: OptimizationDirection::Maximize,
+            },
+        ];
+
+        // Default selected metrics (return_pct, sharpe_ratio, max_drawdown)
+        let mut selected_metrics = HashMap::new();
+        selected_metrics.insert("return_pct".to_string(), OptimizationDirection::Maximize);
+        selected_metrics.insert("sharpe_ratio".to_string(), OptimizationDirection::Maximize);
+        selected_metrics.insert("max_drawdown".to_string(), OptimizationDirection::Minimize);
+
         Self {
             // Data Configuration
             data_file_path: None,
@@ -66,6 +117,10 @@ impl Default for AppState {
             // Indicator Selection
             available_indicators: Vec::new(),
             selected_indicators: HashSet::new(),
+
+            // Optimization Metrics Configuration
+            available_metrics,
+            selected_metrics,
 
             // Trade Management Configuration
             initial_capital: 10000.0,
@@ -145,4 +200,13 @@ pub enum IndicatorCategory {
     Momentum,
     Volatility,
     Volume,
+}
+
+/// Metric information for optimization
+#[derive(Clone, Debug)]
+pub struct MetricInfo {
+    pub name: String,
+    pub display_name: String,
+    pub description: String,
+    pub default_direction: OptimizationDirection,
 }

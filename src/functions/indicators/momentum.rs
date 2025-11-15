@@ -62,6 +62,10 @@ impl Indicator for RSI {
     fn generate_mql5(&self, args: &[String]) -> String {
         format!("iRSI({}, {}, {}, {})", args[0], args[1], args[2], args[3])
     }
+
+    fn try_calculate_vectorized(&self, args: &[IndicatorArg]) -> Option<Result<dsl::Expr>> {
+        Some(VectorizedIndicator::calculate_vectorized(self, args))
+    }
 }
 
 impl VectorizedIndicator for RSI {
@@ -157,6 +161,10 @@ impl Indicator for Stochastic {
             self.k_period, self.d_period, self.slowing
         )
     }
+
+    fn try_calculate_vectorized(&self, args: &[IndicatorArg]) -> Option<Result<dsl::Expr>> {
+        Some(VectorizedIndicator::calculate_vectorized(self, args))
+    }
 }
 
 impl VectorizedIndicator for Stochastic {
@@ -240,6 +248,10 @@ impl Indicator for CCI {
     fn generate_mql5(&self, _args: &[String]) -> String {
         format!("iCCI(_Symbol, _Period, {}, PRICE_TYPICAL)", self.period)
     }
+
+    fn try_calculate_vectorized(&self, args: &[IndicatorArg]) -> Option<Result<dsl::Expr>> {
+        Some(VectorizedIndicator::calculate_vectorized(self, args))
+    }
 }
 
 impl VectorizedIndicator for CCI {
@@ -319,6 +331,10 @@ impl Indicator for WilliamsR {
     fn generate_mql5(&self, _args: &[String]) -> String {
         format!("iWPR(_Symbol, _Period, {})", self.period)
     }
+
+    fn try_calculate_vectorized(&self, args: &[IndicatorArg]) -> Option<Result<dsl::Expr>> {
+        Some(VectorizedIndicator::calculate_vectorized(self, args))
+    }
 }
 
 impl VectorizedIndicator for WilliamsR {
@@ -392,6 +408,10 @@ impl Indicator for ROC {
             self.period
         )
     }
+
+    fn try_calculate_vectorized(&self, args: &[IndicatorArg]) -> Option<Result<dsl::Expr>> {
+        Some(VectorizedIndicator::calculate_vectorized(self, args))
+    }
 }
 
 impl VectorizedIndicator for ROC {
@@ -447,6 +467,10 @@ impl Indicator for AC {
     }
     fn generate_mql5(&self, _args: &[String]) -> String {
         "iAC(_Symbol, _Period)".to_string()
+    }
+
+    fn try_calculate_vectorized(&self, args: &[IndicatorArg]) -> Option<Result<dsl::Expr>> {
+        Some(VectorizedIndicator::calculate_vectorized(self, args))
     }
 }
 
@@ -522,6 +546,10 @@ impl Indicator for AO {
     }
     fn generate_mql5(&self, _args: &[String]) -> String {
         "iAO(_Symbol, _Period)".to_string()
+    }
+
+    fn try_calculate_vectorized(&self, args: &[IndicatorArg]) -> Option<Result<dsl::Expr>> {
+        Some(VectorizedIndicator::calculate_vectorized(self, args))
     }
 }
 
@@ -599,6 +627,10 @@ impl Indicator for RVI {
     }
     fn generate_mql5(&self, _args: &[String]) -> String {
         format!("iRVI(_Symbol, _Period, {})", self.period)
+    }
+
+    fn try_calculate_vectorized(&self, args: &[IndicatorArg]) -> Option<Result<dsl::Expr>> {
+        Some(VectorizedIndicator::calculate_vectorized(self, args))
     }
 }
 
@@ -685,6 +717,10 @@ impl Indicator for DeMarker {
     fn generate_mql5(&self, _args: &[String]) -> String {
         format!("iDeMarker(_Symbol, _Period, {})", self.period)
     }
+
+    fn try_calculate_vectorized(&self, args: &[IndicatorArg]) -> Option<Result<dsl::Expr>> {
+        Some(VectorizedIndicator::calculate_vectorized(self, args))
+    }
 }
 
 impl VectorizedIndicator for DeMarker {
@@ -764,6 +800,10 @@ impl Indicator for Momentum {
             "iMomentum(_Symbol, _Period, {}, PRICE_CLOSE)",
             self.period
         )
+    }
+
+    fn try_calculate_vectorized(&self, args: &[IndicatorArg]) -> Option<Result<dsl::Expr>> {
+        Some(VectorizedIndicator::calculate_vectorized(self, args))
     }
 }
 

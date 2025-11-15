@@ -32,17 +32,12 @@ impl SemanticMapper {
         let condition = self.build_expression(DataType::BoolSeries, &mut consumer, 0)?;
 
         // Build action (simple for now, can be extended)
-        let action_choice = consumer.choose(2); // 0 = OpenLong, 1 = OpenShort
+        // 1.0 = Long signal, -1.0 = Short signal
+        let action_choice = consumer.choose(2);
         let action = if action_choice == 0 {
-            AstNode::Call {
-                function: "OpenLong".to_string(),
-                args: vec![],
-            }
+            AstNode::Const(ConstValue::Float(1.0)) // Long
         } else {
-            AstNode::Call {
-                function: "OpenShort".to_string(),
-                args: vec![],
-            }
+            AstNode::Const(ConstValue::Float(-1.0)) // Short
         };
 
         let root = AstNode::Rule {
@@ -208,8 +203,9 @@ impl SemanticMapper {
         let operations = ["Add", "Subtract", "Multiply", "Divide"];
         let choice = consumer.choose(operations.len());
 
-        let arg1 = self.build_numeric_series(consumer, depth + 1)?;
-        let arg2 = self.build_numeric_series(consumer, depth + 1)?;
+        // Must call build_expression to ensure depth checking happens
+        let arg1 = self.build_expression(DataType::NumericSeries, consumer, depth + 1)?;
+        let arg2 = self.build_expression(DataType::NumericSeries, consumer, depth + 1)?;
 
         Ok(AstNode::Call {
             function: operations[choice].to_string(),
@@ -239,10 +235,23 @@ impl SemanticMapper {
             DataType::NumericSeries => self.build_data_accessor(consumer),
             DataType::Integer => self.build_integer(consumer),
             DataType::Float => self.build_float(consumer),
-            _ => Err(TradebiasError::Generation(format!(
-                "Cannot build terminal for type {:?}",
-                desired_type
-            ))),
+            DataType::BoolSeries => {
+                // When we hit max depth and need a BoolSeries, create a simple comparison
+                // This prevents the "Cannot build terminal for type BoolSeries" error
+                let comparisons = ["gt_scalar", "lt_scalar", "gte_scalar", "lte_scalar"];
+                let choice = consumer.choose(comparisons.len());
+
+                // Get a numeric series (data accessor)
+                let series = self.build_data_accessor(consumer)?;
+
+                // Get a scalar threshold value
+                let threshold = self.build_float(consumer)?;
+
+                Ok(AstNode::Call {
+                    function: comparisons[choice].to_string(),
+                    args: vec![Box::new(series), Box::new(threshold)],
+                })
+            }
         }
     }
 }

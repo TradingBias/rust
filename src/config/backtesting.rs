@@ -12,17 +12,18 @@ pub struct BacktestingConfig {
     pub slippage: f64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum ValidationMethod {
     Simple,
-    WalkForward { anchored: bool },
+    WalkForwardAnchored,
+    WalkForwardRolling,
     KFold,
 }
 
 impl Default for BacktestingConfig {
     fn default() -> Self {
         Self {
-            validation_method: ValidationMethod::WalkForward { anchored: false },
+            validation_method: ValidationMethod::WalkForwardRolling,
             train_test_split: 0.7,
             num_folds: 5,
             initial_capital: 10000.0,

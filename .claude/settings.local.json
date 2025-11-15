@@ -13,7 +13,12 @@
       "Bash(cargo fix:*)",
       "Bash(cargo test:*)",
       "Bash(set RUST_BACKTRACE=1)",
-      "Bash(if not exist \"docs\\project-plan\" mkdir \"docs\\project-plan\")"
+      "Bash(if not exist \"docs\\project-plan\" mkdir \"docs\\project-plan\")",
+      "Bash(timeout 120 tail:*)",
+      "Bash(.targetreleaseexamplestest_evolution.exe testsdataBTC_1day_sample.csv 20 5 5)",
+      "Bash(target/release/examples/test_evolution.exe:*)",
+      "Bash(if not exist \"docs\\project-fix\" mkdir \"docs\\project-fix\")",
+      "Bash(timeout 120 cargo test:*)"
     ],
     "deny": [],
     "ask": []

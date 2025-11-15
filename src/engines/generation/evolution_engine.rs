@@ -1,10 +1,11 @@
 use crate::engines::evaluation::Backtester;
 use crate::engines::generation::{
     hall_of_fame::{EliteStrategy, HallOfFame, get_canonical_ast_string},
-    operators::*,
+    operators::{*, pareto_tournament_selection},
     semantic_mapper::SemanticMapper,
     genome::Genome,
     ast::StrategyAST,
+    pareto::{ObjectiveConfig, OptimizationDirection},
 };
 use crate::error::TradebiasError;
 use polars::prelude::*;
@@ -23,8 +24,15 @@ pub struct EvolutionConfig {
     pub elitism_rate: f64,
     pub tournament_size: usize,
     pub hall_of_fame_size: usize,
-    pub fitness_objectives: Vec<String>, // Metric names
-    pub fitness_weights: Vec<f64>,       // Weights for multi-objective
+
+    // Multi-objective optimization configuration
+    pub objective_configs: Vec<ObjectiveConfig>, // Pareto optimization objectives
+    pub use_pareto: bool,                        // Whether to use Pareto optimization
+
+    // Legacy single-objective fields (for backward compatibility)
+    pub fitness_objectives: Vec<String>,  // Metric names
+    pub fitness_weights: Vec<f64>,        // Weights for single-objective aggregation
+
     pub min_fitness_threshold: f64,
     pub seed: Option<u64>,
 }
@@ -54,7 +62,15 @@ impl EvolutionEngine {
             None => StdRng::from_entropy(),
         };
 
-        let hall_of_fame = HallOfFame::new(config.hall_of_fame_size);
+        // Create HallOfFame based on optimization mode
+        let hall_of_fame = if config.use_pareto {
+            HallOfFame::new_with_pareto(
+                config.hall_of_fame_size,
+                config.objective_configs.clone(),
+            )
+        } else {
+            HallOfFame::new(config.hall_of_fame_size)
+        };
 
         Self {
             config,
@@ -90,6 +106,8 @@ impl EvolutionEngine {
                     fitness: *fitness,
                     metrics: metrics.clone(),
                     canonical_string,
+                    pareto_rank: 0,        // Will be set by HallOfFame
+                    crowding_distance: 0.0, // Will be set by HallOfFame
                 };
                 self.hall_of_fame.try_add(elite);
             }
@@ -139,10 +157,14 @@ impl EvolutionEngine {
             callback.on_strategy_evaluated(i + 1, population.len());
 
             // Generate AST from genome
+            println!("  [{}] Generating AST...", i + 1);
             let ast = self.semantic_mapper.create_strategy_ast(genome)?;
+            println!("  [{}] AST generated: {}", i + 1, ast.root.to_formula_short(60));
 
             // Run backtest
+            println!("  [{}] Running backtest...", i + 1);
             let backtest_result = self.backtester.run(&ast, data)?;
+            println!("  [{}] Backtest complete", i + 1);
 
             // Calculate fitness
             let fitness = self.calculate_fitness(&backtest_result.metrics);
@@ -170,6 +192,21 @@ impl EvolutionEngine {
         evaluated: &[(Genome, f64, StrategyAST, HashMap<String, f64>)],
     ) -> Vec<Genome> {
         let mut next_generation = Vec::new();
+
+        if self.config.use_pareto {
+            // Pareto-based selection
+            self.create_next_generation_pareto(evaluated, &mut next_generation)
+        } else {
+            // Single-objective selection
+            self.create_next_generation_single(evaluated, &mut next_generation)
+        }
+    }
+
+    fn create_next_generation_single(
+        &mut self,
+        evaluated: &[(Genome, f64, StrategyAST, HashMap<String, f64>)],
+        next_generation: &mut Vec<Genome>,
+    ) -> Vec<Genome> {
         let population_fitness: Vec<(Genome, f64)> = evaluated
             .iter()
             .map(|(g, f, _, _)| (g.clone(), *f))
@@ -223,7 +260,102 @@ impl EvolutionEngine {
         }
 
         next_generation.truncate(self.config.population_size);
-        next_generation
+        next_generation.clone()
+    }
+
+    fn create_next_generation_pareto(
+        &mut self,
+        evaluated: &[(Genome, f64, StrategyAST, HashMap<String, f64>)],
+        next_generation: &mut Vec<Genome>,
+    ) -> Vec<Genome> {
+        use crate::engines::generation::pareto::{MultiObjectiveIndividual, extract_objectives};
+
+        // Convert to MultiObjectiveIndividual and calculate Pareto ranks
+        let mut individuals: Vec<MultiObjectiveIndividual<usize>> = evaluated
+            .iter()
+            .enumerate()
+            .map(|(i, (_, _, _, metrics))| {
+                let objectives = extract_objectives(metrics, &self.config.objective_configs);
+                MultiObjectiveIndividual::new(i, objectives)
+            })
+            .collect();
+
+        let directions: Vec<_> = self.config.objective_configs
+            .iter()
+            .map(|c| c.direction)
+            .collect();
+
+        let fronts = crate::engines::generation::pareto::fast_non_dominated_sort(&mut individuals, &directions);
+
+        for front in &fronts {
+            crate::engines::generation::pareto::calculate_crowding_distance(&mut individuals, front);
+        }
+
+        // Create population with Pareto info: (genome, rank, crowding_distance)
+        let population_pareto: Vec<(Genome, usize, f64)> = individuals
+            .iter()
+            .map(|ind| {
+                let (genome, _, _, _) = &evaluated[ind.data];
+                (genome.clone(), ind.rank, ind.crowding_distance)
+            })
+            .collect();
+
+        // Elitism: copy top performers (from first Pareto front)
+        let elite_count = (self.config.population_size as f64 * self.config.elitism_rate) as usize;
+        let mut sorted = population_pareto.clone();
+        sorted.sort_by(|a, b| {
+            match a.1.cmp(&b.1) {
+                std::cmp::Ordering::Equal => {
+                    b.2.partial_cmp(&a.2).unwrap_or(std::cmp::Ordering::Equal)
+                }
+                other => other,
+            }
+        });
+
+        for (genome, _, _) in sorted.iter().take(elite_count) {
+            next_generation.push(genome.clone());
+        }
+
+        // Generate offspring using Pareto tournament selection
+        while next_generation.len() < self.config.population_size {
+            if self.rng.gen::<f64>() < self.config.crossover_rate {
+                // Crossover
+                let parent1 = pareto_tournament_selection(
+                    &population_pareto,
+                    self.config.tournament_size,
+                    &mut self.rng,
+                );
+                let parent2 = pareto_tournament_selection(
+                    &population_pareto,
+                    self.config.tournament_size,
+                    &mut self.rng,
+                );
+
+                let (mut child1, mut child2) = crossover(&parent1, &parent2, &mut self.rng);
+
+                // Apply mutation
+                mutate(&mut child1, self.config.mutation_rate, self.config.gene_range.clone(), &mut self.rng);
+                mutate(&mut child2, self.config.mutation_rate, self.config.gene_range.clone(), &mut self.rng);
+
+                next_generation.push(child1);
+                if next_generation.len() < self.config.population_size {
+                    next_generation.push(child2);
+                }
+            } else {
+                // Reproduction (copy)
+                let parent = pareto_tournament_selection(
+                    &population_pareto,
+                    self.config.tournament_size,
+                    &mut self.rng,
+                );
+                let mut child = parent;
+                mutate(&mut child, self.config.mutation_rate, self.config.gene_range.clone(), &mut self.rng);
+                next_generation.push(child);
+            }
+        }
+
+        next_generation.truncate(self.config.population_size);
+        next_generation.clone()
     }
 
     pub fn get_hall_of_fame(&self) -> &HallOfFame {

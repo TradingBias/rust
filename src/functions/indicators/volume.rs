@@ -49,6 +49,10 @@ impl Indicator for OBV {
     fn generate_mql5(&self, _args: &[String]) -> String {
         "iOBV(_Symbol, _Period)".to_string()
     }
+
+    fn try_calculate_vectorized(&self, args: &[IndicatorArg]) -> Option<Result<dsl::Expr>> {
+        Some(VectorizedIndicator::calculate_vectorized(self, args))
+    }
 }
 
 impl VectorizedIndicator for OBV {
@@ -118,6 +122,10 @@ impl Indicator for MFI {
     }
     fn generate_mql5(&self, _args: &[String]) -> String {
         format!("iMFI(_Symbol, _Period, {})", self.period)
+    }
+
+    fn try_calculate_vectorized(&self, args: &[IndicatorArg]) -> Option<Result<dsl::Expr>> {
+        Some(VectorizedIndicator::calculate_vectorized(self, args))
     }
 }
 
@@ -216,6 +224,10 @@ impl Indicator for Force {
             self.period
         )
     }
+
+    fn try_calculate_vectorized(&self, args: &[IndicatorArg]) -> Option<Result<dsl::Expr>> {
+        Some(VectorizedIndicator::calculate_vectorized(self, args))
+    }
 }
 
 impl VectorizedIndicator for Force {
@@ -277,6 +289,10 @@ impl Indicator for Volumes {
     fn generate_mql5(&self, _args: &[String]) -> String {
         "iVolumes(_Symbol, _Period)".to_string()
     }
+
+    fn try_calculate_vectorized(&self, args: &[IndicatorArg]) -> Option<Result<dsl::Expr>> {
+        Some(VectorizedIndicator::calculate_vectorized(self, args))
+    }
 }
 
 impl VectorizedIndicator for Volumes {
@@ -337,6 +353,10 @@ impl Indicator for Chaikin {
     }
     fn generate_mql5(&self, _args: &[String]) -> String {
         format!("iAD(_Symbol, _Period)")
+    }
+
+    fn try_calculate_vectorized(&self, args: &[IndicatorArg]) -> Option<Result<dsl::Expr>> {
+        Some(VectorizedIndicator::calculate_vectorized(self, args))
     }
 }
 
@@ -422,6 +442,10 @@ impl Indicator for BWMFI {
     }
     fn generate_mql5(&self, _args: &[String]) -> String {
         "iBWMFI(_Symbol, _Period)".to_string()
+    }
+
+    fn try_calculate_vectorized(&self, args: &[IndicatorArg]) -> Option<Result<dsl::Expr>> {
+        Some(VectorizedIndicator::calculate_vectorized(self, args))
     }
 }
 

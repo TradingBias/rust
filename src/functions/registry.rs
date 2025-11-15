@@ -11,7 +11,14 @@ use crate::functions::{
         volatility::{ADX, ATR, StdDev},
         volume::{BWMFI, Chaikin, Force, MFI, OBV, Volumes},
     },
-    primitives::{And, Or, Abs},
+    primitives::{
+        And, Or, Abs,
+        Add, Subtract, Multiply, Divide,
+        GreaterThan, LessThan, Equal, NotEqual, GreaterThanOrEqual, LessThanOrEqual,
+        GreaterThanScalar, LessThanScalar, EqualScalar, NotEqualScalar,
+        GreaterThanOrEqualScalar, LessThanOrEqualScalar,
+        CrossAbove, CrossBelow,
+    },
 };
 use std::{collections::HashMap, sync::Arc};
 
@@ -61,6 +68,10 @@ impl FunctionRegistry {
         self.functions
             .values()
             .filter_map(|f| f.get_indicator_arc())
+            .filter(|indicator| {
+                // Only include indicators that support vectorized calculation
+                indicator.calculation_mode() == crate::functions::traits::CalculationMode::Vectorized
+            })
             .collect()
     }
 
@@ -104,7 +115,34 @@ impl FunctionRegistry {
     }
 
     fn register_primitives(&mut self) {
-        let primitives: Vec<Arc<dyn Primitive>> = vec![Arc::new(And {}), Arc::new(Or {}), Arc::new(Abs {})];
+        let primitives: Vec<Arc<dyn Primitive>> = vec![
+            // Logical operators
+            Arc::new(And {}),
+            Arc::new(Or {}),
+            Arc::new(Abs {}),
+            // Math operators
+            Arc::new(Add {}),
+            Arc::new(Subtract {}),
+            Arc::new(Multiply {}),
+            Arc::new(Divide {}),
+            // Comparison operators (series to series)
+            Arc::new(GreaterThan {}),
+            Arc::new(LessThan {}),
+            Arc::new(Equal {}),
+            Arc::new(NotEqual {}),
+            Arc::new(GreaterThanOrEqual {}),
+            Arc::new(LessThanOrEqual {}),
+            // Comparison operators (series to scalar)
+            Arc::new(GreaterThanScalar {}),
+            Arc::new(LessThanScalar {}),
+            Arc::new(EqualScalar {}),
+            Arc::new(NotEqualScalar {}),
+            Arc::new(GreaterThanOrEqualScalar {}),
+            Arc::new(LessThanOrEqualScalar {}),
+            // Cross operators
+            Arc::new(CrossAbove {}),
+            Arc::new(CrossBelow {}),
+        ];
         for primitive in primitives {
             self.functions
                 .insert(primitive.alias().to_string(), StrategyFunction::Primitive(primitive));

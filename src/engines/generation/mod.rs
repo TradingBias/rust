@@ -9,6 +9,7 @@ pub mod diversity_validator;
 pub mod lightweight_validator;
 pub mod optimisation;
 pub mod genome;
+pub mod pareto;
 
 pub use genome::Genome;
 pub use ast::*;
@@ -18,6 +19,7 @@ pub use progress::{ConsoleProgressCallback, IpcProgressCallback};
 pub use semantic_mapper::SemanticMapper;
 pub use diversity_validator::DiversityValidator;
 pub use lightweight_validator::LightweightValidator;
+pub use pareto::{ObjectiveConfig, OptimizationDirection};
 pub use optimisation::{
     methods::{
         base::{ValidationMethod, AggregatedResult, ValidationResult},

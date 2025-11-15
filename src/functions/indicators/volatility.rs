@@ -55,6 +55,10 @@ impl Indicator for ATR {
     fn generate_mql5(&self, _args: &[String]) -> String {
         format!("iATR(_Symbol, _Period, {})", self.period)
     }
+
+    fn try_calculate_vectorized(&self, args: &[IndicatorArg]) -> Option<Result<dsl::Expr>> {
+        Some(VectorizedIndicator::calculate_vectorized(self, args))
+    }
 }
 
 impl VectorizedIndicator for ATR {
@@ -284,6 +288,10 @@ impl Indicator for StdDev {
             "iStdDev(_Symbol, _Period, {}, 0, MODE_SMA, PRICE_CLOSE)",
             self.period
         )
+    }
+
+    fn try_calculate_vectorized(&self, args: &[IndicatorArg]) -> Option<Result<dsl::Expr>> {
+        Some(VectorizedIndicator::calculate_vectorized(self, args))
     }
 }
 

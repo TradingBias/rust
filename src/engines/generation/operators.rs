@@ -1,7 +1,8 @@
 use crate::engines::generation::genome::Genome;
+use crate::engines::generation::pareto::crowded_comparison;
 use rand::Rng;
 
-/// Tournament selection: pick best of K random candidates
+/// Tournament selection: pick best of K random candidates (single-objective)
 pub fn tournament_selection<R: Rng>(
     population: &[(Genome, f64)],
     tournament_size: usize,
@@ -15,6 +16,42 @@ pub fn tournament_selection<R: Rng>(
         if population[idx].1 > best_fitness {
             best_idx = idx;
             best_fitness = population[idx].1;
+        }
+    }
+
+    population[best_idx].0.clone()
+}
+
+/// Tournament selection for Pareto optimization: pick best based on rank and crowding distance
+pub fn pareto_tournament_selection<R: Rng>(
+    population: &[(Genome, usize, f64)], // (genome, pareto_rank, crowding_distance)
+    tournament_size: usize,
+    rng: &mut R,
+) -> Genome {
+    use crate::engines::generation::pareto::MultiObjectiveIndividual;
+
+    let mut best_idx = rng.gen_range(0..population.len());
+
+    for _ in 1..tournament_size {
+        let idx = rng.gen_range(0..population.len());
+
+        // Create temporary individuals for comparison
+        let best_ind = MultiObjectiveIndividual {
+            data: (),
+            objectives: vec![],
+            rank: population[best_idx].1,
+            crowding_distance: population[best_idx].2,
+        };
+
+        let challenger_ind = MultiObjectiveIndividual {
+            data: (),
+            objectives: vec![],
+            rank: population[idx].1,
+            crowding_distance: population[idx].2,
+        };
+
+        if crowded_comparison(&challenger_ind, &best_ind) {
+            best_idx = idx;
         }
     }
 
