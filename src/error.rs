@@ -25,6 +25,9 @@ pub enum TradebiasError {
 
     #[error("Configuration error: {0}")]
     Configuration(String),
+
+    #[error("Data loading error: {0}")]
+    DataLoading(String),
     
     #[error("IO error: {0}")]
     Io(#[from] std::io::Error),

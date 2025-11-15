@@ -1,6 +1,6 @@
 use crate::{
     functions::{
-        primitives::{MAMethod, MovingAverage, StdDev},
+        primitives::{MAMethod, MovingAverage},
         traits::{Indicator, IndicatorArg, Primitive},
     },
     types::{DataType, ScaleType},
@@ -61,14 +61,16 @@ impl crate::functions::traits::VectorizedIndicator for SMA {
             IndicatorArg::Series(expr) => expr.clone(),
             _ => bail!("SMA: first arg must be series"),
         };
-        let period = match &args[1] {
-            IndicatorArg::Scalar(p) => *p as i64,
-            _ => bail!("SMA: second arg must be scalar period"),
+
+        // Use period from struct
+        use polars::prelude::RollingOptionsFixedWindow;
+        let options = RollingOptionsFixedWindow {
+            window_size: self.period,
+            min_periods: self.period,
+            ..Default::default()
         };
-        let ma = MovingAverage {
-            method: MAMethod::Simple,
-        };
-        ma.execute(&[series, dsl::lit(period)])
+
+        Ok(series.rolling_mean(options))
     }
 }
 
@@ -123,14 +125,18 @@ impl crate::functions::traits::VectorizedIndicator for EMA {
             IndicatorArg::Series(expr) => expr.clone(),
             _ => bail!("EMA: first arg must be series"),
         };
-        let period = match &args[1] {
-            IndicatorArg::Scalar(p) => *p as i64,
-            _ => bail!("EMA: second arg must be scalar period"),
+
+        // Use period from struct
+        use polars::prelude::EWMOptions;
+        let alpha = 2.0 / (self.period as f64 + 1.0);
+        let options = EWMOptions {
+            alpha,
+            adjust: false,
+            min_periods: self.period,
+            ..Default::default()
         };
-        let ma = MovingAverage {
-            method: MAMethod::Exponential,
-        };
-        ma.execute(&[series, dsl::lit(period)])
+
+        Ok(series.ewm_mean(options))
     }
 }
 
@@ -203,17 +209,28 @@ impl crate::functions::traits::VectorizedIndicator for MACD {
             IndicatorArg::Series(expr) => expr.clone(),
             _ => bail!("MACD: first arg must be series"),
         };
-        let ema_fast_primitive = MovingAverage {
-            method: MAMethod::Exponential,
-        };
-        let ema_slow_primitive = MovingAverage {
-            method: MAMethod::Exponential,
+
+        // Calculate EMAs directly using Polars
+        use polars::prelude::EWMOptions;
+
+        let fast_alpha = 2.0 / (self.fast_period as f64 + 1.0);
+        let fast_options = EWMOptions {
+            alpha: fast_alpha,
+            adjust: false,
+            min_periods: self.fast_period,
+            ..Default::default()
         };
 
-        let ema_fast = ema_fast_primitive
-            .execute(&[series.clone(), dsl::lit(self.fast_period as i64)])?;
-        let ema_slow =
-            ema_slow_primitive.execute(&[series, dsl::lit(self.slow_period as i64)])?;
+        let slow_alpha = 2.0 / (self.slow_period as f64 + 1.0);
+        let slow_options = EWMOptions {
+            alpha: slow_alpha,
+            adjust: false,
+            min_periods: self.slow_period,
+            ..Default::default()
+        };
+
+        let ema_fast = series.clone().ewm_mean(fast_options);
+        let ema_slow = series.ewm_mean(slow_options);
 
         let macd_line = ema_fast - ema_slow;
 
@@ -277,19 +294,21 @@ impl crate::functions::traits::VectorizedIndicator for BollingerBands {
             IndicatorArg::Series(expr) => expr.clone(),
             _ => bail!("BB: first arg must be series"),
         };
-        let period = self.period as i64;
-        let deviation = self.deviation;
 
-        let sma = MovingAverage {
-            method: MAMethod::Simple,
+        // Calculate SMA and StdDev directly using Polars
+        use polars::prelude::RollingOptionsFixedWindow;
+
+        let options = RollingOptionsFixedWindow {
+            window_size: self.period,
+            min_periods: self.period,
+            ..Default::default()
         };
-        let std_dev = StdDev;
 
-        let middle_band = sma.execute(&[series.clone(), dsl::lit(period)])?;
-        let std_dev_val = std_dev.execute(&[series, dsl::lit(period)])?;
+        let middle_band = series.clone().rolling_mean(options.clone());
+        let std_dev_val = series.rolling_std(options);
 
-        let upper_band = middle_band.clone() + (dsl::lit(deviation) * std_dev_val.clone());
-        let _lower_band = middle_band.clone() - (dsl::lit(deviation) * std_dev_val);
+        let upper_band = middle_band.clone() + (dsl::lit(self.deviation) * std_dev_val.clone());
+        let _lower_band = middle_band - (dsl::lit(self.deviation) * std_dev_val);
 
         Ok(upper_band)
     }

@@ -6,4 +6,5 @@ pub mod error;
 pub mod functions;
 pub mod ml;
 pub mod types;
+pub mod ui;
 pub mod utils;
